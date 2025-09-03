@@ -253,7 +253,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         <GlassButton
           onClick={() => setMapType(mapType === 'roadmap' ? 'satellite' : 'roadmap')}
           title={mapType === 'roadmap' ? 'Przełącz na widok satelitarny' : 'Przełącz na mapę drogową'}
-          variant="secondary"
+          variant="primary"
           size="xs"
           icon={mapType === 'roadmap' ? Satellite : MapIcon}
         >
@@ -263,18 +263,17 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         </GlassButton>
       </div>
 
-      {/* Tree count indicator */}
-      <div className="absolute bottom-32 left-3 sm:bottom-5 sm:left-5">
+      {/* Tree count indicator and Legend - Left side */}
+      <div className="absolute bottom-5 left-3 sm:bottom-5 sm:left-5 space-y-2">
+        {/* Tree count indicator */}
         <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm px-2 py-1 sm:px-5 sm:py-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50">
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Zgłoszenia: <span className="font-bold text-green-600">{trees.length}</span>
           </p>
         </div>
-      </div>
-
-      {/* Legend */}
-      <div className="absolute bottom-32 right-3 sm:bottom-5 sm:right-5 max-w-40 sm:max-w-60">
-        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-2 sm:p-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+        
+        {/* Legend */}
+        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-2 sm:p-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 max-w-40 sm:max-w-60">
           <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">Legenda:</div>
           <div className="space-y-1 sm:space-y-2 text-sm">
             <div className="flex items-center space-x-3">

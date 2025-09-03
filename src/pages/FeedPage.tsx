@@ -17,21 +17,30 @@ export const FeedPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const handleScroll = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target && target.classList.contains('overflow-y-auto')) {
-        const { scrollTop, scrollHeight, clientHeight } = target;
-        if (scrollTop + clientHeight >= scrollHeight - 100) {
+    const handleScroll = () => {
+      // Sprawdzamy scroll na głównym kontenerze aplikacji
+      const mainContainer = document.querySelector('main.overflow-y-auto');
+      if (mainContainer) {
+        const { scrollTop, scrollHeight, clientHeight } = mainContainer;
+        console.log('Scroll event:', { scrollTop, scrollHeight, clientHeight, threshold: scrollHeight - 200 });
+        if (scrollTop + clientHeight >= scrollHeight - 200) {
+          console.log('Triggering loadMorePosts');
           loadMorePosts();
         }
       }
     };
 
-    // Nasłuchuj scroll na kontenerze feed
-    const feedContainer = document.querySelector('.overflow-y-auto');
-    if (feedContainer) {
-      feedContainer.addEventListener('scroll', handleScroll);
-      return () => feedContainer.removeEventListener('scroll', handleScroll);
+    // Nasłuchuj scroll na głównym kontenerze
+    const mainContainer = document.querySelector('main.overflow-y-auto');
+    if (mainContainer) {
+      console.log('Added scroll listener to main container');
+      mainContainer.addEventListener('scroll', handleScroll);
+      return () => {
+        console.log('Removed scroll listener');
+        mainContainer.removeEventListener('scroll', handleScroll);
+      };
+    } else {
+      console.log('Main container not found');
     }
   }, [isLoadingMore, hasMore]);
 
@@ -72,7 +81,9 @@ export const FeedPage: React.FC = () => {
   };
 
   const loadMorePosts = () => {
+    console.log('loadMorePosts called', { isLoadingMore, hasMore });
     if (!isLoadingMore && hasMore) {
+      console.log('Loading more posts...');
       loadPosts(true);
     }
   };

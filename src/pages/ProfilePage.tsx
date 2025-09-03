@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Bell, Shield, Settings, ChevronRight, Edit, Save, X, LogOut } from 'lucide-react';
+import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
@@ -41,9 +41,7 @@ export const ProfilePage: React.FC = () => {
     }));
   };
 
-  const handleAdminPanelClick = () => {
-    navigate('/admin');
-  };
+
 
   const handleSaveData = () => {
     setShowPasswordModal(true);
@@ -76,7 +74,7 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+      <div className="max-w-2xl sm:max-w-none mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -294,33 +292,7 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-          {/* Admin Panel Access */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <Shield className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                Panel administratora
-              </h3>
-            </div>
 
-            <div className="space-y-3">
-              <GlassButton
-                onClick={handleAdminPanelClick}
-                variant="secondary"
-                size="sm"
-                className="w-full text-left"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-gray-700 dark:text-gray-300 text-base">
-                    Zarządzaj i moderuj zawartość
-                  </span>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
-                </div>
-              </GlassButton>
-            </div>
-          </div>
-        </div>
 
         {/* Settings */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">

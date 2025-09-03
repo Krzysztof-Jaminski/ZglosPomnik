@@ -1,14 +1,15 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Map, Rss, TreePine, FileText, BookOpen, User } from 'lucide-react';
+import { Map, Rss, TreePine, FileText, BookOpen, User, Shield } from 'lucide-react';
 
-export const Sidebar: React.FC = () => {
+const Sidebar: React.FC = () => {
   const navItems = [
     { to: '/map', icon: Map, label: 'Mapa' },
     { to: '/report', icon: TreePine, label: 'Zgłoś drzewo' },
     { to: '/applications', icon: FileText, label: 'Wnioski' },
     { to: '/encyclopedia', icon: BookOpen, label: 'Encyklopedia' },
-    { to: '/profile', icon: User, label: 'Profil' }
+    { to: '/profile', icon: User, label: 'Profil' },
+    { to: '/admin', icon: Shield, label: 'Panel administratora' }
   ];
 
   return (
@@ -36,3 +37,5 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
+
+export { Sidebar };

@@ -24,12 +24,16 @@ export const Header: React.FC = () => {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 h-14 sm:h-18 w-full">
-      <div className="w-full px-6">
+      <div className="w-full px-3">
         <div className="flex justify-between items-center h-14 sm:h-18 w-full">
-          <div className="flex items-center space-x-4">
-            <Link to="/map" className="flex items-center space-x-3 sm:space-x-4">
-              <Tree className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
-              <h1 className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
+          <div className="flex items-center space-x-4 focus:outline-none focus:ring-0 focus:ring-offset-0">
+            <Link to="/map" className="flex items-center space-x-1 sm:space-x-2 focus:outline-none focus:ring-0 focus:ring-offset-0">
+              <img 
+                src="/green_tree_icon.svg" 
+                alt="ZgłośPomnik" 
+                className="w-12 h-12 sm:w-10 sm:h-10"
+              />
+              <h1 className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400 focus:outline-none focus:ring-0 focus:ring-offset-0">
                 ZgłośPomnik
               </h1>
             </Link>
@@ -45,7 +49,7 @@ export const Header: React.FC = () => {
             >
               <span className="sr-only">Toggle theme</span>
             </GlassButton>
-            <Link to="/profile">
+            <Link to="/profile" className="focus:outline-none">
               <GlassButton
                 size="xs"
                 variant="secondary"

@@ -181,19 +181,19 @@ export const AdminPage: React.FC = () => {
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-5xl sm:max-w-none mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-2 sm:mb-4"
         >
           <div className="flex items-center space-x-3 mb-2">
-            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-            <h1 className="text-lg sm:text-2xl font-bold text-green-900 dark:text-white">
+            <Shield className="w-5 h-5 sm:w-8 sm:h-8 text-green-600" />
+            <h1 className="text-lg sm:text-3xl font-bold text-green-900 dark:text-white">
               Panel administratora
             </h1>
           </div>
-          <p className="text-green-800 dark:text-gray-400 text-base sm:text-lg">
+          <p className="text-green-800 dark:text-gray-400 text-base sm:text-xl">
             Zarządzaj zgłoszeniami i moderuj zawartość
           </p>
         </motion.div>
@@ -201,21 +201,21 @@ export const AdminPage: React.FC = () => {
         {/* Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-2 sm:mb-4">
           <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="flex space-x-2 sm:space-x-4 px-2 sm:px-3">
+            <nav className="flex space-x-2 sm:space-x-6 px-2 sm:px-4">
               {tabs.map(({ id, label, icon: Icon, count }) => (
                 <button
                   key={id}
                   onClick={() => setActiveTab(id as any)}
-                  className={`flex items-center space-x-1 py-1 sm:py-2 border-b-2 font-medium transition-colors ${
+                  className={`flex items-center space-x-2 py-2 sm:py-3 border-b-2 font-medium transition-colors ${
                     activeTab === id
                       ? 'border-green-500 text-green-600 dark:text-green-400'
                       : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="text-sm sm:text-base">{label}</span>
+                  <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
+                  <span className="text-sm sm:text-lg">{label}</span>
                   {count > 0 && (
-                    <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 px-2 py-1 rounded-full text-xs sm:text-sm">
+                    <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 px-2 py-1 rounded-full text-xs sm:text-base">
                       {count}
                     </span>
                   )}
@@ -224,27 +224,27 @@ export const AdminPage: React.FC = () => {
             </nav>
           </div>
 
-          <div className="p-2 sm:p-3">
+          <div className="p-2 sm:p-6">
             {activeTab === 'reports' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {trees.map((tree, index) => (
                   <motion.div
                     key={tree.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 hover:shadow-xl transition-all"
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 sm:p-4 hover:shadow-xl transition-all"
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">
                           {tree.commonName}
                         </h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-xs">
+                        <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
                           {tree.species}
                         </p>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
                         tree.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
                         tree.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
                         'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
@@ -254,16 +254,16 @@ export const AdminPage: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-1">
-                          <Users className="w-3 h-3 text-gray-400" />
-                          <span className="text-gray-600 dark:text-gray-400 text-xs">
+                          <Users className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                          <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
                             {tree.reportedBy}
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3 text-gray-400" />
-                          <span className="text-gray-600 dark:text-gray-400 text-xs">
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                          <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
                             {new Date(tree.reportedAt).toLocaleDateString('pl-PL')}
                           </span>
                         </div>
@@ -285,33 +285,33 @@ export const AdminPage: React.FC = () => {
             )}
 
             {activeTab === 'comments' && (
-              <div className="space-y-1 sm:space-y-2">
+              <div className="space-y-2 sm:space-y-4">
                 {posts.map((post, index) => (
                   <motion.div
                     key={`comments-${post.id}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="border border-green-200 dark:border-green-800 rounded-lg p-1 sm:p-2"
+                    className="border border-green-200 dark:border-green-800 rounded-lg p-3 sm:p-4"
                   >
-                    <div className="mb-1">
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+                    <div className="mb-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-lg">
                         {post.commonName} - Komentarze ({post.comments.length})
                       </h4>
                     </div>
                     
                     {post.comments.length === 0 ? (
-                      <p className="text-gray-500 text-sm sm:text-base">Brak komentarzy</p>
+                      <p className="text-gray-500 text-sm sm:text-lg">Brak komentarzy</p>
                     ) : (
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         {post.comments
                           .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes))
                           .map((comment) => (
-                          <div key={comment.id} className="bg-green-50 dark:bg-green-900/20 rounded-lg p-1">
+                          <div key={comment.id} className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <div className="flex items-center space-x-1 mb-0.5">
-                                  <span className="font-medium text-gray-900 dark:text-white text-xs">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <span className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm">
                                     {comment.userName}
                                   </span>
                                   <span className="text-gray-500 text-xs sm:text-sm">
@@ -323,13 +323,13 @@ export const AdminPage: React.FC = () => {
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-gray-700 dark:text-gray-300 mb-1 text-xs">
+                                <p className="text-gray-700 dark:text-gray-300 mb-2 text-xs sm:text-sm">
                                   {comment.content}
                                 </p>
-                                <div className="flex items-center space-x-2 text-gray-500 text-xs">
-                                  <ThumbsUp className="w-4 h-4" />
+                                <div className="flex items-center space-x-3 text-gray-500 text-xs sm:text-sm">
+                                  <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5" />
                                   <span>{comment.likes}</span>
-                                  <ThumbsDown className="w-4 h-4" />
+                                  <ThumbsDown className="w-4 h-4 sm:w-5 sm:h-5" />
                                   <span>{comment.dislikes}</span>
                                 </div>
                               </div>
@@ -352,28 +352,28 @@ export const AdminPage: React.FC = () => {
             )}
 
             {activeTab === 'users' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {users.map((user, index) => (
                   <motion.div
                     key={user.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 hover:shadow-xl transition-all"
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 sm:p-4 hover:shadow-xl transition-all"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
                           {user.name}
                         </h3>
                         {user.role === 'admin' && (
-                          <Crown className="w-4 h-4 text-yellow-500" />
+                          <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
                         )}
                         {user.role === 'ecologist' && (
-                          <UserCheck className="w-4 h-4 text-green-500" />
+                          <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
                         )}
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
                         user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
                         user.status === 'suspended' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
                         'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
@@ -383,16 +383,16 @@ export const AdminPage: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-1">
-                          <Mail className="w-3 h-3 text-gray-400" />
-                          <span className="text-gray-600 dark:text-gray-400 text-xs truncate">
+                          <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                          <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm truncate">
                             {user.email}
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <TreePine className="w-3 h-3 text-gray-400" />
-                          <span className="text-gray-600 dark:text-gray-400 text-xs">
+                          <TreePine className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                          <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
                             {user.reportsCount} zgłoszeń
                           </span>
                         </div>
@@ -418,11 +418,11 @@ export const AdminPage: React.FC = () => {
         {/* Password Confirmation Modal */}
         {showPasswordModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 max-w-sm w-full">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-3">
                 Potwierdź usunięcie
               </h3>
-              <p className="text-base text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-4">
                 Wprowadź hasło administratora aby potwierdzić usunięcie.
               </p>
               <input
@@ -430,13 +430,13 @@ export const AdminPage: React.FC = () => {
                 value={deletePassword}
                 onChange={(e) => setDeletePassword(e.target.value)}
                 placeholder="Hasło administratora"
-                className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white mb-4"
+                className="w-full px-4 py-3 text-base sm:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white mb-4"
               />
-              <div className="flex space-x-2">
+              <div className="flex space-x-3">
                 <GlassButton
                   onClick={cancelDelete}
                   variant="secondary"
-                  size="xs"
+                  size="sm"
                   className="flex-1"
                 >
                   <span className="text-sm sm:text-base">Anuluj</span>
@@ -444,7 +444,7 @@ export const AdminPage: React.FC = () => {
                 <GlassButton
                   onClick={confirmDelete}
                   variant="danger"
-                  size="xs"
+                  size="sm"
                   className="flex-1"
                   disabled={!deletePassword}
                 >

@@ -241,7 +241,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto px-1 sm:px-0"
+      className="max-w-2xl sm:max-w-none mx-auto px-1 sm:px-0"
     >
       <div className="text-center mb-4 sm:mb-6">
         <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-2" />
@@ -303,7 +303,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl mx-auto px-1 sm:px-0"
+      className="max-w-3xl sm:max-w-none mx-auto px-1 sm:px-0"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -375,7 +375,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl mx-auto px-1 sm:px-0"
+      className="max-w-3xl sm:max-w-none mx-auto px-1 sm:px-0"
     >
       <div className="text-center mb-2 sm:mb-3">
         <h2 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
@@ -447,7 +447,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl mx-auto px-1 sm:px-0"
+      className="max-w-3xl sm:max-w-none mx-auto px-1 sm:px-0"
     >
       <div className="text-center mb-2 sm:mb-3">
         <h2 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
@@ -586,7 +586,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto px-1 sm:px-0"
+      className="max-w-2xl sm:max-w-none mx-auto px-1 sm:px-0"
     >
       <div className="mb-2 sm:mb-3 text-center">
         <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mx-auto mb-1" />
@@ -732,7 +732,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto text-center px-1 sm:px-0"
+      className="max-w-2xl sm:max-w-none mx-auto text-center px-1 sm:px-0"
     >
       <div className="mb-3 sm:mb-4">
         <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-1 sm:mb-2" />

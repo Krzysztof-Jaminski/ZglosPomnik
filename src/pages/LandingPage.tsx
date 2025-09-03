@@ -32,7 +32,11 @@ export const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <Trees className="w-4 h-4 text-green-400" />
+              <img 
+                src="/green_tree_icon.svg" 
+                alt="ZgłośPomnik" 
+                className="w-6 h-6"
+              />
               <span className="text-sm font-bold text-white">ZgłośPomnik</span>
             </div>
             <div className="flex items-center gap-4 text-xs">

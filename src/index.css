@@ -17,6 +17,15 @@
     max-width: 100vw;
   }
 
+  /* Remove focus ring from header links */
+  header a:focus,
+  header a:focus-visible,
+  header a:active {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
   * {
     @apply transition-colors duration-200;
   }

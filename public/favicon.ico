@@ -1,0 +1,27 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background circle -->
+  <circle cx="50" cy="50" r="45" fill="#0f1419" stroke="#1a1f2e" stroke-width="2"/>
+  
+  <!-- Tree trunk -->
+  <rect x="46" y="65" width="8" height="20" fill="#8B4513" rx="2"/>
+  
+  <!-- Tree leaves/crown - bright green -->
+  <circle cx="40" cy="45" r="12" fill="#4ade80"/>
+  <circle cx="50" cy="38" r="14" fill="#22c55e"/>
+  <circle cx="60" cy="45" r="12" fill="#4ade80"/>
+  <circle cx="45" cy="50" r="10" fill="#22c55e"/>
+  <circle cx="55" cy="50" r="10" fill="#22c55e"/>
+  
+  <!-- Highlight leaves for depth -->
+  <circle cx="48" cy="42" r="6" fill="#4ade80"/>
+  <circle cx="52" cy="46" r="4" fill="#4ade80"/>
+  
+  <!-- Small decorative leaves around -->
+  <ellipse cx="25" cy="25" rx="3" ry="6" fill="#22c55e" transform="rotate(45 25 25)"/>
+  <ellipse cx="75" cy="25" rx="3" ry="6" fill="#22c55e" transform="rotate(-45 75 25)"/>
+  <ellipse cx="25" cy="75" rx="3" ry="6" fill="#22c55e" transform="rotate(-45 25 75)"/>
+  <ellipse cx="75" cy="75" rx="3" ry="6" fill="#22c55e" transform="rotate(45 75 75)"/>
+  
+  <!-- Center highlight for modern app icon look -->
+  <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+</svg>
