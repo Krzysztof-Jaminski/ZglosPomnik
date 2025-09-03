@@ -43,14 +43,13 @@ export const MapPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Map takes all space except bottombar */}
-      <div className="flex-1 relative overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
+    <div className="flex flex-col h-full">
+      {/* Map takes all available space */}
+      <div className="flex-1 relative overflow-hidden">
         <MapComponent ref={mapComponentRef} onTreeSelect={handleMapClick} />
       </div>
       
-      {/* Bottombar space */}
-      <div className="h-16 sm:hidden"></div>
+
 
       {/* Confirmation popup */}
       <AnimatePresence>

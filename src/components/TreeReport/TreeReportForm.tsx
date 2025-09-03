@@ -481,16 +481,16 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             type="submit"
             disabled={!selectedSpecies || !latitude || !longitude || isSubmitting}
             className="flex-1"
-            size="md"
+            size="sm"
             variant="primary"
           >
             {isSubmitting ? (
-              <div className="flex items-center justify-center space-x-3">
-                <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
-                <span className="text-base sm:text-lg">Wysyłanie zgłoszenia...</span>
+              <div className="flex items-center justify-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span className="text-sm">Wysyłanie...</span>
               </div>
             ) : (
-              <span className="text-base sm:text-lg">Wyślij</span>
+              <span className="text-sm">Wyślij</span>
             )}
           </GlassButton>
         </div>

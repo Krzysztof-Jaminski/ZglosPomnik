@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/app": "^7.0.2",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@headlessui/react": "^2.2.7",
     "clsx": "^2.1.1",

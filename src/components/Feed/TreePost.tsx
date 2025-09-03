@@ -156,7 +156,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                       type="submit"
                       disabled={!newComment.trim() || isSubmittingComment}
                       variant="primary"
-                      size="md"
+                      size="sm"
                     >
                       {isSubmittingComment ? 'Wysyłanie...' : 'Komentuj'}
                     </GlassButton>

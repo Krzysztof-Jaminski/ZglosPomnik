@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Bell, Shield, Settings, ChevronRight, Edit, Save, X } from 'lucide-react';
+import { User, Mail, Phone, Bell, Shield, Settings, ChevronRight, Edit, Save, X, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
@@ -66,6 +66,12 @@ export const ProfilePage: React.FC = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleLogout = () => {
+    // Tutaj można dodać logikę czyszczenia sesji/tokenów
+    // Na razie po prostu przekierowujemy na landing page
+    navigate('/');
   };
 
   return (
@@ -329,11 +335,23 @@ export const ProfilePage: React.FC = () => {
             <div className="space-y-3">
               <GlassButton
                 variant="secondary"
-                size="sm"
+                size="xs"
                 className="w-full text-left"
               >
-                <span className="text-gray-700 dark:text-gray-300 text-base">
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
                   Zmień hasło
+                </span>
+              </GlassButton>
+              
+              <GlassButton
+                onClick={handleLogout}
+                variant="danger"
+                size="xs"
+                className="w-full text-left"
+                icon={LogOut}
+              >
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                  Wyloguj się
                 </span>
               </GlassButton>
             </div>

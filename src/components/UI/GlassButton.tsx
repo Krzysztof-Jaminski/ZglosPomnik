@@ -47,7 +47,7 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
       dark:bg-gray-800/50 dark:hover:bg-gray-700/60 dark:active:bg-gray-600/70
       dark:text-gray-300 dark:hover:text-white
       dark:hover:border-l-green-500
-      focus:ring-2 focus:ring-green-500/50
+      focus:ring-0
     `,
     secondary: `
       bg-green-800/20 hover:bg-green-700/40 active:bg-blue-600/60
@@ -56,7 +56,7 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
       dark:bg-gray-800/30 dark:hover:bg-gray-700/50 dark:active:bg-gray-600/60
       dark:text-gray-400 dark:hover:text-gray-200
       dark:hover:border-l-green-400
-      focus:ring-2 focus:ring-green-500/50
+      focus:ring-0
     `,
     danger: `
       bg-red-800/20 hover:bg-red-900/40 active:bg-red-800/50

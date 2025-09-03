@@ -7,6 +7,8 @@ import { GlassButton } from '../components/UI/GlassButton';
 export const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<TreePostType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [filterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
@@ -14,9 +16,33 @@ export const FeedPage: React.FC = () => {
     loadPosts();
   }, []);
 
-  const loadPosts = async () => {
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains('overflow-y-auto')) {
+        const { scrollTop, scrollHeight, clientHeight } = target;
+        if (scrollTop + clientHeight >= scrollHeight - 100) {
+          loadMorePosts();
+        }
+      }
+    };
+
+    // Nasłuchuj scroll na kontenerze feed
+    const feedContainer = document.querySelector('.overflow-y-auto');
+    if (feedContainer) {
+      feedContainer.addEventListener('scroll', handleScroll);
+      return () => feedContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [isLoadingMore, hasMore]);
+
+  const loadPosts = async (isLoadMore = false) => {
     try {
-      setIsLoading(true);
+      if (isLoadMore) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+      
       const treesData = await api.getTrees();
       
       // Convert trees to posts with social features
@@ -29,11 +55,25 @@ export const FeedPage: React.FC = () => {
         legendComment: Math.random() > 0.6 ? generateLegendComment(tree.id) : undefined
       }));
 
-      setPosts(postsData);
+      if (isLoadMore) {
+        setPosts(prevPosts => [...prevPosts, ...postsData]);
+      } else {
+        setPosts(postsData);
+      }
+      
+      // Symulujemy ograniczoną liczbę postów (dla demo)
+      setHasMore(postsData.length > 0);
     } catch (error) {
       console.error('Error loading posts:', error);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  const loadMorePosts = () => {
+    if (!isLoadingMore && hasMore) {
+      loadPosts(true);
     }
   };
 
@@ -240,6 +280,23 @@ export const FeedPage: React.FC = () => {
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400 text-lg">
               Brak zgłoszeń spełniających kryteria
+            </p>
+          </div>
+        )}
+
+        {/* Loading more indicator */}
+        {isLoadingMore && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Ładowanie więcej...</p>
+          </div>
+        )}
+
+        {/* End of feed indicator */}
+        {!hasMore && filteredAndSortedPosts.length > 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              To wszystkie dostępne zgłoszenia
             </p>
           </div>
         )}

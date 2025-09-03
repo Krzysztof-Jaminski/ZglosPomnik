@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Trees, Home, Info, HelpCircle, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GlassButton } from '../components/UI/GlassButton';
+import { DarkGlassButton } from '../components/UI/DarkGlassButton';
 import PhoneMockup from '../components/Landing/PhoneMockup';
 
 export const LandingPage = () => {
@@ -43,7 +43,7 @@ export const LandingPage = () => {
                 <a href="#" className="text-gray-400 hover:text-green-400">KONTAKT</a>
               </div>
               <div className="flex items-center gap-2">
-                <GlassButton
+                <DarkGlassButton
                   onClick={() => {
                     setAuthMode('login');
                     setShowAuthModal(true);
@@ -53,15 +53,15 @@ export const LandingPage = () => {
                   className="text-xs px-3"
                 >
                   ZALOGUJ
-                </GlassButton>
-                <GlassButton
+                </DarkGlassButton>
+                <DarkGlassButton
                   onClick={handleContinueWithoutLogin}
                   variant="primary"
                   size="xs"
                   className="text-xs px-3"
                 >
                   ROZPOCZNIJ
-                </GlassButton>
+                </DarkGlassButton>
               </div>
             </div>
           </div>
@@ -115,14 +115,14 @@ export const LandingPage = () => {
                 </div>
               </div>
 
-              <GlassButton
+              <DarkGlassButton
                 onClick={handleContinueWithoutLogin}
                 variant="primary"
                 size="lg"
                 className="text-base"
               >
                 ROZPOCZNIJ TERAZ
-              </GlassButton>
+              </DarkGlassButton>
             </div>
           </div>
         </div>
@@ -183,13 +183,13 @@ export const LandingPage = () => {
                           placeholder="••••••••"
                         />
                       </div>
-                      <GlassButton
+                      <DarkGlassButton
                         variant="primary"
                         size="lg"
                         className="w-full"
                       >
                         Zaloguj się
-                      </GlassButton>
+                      </DarkGlassButton>
                       <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                         Nie masz konta?{' '}
                         <button
@@ -232,13 +232,13 @@ export const LandingPage = () => {
                           placeholder="••••••••"
                         />
                       </div>
-                      <GlassButton
+                      <DarkGlassButton
                         variant="primary"
                         size="lg"
                         className="w-full"
                       >
                         Zarejestruj się
-                      </GlassButton>
+                      </DarkGlassButton>
                       <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                         Masz już konto?{' '}
                         <button
