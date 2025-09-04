@@ -6,6 +6,7 @@ const Sidebar: React.FC = () => {
   const navItems = [
     { to: '/map', icon: Map, label: 'Mapa' },
     { to: '/report', icon: TreePine, label: 'Zgłoś drzewo' },
+    { to: '/feed', icon: Rss, label: 'Feed' },
     { to: '/applications', icon: FileText, label: 'Wnioski' },
     { to: '/encyclopedia', icon: BookOpen, label: 'Encyklopedia' },
     { to: '/profile', icon: User, label: 'Profil' },

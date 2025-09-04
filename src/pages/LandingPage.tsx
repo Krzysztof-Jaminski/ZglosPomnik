@@ -1,17 +1,58 @@
 import { useState } from 'react';
-import { Trees, Home, Info, HelpCircle, Mail } from 'lucide-react';
+import { Home, Info, HelpCircle, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
 import PhoneMockup from '../components/Landing/PhoneMockup';
+import { useAuth } from '../context/AuthContext';
+import { LoginForm } from '../components/Auth/LoginForm';
+import { RegisterForm } from '../components/Auth/RegisterForm';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'menu'>('menu');
+  const [error, setError] = useState<string | null>(null);
+  
+  // Bezpieczne używanie kontekstu autoryzacji
+  let authContext;
+  try {
+    authContext = useAuth();
+  } catch (error) {
+    // Jeśli kontekst nie jest dostępny, użyj domyślnych wartości
+    authContext = {
+      login: async () => {},
+      register: async () => {},
+      isLoading: false
+    };
+  }
+  
+  const { login, register, isLoading } = authContext;
 
   const handleContinueWithoutLogin = () => {
     navigate('/map');
+  };
+
+  const handleLogin = async (credentials: any) => {
+    try {
+      setError(null);
+      await login(credentials);
+      setShowAuthModal(false);
+      navigate('/map');
+    } catch (error: any) {
+      setError(error.message || 'Błąd logowania');
+    }
+  };
+
+  const handleRegister = async (userData: any) => {
+    try {
+      setError(null);
+      await register(userData);
+      setShowAuthModal(false);
+      navigate('/map');
+    } catch (error: any) {
+      setError(error.message || 'Błąd rejestracji');
+    }
   };
 
   return (
@@ -164,95 +205,27 @@ export const LandingPage = () => {
                   </button>
                 </div>
 
+                {error && (
+                  <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
+                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   {authMode === 'login' ? (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
-                          placeholder="twoj@email.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Hasło
-                        </label>
-                        <input
-                          type="password"
-                          className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
-                          placeholder="••••••••"
-                        />
-                      </div>
-                      <DarkGlassButton
-                        variant="primary"
-                        size="lg"
-                        className="w-full"
-                      >
-                        Zaloguj się
-                      </DarkGlassButton>
-                      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                        Nie masz konta?{' '}
-                        <button
-                          onClick={() => setAuthMode('register')}
-                          className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium"
-                        >
-                          Zarejestruj się
-                        </button>
-                      </p>
-                    </>
+                    <LoginForm
+                      onSubmit={handleLogin}
+                      onSwitchToRegister={() => setAuthMode('register')}
+                      onClose={() => setShowAuthModal(false)}
+                      isLoading={isLoading}
+                    />
                   ) : (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
-                          placeholder="twoj@email.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Hasło
-                        </label>
-                        <input
-                          type="password"
-                          className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
-                          placeholder="••••••••"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Powtórz hasło
-                        </label>
-                        <input
-                          type="password"
-                          className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
-                          placeholder="••••••••"
-                        />
-                      </div>
-                      <DarkGlassButton
-                        variant="primary"
-                        size="lg"
-                        className="w-full"
-                      >
-                        Zarejestruj się
-                      </DarkGlassButton>
-                      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                        Masz już konto?{' '}
-                        <button
-                          onClick={() => setAuthMode('login')}
-                          className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium"
-                        >
-                          Zaloguj się
-                        </button>
-                      </p>
-                    </>
+                    <RegisterForm
+                      onSubmit={handleRegister}
+                      onSwitchToLogin={() => setAuthMode('login')}
+                      onClose={() => setShowAuthModal(false)}
+                      isLoading={isLoading}
+                    />
                   )}
                 </div>
               </div>

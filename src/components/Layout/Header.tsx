@@ -1,11 +1,11 @@
 import React from 'react';
-import { Trees as Tree, Moon, Sun, Monitor, User } from 'lucide-react';
+import { Moon, Sun, Monitor, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassButton } from '../UI/GlassButton';
 
 export const Header: React.FC = () => {
-  const { theme, actualTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const themeIcons = {
     light: Sun,

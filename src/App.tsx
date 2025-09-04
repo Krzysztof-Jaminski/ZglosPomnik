@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { AuthPage } from './pages/AuthPage';
 import { Header } from './components/Layout/Header';
@@ -44,40 +45,40 @@ const BackButtonHandler: React.FC = () => {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   return (
     <ThemeProvider>
-      <Router>
-        <BackButtonHandler />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/auth/:mode" element={<AuthPage />} />
-          <Route path="/*" element={
-            <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden flex flex-col max-w-full">
-              <Header />
-              
-              <div className="flex flex-1 overflow-y-auto w-full">
-                <Sidebar />
+      <AuthProvider>
+        <Router>
+          <BackButtonHandler />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth/:mode" element={<AuthPage />} />
+            <Route path="/*" element={
+              <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden flex flex-col max-w-full">
+                <Header />
                 
-                <main className="flex-1 overflow-y-auto pb-20 sm:pb-0 w-full max-w-full">
-                  <Routes>
-                    <Route path="/map" element={<MapPage />} />
-                    <Route path="/feed" element={<FeedPage />} />
-                    <Route path="/report" element={<ReportPage />} />
-                    <Route path="/applications" element={<ApplicationsPage />} />
-                    <Route path="/encyclopedia" element={<EncyclopediaPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/admin" element={<AdminPage />} />
-                  </Routes>
-                </main>
+                <div className="flex flex-1 overflow-y-auto w-full">
+                  <Sidebar />
+                  
+                  <main className="flex-1 overflow-y-auto pb-20 sm:pb-0 w-full max-w-full">
+                    <Routes>
+                      <Route path="/map" element={<MapPage />} />
+                      <Route path="/feed" element={<FeedPage />} />
+                      <Route path="/report" element={<ReportPage />} />
+                      <Route path="/applications" element={<ApplicationsPage />} />
+                      <Route path="/encyclopedia" element={<EncyclopediaPage />} />
+                      <Route path="/profile" element={<ProfilePage />} />
+                      <Route path="/admin" element={<AdminPage />} />
+                    </Routes>
+                  </main>
+                </div>
+                
+                <BottomNavigation />
               </div>
-              
-              <BottomNavigation />
-            </div>
-          } />
-        </Routes>
-      </Router>
+            } />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

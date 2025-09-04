@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
+import { LoginRequest } from '../../services/authService';
 
 interface LoginFormProps {
-  onSubmit: (email: string, password: string) => void;
+  onSubmit: (credentials: LoginRequest) => void;
   onSwitchToRegister: () => void;
   onClose: () => void;
   onBackToMenu?: () => void;
@@ -26,7 +27,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData.email, formData.password);
+    const credentials: LoginRequest = {
+      email: formData.email,
+      password: formData.password
+    };
+    onSubmit(credentials);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

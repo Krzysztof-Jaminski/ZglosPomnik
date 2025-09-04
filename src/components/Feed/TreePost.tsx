@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle, Share2, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { TreePost as TreePostType } from '../../types';
+import { TreePost as TreePostType, Comment } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
+import { commentsService } from '../../services/commentsService';
 
 interface TreePostProps {
   post: TreePostType;
@@ -22,11 +23,37 @@ export const TreePost: React.FC<TreePostProps> = ({
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+
+  // Load comments when showComments becomes true
+  useEffect(() => {
+    if (showComments && !commentsLoaded) {
+      loadComments();
+    }
+  }, [showComments, commentsLoaded]);
+
+  const loadComments = async () => {
+    setIsLoadingComments(true);
+    try {
+      const commentsData = await commentsService.getTreeComments(post.id);
+      setComments(commentsData);
+      setCommentsLoaded(true);
+    } catch (error) {
+      console.error('Error loading comments:', error);
+      // Fallback to mock comments if API fails
+      setComments(post.comments);
+      setCommentsLoaded(true);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
 
   // Find the most popular comment (highest likes)
-  const mostPopularComment = post.comments.length > 0 
-    ? post.comments.reduce((prev, current) => 
-        (current.likes > prev.likes) ? current : prev
+  const mostPopularComment = comments.length > 0 
+    ? comments.reduce((prev, current) => 
+        (current.likesCount > prev.likesCount) ? current : prev
       )
     : null;
 
@@ -41,31 +68,42 @@ export const TreePost: React.FC<TreePostProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-600 mb-3 p-3">
+    <div 
+      id={`tree-post-${post.id}`}
+      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-600 mb-3 p-3"
+    >
       {/* Header */}
       <div className="flex items-center space-x-4 mb-4">
-        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-          <span className="text-green-600 dark:text-green-400 font-semibold text-base">
-            {post.reportedBy.charAt(0).toUpperCase()}
-          </span>
+        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center overflow-hidden">
+          {post.userData.avatar ? (
+            <img 
+              src={post.userData.avatar} 
+              alt={post.userData.userName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-green-600 dark:text-green-400 font-semibold text-base">
+              {post.userData.userName.charAt(0).toUpperCase()}
+            </span>
+          )}
         </div>
         <div className="flex-1">
           <div className="flex items-center space-x-4">
             <span className="font-medium text-gray-900 dark:text-white text-base">
-              {post.reportedBy}
+              {post.userData.userName}
             </span>
             <span className="text-base text-gray-500">
-              {new Date(post.reportedAt).toLocaleDateString('pl-PL')}
+              {new Date(post.submissionDate).toLocaleDateString('pl-PL')}
             </span>
           </div>
         </div>
       </div>
 
       {/* Photos */}
-      {post.photos.length > 0 && (
+      {post.images.length > 0 && (
         <div className="mb-4">
           <img
-            src={post.photos[0]}
+            src={post.images[0]}
             alt="Tree photo"
             className="w-full h-48 object-cover rounded-lg"
           />
@@ -75,11 +113,16 @@ export const TreePost: React.FC<TreePostProps> = ({
       {/* Content */}
       <div className="mb-4">
         <h3 className="font-medium text-gray-900 dark:text-white text-lg mb-2">
-          {post.commonName}
+          {post.species}
         </h3>
-        <p className="text-base text-gray-600 dark:text-gray-400 mb-2">
-          {post.notes}
+        <p className="text-sm italic text-gray-500 dark:text-gray-400 mb-2">
+          {post.speciesLatin}
         </p>
+        {post.description && (
+          <p className="text-base text-gray-600 dark:text-gray-400 mb-2">
+            {post.description}
+          </p>
+        )}
       </div>
 
 
@@ -116,7 +159,7 @@ export const TreePost: React.FC<TreePostProps> = ({
             className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
           >
             <MessageCircle className="w-5 h-5" />
-            <span className="text-sm font-medium">{post.comments.length}</span>
+            <span className="text-sm font-medium">{comments.length}</span>
           </button>
         </div>
         
@@ -166,26 +209,48 @@ export const TreePost: React.FC<TreePostProps> = ({
             </form>
 
             {/* Comments List */}
-            <div className="space-y-4 max-h-64 overflow-y-auto">
-              {post.comments
-                .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes))
+            <div className="space-y-4">
+              {isLoadingComments ? (
+                <div className="text-center py-4">
+                  <div className="text-gray-500 dark:text-gray-400">Ładowanie komentarzy...</div>
+                </div>
+              ) : comments.length === 0 ? (
+                <div className="text-center py-4">
+                  <div className="text-gray-500 dark:text-gray-400">Brak komentarzy</div>
+                </div>
+              ) : (
+                comments
+                  .sort((a, b) => b.likesCount - a.likesCount)
                 .map((comment) => {
-                  const isMostPopular = comment.id === mostPopularComment?.id && comment.likes > 0;
+                  const isMostPopular = comment.id === mostPopularComment?.id && comment.likesCount > 0;
                   return (
                 <div key={comment.id} className={`flex space-x-4 ${isMostPopular ? 'bg-green-50 dark:bg-green-900/20 rounded-lg p-3' : ''}`}>
-                  <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-gray-600 dark:text-gray-400 font-semibold text-base">
-                      {comment.userName.charAt(0).toUpperCase()}
-                    </span>
+                  <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                    {comment.userData.avatar ? (
+                      <img 
+                        src={comment.userData.avatar} 
+                        alt={comment.userData.userName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-600 dark:text-gray-400 font-semibold text-base">
+                        {comment.userData.userName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <span className="font-medium text-gray-900 dark:text-white text-base">
-                        {comment.userName}
+                        {comment.userData.userName}
                       </span>
                       <span className="text-base text-gray-500">
-                        {new Date(comment.createdAt).toLocaleDateString('pl-PL')}
+                        {new Date(comment.datePosted).toLocaleDateString('pl-PL')}
                       </span>
+                      {comment.isLegend && (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs rounded-full">
+                          Legenda
+                        </span>
+                      )}
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 text-base mb-3">
                       {comment.content}
@@ -193,31 +258,25 @@ export const TreePost: React.FC<TreePostProps> = ({
                     <div className="flex items-center space-x-4">
                       <button
                         onClick={() => onCommentVote(comment.id, 'like')}
-                        className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
-                          comment.userVote === 'like' 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
+                        className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                       >
                         <ThumbsUp className="w-5 h-5" />
-                        <span className="text-sm font-medium">{comment.likes}</span>
+                        <span className="text-sm font-medium">{comment.likesCount}</span>
                       </button>
+                      
                       <button
                         onClick={() => onCommentVote(comment.id, 'dislike')}
-                        className={`danger flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
-                          comment.userVote === 'dislike' 
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
+                        className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                       >
                         <ThumbsDown className="w-5 h-5" />
-                        <span className="text-sm font-medium">{comment.dislikes}</span>
+                        <span className="text-sm font-medium">0</span>
                       </button>
                     </div>
                   </div>
                 </div>
                   );
-                })}
+                })
+              )}
             </div>
           </motion.div>
         )}

@@ -1,42 +1,93 @@
 import { Tree } from '../types';
 
-// Mock data for development
-const mockTrees = [
+// Mock data for development - updated to match new Tree interface
+const mockTrees: Tree[] = [
   {
     id: '1',
-    species: 'Quercus robur',
-    commonName: 'Dąb szypułkowy',
-    latitude: 52.237049,
-    longitude: 21.017532,
-    reportedBy: 'current-user',
-    reportedAt: '2024-01-15T10:30:00Z',
-    status: 'approved',
-    notes: 'Piękny stary dąb w centrum miasta',
-    photos: ['https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg']
+    userData: {
+      userName: 'Jan Kowalski',
+      avatar: 'https://images.pexels.com/users/avatars/268385455/photo-dog-681.png?fit=crop&h=100&w=100'
+    },
+    species: 'Dąb szypułkowy',
+    speciesLatin: 'Quercus robur',
+    location: {
+      lat: 52.237049,
+      lng: 21.017532,
+      address: 'Warszawa, ul. Krakowskie Przedmieście 1'
+    },
+    circumference: 350,
+    height: 25,
+    condition: 'good',
+    isAlive: true,
+    estimatedAge: 150,
+    description: 'Piękny stary dąb w centrum miasta',
+    images: ['https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg'],
+    isMonument: true,
+    status: 'Monument',
+    submissionDate: '2024-01-15T10:30:00Z',
+    approvalDate: '2024-01-20T10:30:00Z',
+    votes: {
+      approve: 15,
+      reject: 2
+    }
   },
   {
     id: '2',
-    species: 'Acer platanoides',
-    commonName: 'Klon zwyczajny',
-    latitude: 52.240049,
-    longitude: 21.020532,
-    reportedBy: 'other-user',
-    reportedAt: '2024-01-14T14:20:00Z',
+    userData: {
+      userName: 'Anna Nowak',
+      avatar: ''
+    },
+    species: 'Klon zwyczajny',
+    speciesLatin: 'Acer platanoides',
+    location: {
+      lat: 52.240049,
+      lng: 21.020532,
+      address: 'Warszawa, ul. Nowy Świat 15'
+    },
+    circumference: 120,
+    height: 12,
+    condition: 'good',
+    isAlive: true,
+    estimatedAge: 30,
+    description: 'Młody klon przy ulicy',
+    images: ['https://images.pexels.com/photos/1172675/pexels-photo-1172675.jpeg'],
+    isMonument: false,
     status: 'pending',
-    notes: 'Młody klon przy ulicy',
-    photos: ['https://images.pexels.com/photos/1172675/pexels-photo-1172675.jpeg']
+    submissionDate: '2024-01-14T14:20:00Z',
+    approvalDate: '',
+    votes: {
+      approve: 3,
+      reject: 0
+    }
   },
   {
     id: '3',
-    species: 'Betula pendula',
-    commonName: 'Brzoza brodawkowata',
-    latitude: 52.234049,
-    longitude: 21.014532,
-    reportedBy: 'current-user',
-    reportedAt: '2024-01-13T09:15:00Z',
+    userData: {
+      userName: 'Piotr Wiśniewski',
+      avatar: 'https://images.pexels.com/users/avatars/268385455/photo-dog-681.png?fit=crop&h=100&w=100'
+    },
+    species: 'Brzoza brodawkowata',
+    speciesLatin: 'Betula pendula',
+    location: {
+      lat: 52.234049,
+      lng: 21.014532,
+      address: 'Warszawa, Park Łazienkowski'
+    },
+    circumference: 80,
+    height: 18,
+    condition: 'good',
+    isAlive: true,
+    estimatedAge: 45,
+    description: 'Charakterystyczna brzoza z białą korą',
+    images: ['https://images.pexels.com/photos/1172675/pexels-photo-1172675.jpeg'],
+    isMonument: false,
     status: 'approved',
-    notes: 'Charakterystyczna brzoza z białą korą',
-    photos: ['https://images.pexels.com/photos/1172675/pexels-photo-1172675.jpeg']
+    submissionDate: '2024-01-13T09:15:00Z',
+    approvalDate: '2024-01-18T09:15:00Z',
+    votes: {
+      approve: 8,
+      reject: 1
+    }
   }
 ];
 
@@ -176,7 +227,7 @@ export const api = {
   // Trees
   async getTrees(): Promise<Tree[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
-    return mockTrees as Tree[];
+    return mockTrees;
   },
 
   async getTree(id: string) {
@@ -297,10 +348,11 @@ export const api = {
     return `${template.template}
 
 DANE DRZEWA:
-Gatunek: ${tree.species} (${tree.commonName})
-Lokalizacja: ${tree.latitude}, ${tree.longitude}
-Data zgłoszenia: ${new Date(tree.reportedAt).toLocaleDateString('pl-PL')}
-Opis: ${tree.notes}
+Gatunek: ${tree.species} (${tree.speciesLatin})
+Lokalizacja: ${tree.location.lat}, ${tree.location.lng}
+Adres: ${tree.location.address}
+Data zgłoszenia: ${new Date(tree.submissionDate).toLocaleDateString('pl-PL')}
+Opis: ${tree.description}
 
 Z poważaniem,
 [Imię i nazwisko]`;
@@ -312,58 +364,27 @@ Z poważaniem,
     return mockMunicipalities;
   },
 
-  // User authentication
+  // User authentication - DEPRECATED: Use authService instead
   async login(email: string, password: string) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    if (email === 'admin@example.com' && password === 'admin') {
-      return {
-        user: {
-          id: '1',
-          email: 'admin@example.com',
-          name: 'Administrator',
-          role: 'admin'
-        },
-        token: 'mock-admin-token'
-      };
-    }
-    if (email === 'user@example.com' && password === 'user') {
-      return {
-        user: {
-          id: '2',
-          email: 'user@example.com',
-          name: 'Jan Kowalski',
-          role: 'user'
-        },
-        token: 'mock-user-token'
-      };
-    }
-    throw new Error('Invalid credentials');
+    console.warn('api.login is deprecated. Use authService.login instead.');
+    const { authService } = await import('./authService');
+    return authService.login({ email, password });
   },
 
   async register(userData: any) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-      user: {
-        id: Date.now().toString(),
-        ...userData,
-        role: 'user'
-      },
-      token: 'mock-token'
-    };
+    console.warn('api.register is deprecated. Use authService.register instead.');
+    const { authService } = await import('./authService');
+    return authService.register(userData);
   },
 
   async getCurrentUser() {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return {
-      id: '2',
-      email: 'user@example.com',
-      name: 'Jan Kowalski',
-      role: 'user'
-    };
+    console.warn('api.getCurrentUser is deprecated. Use authService.getCurrentUser instead.');
+    const { authService } = await import('./authService');
+    return authService.getCurrentUser();
   },
 
   // File upload
-  async uploadPhoto(file: File) {
+  async uploadPhoto(_file: File) {
     await new Promise(resolve => setTimeout(resolve, 2000));
     // Mock photo upload - return a placeholder URL
     return `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo-${Math.floor(Math.random() * 1000000)}.jpeg`;

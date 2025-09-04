@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
+import { RegisterRequest } from '../../services/authService';
 
 interface RegisterFormProps {
-  onSubmit: (name: string, email: string, password: string) => void;
+  onSubmit: (userData: RegisterRequest) => void;
   onSwitchToLogin: () => void;
   onClose: () => void;
   onBackToMenu?: () => void;
@@ -19,10 +20,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   isLoading = false
 }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: ''
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -32,7 +35,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       alert('Hasła nie są identyczne');
       return;
     }
-    onSubmit(formData.name, formData.email, formData.password);
+    
+    const userData: RegisterRequest = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      phone: formData.phone
+    };
+    
+    onSubmit(userData);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,19 +64,38 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
           <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
-            Imię i nazwisko
+            Imię
           </label>
           <div className="relative">
             <User className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="firstName"
+              value={formData.firstName}
               onChange={handleInputChange}
               required
               className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
               style={{ fontSize: '10px' }}
-              placeholder="Jan Kowalski"
+              placeholder="Jan"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
+            Nazwisko
+          </label>
+          <div className="relative">
+            <User className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              required
+              className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
+              style={{ fontSize: '10px' }}
+              placeholder="Kowalski"
             />
           </div>
         </div>
@@ -128,6 +160,25 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
               style={{ fontSize: '10px' }}
               placeholder="••••••••"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
+            Telefon
+          </label>
+          <div className="relative">
+            <Phone className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              required
+              className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
+              style={{ fontSize: '10px' }}
+              placeholder="+48 123 456 789"
             />
           </div>
         </div>

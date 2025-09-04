@@ -1,18 +1,56 @@
 export interface Tree {
   id: string;
+  userData: {
+    userName: string;
+    avatar: string;
+  };
   species: string;
-  commonName: string;
-  latitude: number;
-  longitude: number;
-  reportedBy: string;
-  reportedAt: string;
-  status: 'pending' | 'approved' | 'rejected';
-  notes: string;
-  photos: string[];
-  municipalApplicationId?: string;
-  pierśnica?: number; // pierśnica na wysokości 130 cm (w cm)
-  height?: number; // wysokość drzewa (w metrach)
-  plotNumber?: string; // numer działki (opcjonalny)
+  speciesLatin: string;
+  location: {
+    lat: number;
+    lng: number;
+    address: string;
+  };
+  circumference: number;
+  height: number;
+  condition: string;
+  isAlive: boolean;
+  estimatedAge: number | null;
+  description: string;
+  images: string[];
+  isMonument: boolean;
+  status: string;
+  submissionDate: string;
+  approvalDate: string;
+  votes: {
+    approve: number;
+    reject: number;
+  };
+}
+
+export interface Species {
+  id: string;
+  polishName: string;
+  latinName: string;
+  family: string;
+  description: string;
+  identificationGuide: string[];
+  seasonalChanges: {
+    spring: string;
+    summer: string;
+    autumn: string;
+    winter: string;
+  };
+  images: {
+    imageUrl: string;
+    type: 'Leaf' | 'Tree' | 'Bark' | 'Fruit' | 'Flower';
+    altText: string;
+  }[];
+  traits: {
+    maxHeight: number;
+    lifespan: string;
+    nativeToPoland: boolean;
+  };
 }
 
 export interface TreeSpecies {
@@ -34,27 +72,24 @@ export interface TreeSpecies {
 
 export interface User {
   id: string;
-  name: string;
   email: string;
-  role: 'ecologist' | 'citizen' | 'admin';
-  registeredAt: string;
-  preferences: {
-    theme: 'light' | 'dark' | 'auto';
-    notifications: boolean;
-    language: string;
-  };
+  name: string;
+  avatar: string;
+  registrationDate: string;
+  submissionsCount: number;
+  verificationsCount: number;
 }
 
 export interface Comment {
   id: string;
-  treeId: string;
-  userId: string;
-  userName: string;
+  userData: {
+    userName: string;
+    avatar: string;
+  };
   content: string;
-  createdAt: string;
-  likes: number;
-  dislikes: number;
-  userVote?: 'like' | 'dislike' | null;
+  datePosted: string;
+  isLegend: boolean;
+  likesCount: number;
 }
 
 export interface TreePost extends Tree {
