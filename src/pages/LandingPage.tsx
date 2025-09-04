@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Info, MapPin, FileText, Users, BarChart3, Settings, Play, Pause } from 'lucide-react';
+import { Info, MapPin, FileText, Users, BarChart3, Settings, Shield, Heart, Zap, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
@@ -13,7 +13,6 @@ export const LandingPage = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'menu'>('menu');
   const [error, setError] = useState<string | null>(null);
   const [currentScreen, setCurrentScreen] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
   
   // Bezpieczne używanie kontekstu autoryzacji
   let authContext;
@@ -34,7 +33,7 @@ export const LandingPage = () => {
   const phoneScreens = [
     {
       id: 1,
-      image: '/LandPagePhotos/1756984976104.jpg',
+      image: '/LandPagePhotos/1.jpg',
       title: 'Mapa Interaktywna',
       description: 'Odkryj pomniki przyrody w swojej okolicy dzięki intuicyjnej mapie. Kliknij na lokalizację, aby zobaczyć szczegóły i zgłosić nowy pomnik.',
       features: ['Interaktywna mapa', 'Lokalizacja GPS', 'Szczegóły pomników'],
@@ -42,15 +41,15 @@ export const LandingPage = () => {
     },
     {
       id: 2,
-      image: '/LandPagePhotos/1756984976108.jpg',
-      title: 'Profil i Logowanie',
-      description: 'Zaloguj się do swojego konta lub utwórz nowe. Zarządzaj swoimi zgłoszeniami, ustawieniami i preferencjami.',
-      features: ['Bezpieczne logowanie', 'Zarządzanie kontem', 'Ustawienia prywatności'],
-      icon: Settings
+      image: '/LandPagePhotos/2.jpg',
+      title: 'Formularz Zgłoszenia',
+      description: 'Wypełnij szczegółowy formularz zgłoszenia pomnika przyrody. Nasz system poprowadzi Cię przez każdy krok procesu.',
+      features: ['Przewodnik krok po kroku', 'Walidacja danych', 'Zapisywanie postępu'],
+      icon: FileText
     },
     {
       id: 3,
-      image: '/LandPagePhotos/1756984976112.jpg',
+      image: '/LandPagePhotos/3.jpg',
       title: 'Status Zgłoszeń',
       description: 'Śledź status swoich zgłoszeń w czasie rzeczywistym. Otrzymuj powiadomienia o zmianach i postępach w procesie.',
       features: ['Status w czasie rzeczywistym', 'Historia zgłoszeń', 'Powiadomienia push'],
@@ -58,56 +57,47 @@ export const LandingPage = () => {
     },
     {
       id: 4,
-      image: '/LandPagePhotos/1756984976115.jpg',
-      title: 'Społeczność',
-      description: 'Dołącz do społeczności miłośników przyrody. Dziel się zdjęciami, komentuj i wspieraj innych w ochronie pomników.',
-      features: ['Galeria zdjęć', 'System komentarzy', 'Oceny i reakcje'],
-      icon: Users
-    },
-    {
-      id: 5,
-      image: '/LandPagePhotos/1756984976118.jpg',
+      image: '/LandPagePhotos/4.jpg',
       title: 'Encyklopedia Przyrody',
       description: 'Poznaj różne gatunki drzew i roślin. Nasza encyklopedia pomoże Ci zidentyfikować i lepiej zrozumieć pomniki przyrody.',
       features: ['Baza wiedzy', 'Identyfikacja gatunków', 'Ciekawostki przyrodnicze'],
       icon: Info
     },
     {
+      id: 5,
+      image: '/LandPagePhotos/5.jpg',
+      title: 'Społeczność',
+      description: 'Dołącz do społeczności miłośników przyrody. Dziel się zdjęciami, komentuj i wspieraj innych w ochronie pomników.',
+      features: ['Galeria zdjęć', 'System komentarzy', 'Oceny i reakcje'],
+      icon: Users
+    },
+    {
       id: 6,
-      image: '/LandPagePhotos/1756984976121.jpg',
-      title: 'Formularz Zgłoszenia',
-      description: 'Wypełnij szczegółowy formularz zgłoszenia pomnika przyrody. Nasz system poprowadzi Cię przez każdy krok procesu.',
-      features: ['Przewodnik krok po kroku', 'Walidacja danych', 'Zapisywanie postępu'],
-      icon: FileText
+      image: '/LandPagePhotos/6.jpg',
+      title: 'Profil i Logowanie',
+      description: 'Zaloguj się do swojego konta lub utwórz nowe. Zarządzaj swoimi zgłoszeniami, ustawieniami i preferencjami.',
+      features: ['Bezpieczne logowanie', 'Zarządzanie kontem', 'Ustawienia prywatności'],
+      icon: Settings
     }
   ];
 
   // Animacja telefonu
   useEffect(() => {
-    if (!isPlaying) return;
-    
     const interval = setInterval(() => {
       setCurrentScreen((prev) => (prev + 1) % phoneScreens.length);
-    }, 5000); // 5 sekund
+    }, 8000); // 8 sekund
     
     return () => clearInterval(interval);
-  }, [isPlaying, phoneScreens.length]);
-
-  const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const handlePhoneClick = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleContentClick = () => {
-    setIsPlaying(!isPlaying);
-  };
+  }, [phoneScreens.length]);
 
   const handleContinueWithoutLogin = () => {
-    navigate('/map');
+    setShowAuthModal(true);
   };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
 
   const handleLogin = async (credentials: any) => {
     try {
@@ -159,10 +149,14 @@ export const LandingPage = () => {
             </div>
             <div className="flex items-center gap-2 sm:gap-4 text-xs">
               <div className="hidden lg:flex items-center gap-3 sm:gap-4">
-                <a href="#" className="text-gray-400 hover:text-green-400 text-xs">HOME</a>
-                <a href="#" className="text-gray-400 hover:text-green-400 text-xs">O NAS</a>
-                <a href="#" className="text-gray-400 hover:text-green-400 text-xs">POMOC</a>
-                <a href="#" className="text-gray-400 hover:text-green-400 text-xs">KONTAKT</a>
+                <DarkGlassButton
+                  onClick={scrollToTop}
+                  variant="secondary"
+                  size="xs"
+                  className="text-xs"
+                >
+                  HOME
+                </DarkGlassButton>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <DarkGlassButton
@@ -191,18 +185,18 @@ export const LandingPage = () => {
       </nav>
 
       {/* Animated Phone Section */}
-      <section className="relative z-10 min-h-screen flex items-center pt-24">
+      <section className="relative z-10 min-h-screen flex items-center pt-16">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
 
             {/* Phone Mockup - Left side */}
             <div className="relative flex items-center justify-center order-1 lg:order-1">
               <div className="relative">
                 <div 
-                  className="relative w-96 sm:w-[28rem] lg:w-[32rem] h-[800px] sm:h-[900px] lg:h-[1000px] bg-black rounded-[2.5rem] p-1 shadow-[0_0_40px_rgba(0,0,0,0.3)] cursor-pointer"
-                  onClick={handlePhoneClick}
+                  className="relative w-full max-w-64 sm:max-w-80 lg:w-[28rem] aspect-[9/19.5] bg-black rounded-[2rem] p-1 shadow-[0_0_40px_rgba(0,0,0,0.3)]"
                 >
-                  <div className="w-full h-full bg-black rounded-[2rem] overflow-hidden relative">
+                  <div className="w-full h-full bg-black rounded-[1.5rem] overflow-hidden relative">
                     {/* Notch */}
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 sm:w-20 h-3 sm:h-4 bg-black rounded-b-xl z-10"></div>
                     
@@ -216,7 +210,7 @@ export const LandingPage = () => {
                               key={currentScreen}
                               src={phoneScreens[currentScreen].image} 
                               alt={phoneScreens[currentScreen].title}
-                              className="w-full h-full object-cover object-top"
+                              className="w-full h-full object-contain"
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
@@ -230,126 +224,198 @@ export const LandingPage = () => {
                   </div>
                 </div>
                 
-                {/* Screen indicator dots */}
-                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-1.5 z-20">
-                  {phoneScreens.map((_, dotIndex) => (
-                    <div
-                      key={dotIndex}
-                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                        dotIndex === currentScreen ? 'bg-green-400' : 'bg-white/40'
-                      }`}
-                    />
-                  ))}
-                </div>
+                
               </div>
             </div>
 
             {/* Mobile: Description below phone */}
             <div className="lg:hidden order-2 text-center">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentScreen}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 1 }}
+              <p className="text-base text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
+                Kompleksowa platforma do ochrony pomników przyrody. Rejestracja, komunikacja, zgłaszanie i tworzenie wniosków w jednym miejscu.
+              </p>
+
+              <div className="flex items-center justify-center mb-8">
+                <DarkGlassButton
+                  onClick={handleContinueWithoutLogin}
+                  variant="primary"
+                  size="md"
+                  className="text-base px-8 py-3"
                 >
-                  <p className="text-base text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
-                    {phoneScreens[currentScreen].description}
-                  </p>
-
-                  <div className="space-y-3 mb-8 max-w-sm mx-auto">
-                    {phoneScreens[currentScreen].features.map((feature, featureIndex) => (
-                      <div key={featureIndex} className="flex items-center justify-center gap-3">
-                        <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
-                        <span className="text-sm text-gray-300">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-center gap-4">
-                    <DarkGlassButton
-                      onClick={handleContinueWithoutLogin}
-                      variant="primary"
-                      size="md"
-                      className="text-base px-8 py-3"
-                    >
-                      WYPRÓBUJ TERAZ
-                    </DarkGlassButton>
-                    
-                    <button
-                      onClick={togglePlayPause}
-                      className="p-3 rounded-full bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 transition-colors"
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-6 h-6 text-white" />
-                      ) : (
-                        <Play className="w-6 h-6 text-white" />
-                      )}
-                    </button>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+                  DOŁĄCZ DO NAS
+                </DarkGlassButton>
+              </div>
             </div>
 
-            {/* Desktop: Content - Right side with animation */}
-            <div 
-              className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-2 lg:order-2 cursor-pointer"
-              onClick={handleContentClick}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentScreen}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 1 }}
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    {(() => {
-                      const IconComponent = phoneScreens[currentScreen].icon;
-                      return <IconComponent className="w-8 h-8 text-green-400" />;
-                    })()}
-                    <h2 className="text-4xl font-bold text-white">
-                      {phoneScreens[currentScreen].title}
-                    </h2>
-                  </div>
-                  
-                  <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                    {phoneScreens[currentScreen].description}
-                  </p>
-
-                  <div className="space-y-3 mb-8">
-                    {phoneScreens[currentScreen].features.map((feature, featureIndex) => (
-                      <div key={featureIndex} className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
-                        <span className="text-sm text-gray-300">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+            {/* Desktop: Content - Right side */}
+            <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-2 lg:order-2">
+              <div className="flex items-center gap-3 mb-4">
+                <Heart className="w-8 h-8 text-green-400" />
+                <h2 className="text-4xl font-bold text-white">
+                  ZgłośPomnik
+                </h2>
+              </div>
+                
+              <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+                Kompleksowa platforma do ochrony pomników przyrody. Rejestracja, komunikacja, zgłaszanie i tworzenie wniosków w jednym miejscu. Wszystko zaprojektowane specjalnie dla miłośników przyrody.
+              </p>
 
               <div className="flex items-center gap-4">
                 <DarkGlassButton
                   onClick={handleContinueWithoutLogin}
                   variant="primary"
                   size="sm"
-                  className="text-sm sm:text-base w-fit"
+                  className="text-xs sm:text-sm w-fit px-4 py-2"
                 >
-                  WYPRÓBUJ TERAZ
+                  DOŁĄCZ DO NAS
                 </DarkGlassButton>
-                
-                <button
-                  onClick={togglePlayPause}
-                  className="p-2 rounded-full bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 transition-colors"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-5 h-5 text-white" />
-                  ) : (
-                    <Play className="w-5 h-5 text-white" />
-                  )}
-                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="relative z-10 py-16 bg-gray-900/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Co możesz robić w aplikacji?
+            </h2>
+            <p className="text-lg text-gray-300 max-w-3xl mx-auto">
+              Nasza platforma oferuje wszystkie narzędzia potrzebne do skutecznej ochrony pomników przyrody
+                  </p>
+                </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            {/* Mapa */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-4">
+                <MapPin className="w-8 h-8 text-green-400" />
+                <h3 className="text-xl font-bold text-white">Mapa Interaktywna</h3>
+              </div>
+              <p className="text-gray-300 mb-4">
+                Odkryj pomniki przyrody w swojej okolicy dzięki intuicyjnej mapie. Kliknij na lokalizację, aby zobaczyć szczegóły i zgłosić nowy pomnik.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>• Interaktywna mapa z GPS</li>
+                <li>• Szczegóły każdego pomnika</li>
+                <li>• Lokalizacja w czasie rzeczywistym</li>
+              </ul>
+            </div>
+
+            {/* Zgłoszenia */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-4">
+                <FileText className="w-8 h-8 text-green-400" />
+                <h3 className="text-xl font-bold text-white">Zgłaszanie Pomników</h3>
+              </div>
+              <p className="text-gray-300 mb-4">
+                Wypełnij szczegółowy formularz zgłoszenia pomnika przyrody. Nasz system poprowadzi Cię przez każdy krok procesu.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>• Przewodnik krok po kroku</li>
+                <li>• Walidacja danych</li>
+                <li>• Zapisywanie postępu</li>
+              </ul>
+            </div>
+
+            {/* Wnioski */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-4">
+                <BarChart3 className="w-8 h-8 text-green-400" />
+                <h3 className="text-xl font-bold text-white">Wnioski i Raporty</h3>
+              </div>
+              <p className="text-gray-300 mb-4">
+                Twórz profesjonalne wnioski o uznanie drzew za pomniki przyrody. Nasze szablony ułatwiają proces składania dokumentów.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>• Gotowe szablony wniosków</li>
+                <li>• Automatyczne generowanie</li>
+                <li>• Śledzenie statusu</li>
+              </ul>
+            </div>
+
+            {/* Gatunki */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-4">
+                <Info className="w-8 h-8 text-green-400" />
+                <h3 className="text-xl font-bold text-white">Encyklopedia Gatunków</h3>
+              </div>
+              <p className="text-gray-300 mb-4">
+                Poznaj różne gatunki drzew i ich charakterystyki. Dowiedz się, które drzewa mogą zostać uznane za pomniki przyrody.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>• Szczegółowe opisy gatunków</li>
+                <li>• Zdjęcia i charakterystyki</li>
+                <li>• Wymagania ochronne</li>
+              </ul>
+            </div>
+
+            {/* Feed */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="w-8 h-8 text-green-400" />
+                <h3 className="text-xl font-bold text-white">Społeczność</h3>
+              </div>
+              <p className="text-gray-300 mb-4">
+                Dołącz do społeczności miłośników przyrody. Dziel się zdjęciami, komentuj i wspieraj innych w ich działaniach.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>• Dzielenie się zdjęciami</li>
+                <li>• Komentarze i dyskusje</li>
+                <li>• Wsparcie społeczności</li>
+              </ul>
+            </div>
+
+            {/* Profil */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-4">
+                <Settings className="w-8 h-8 text-green-400" />
+                <h3 className="text-xl font-bold text-white">Profil Użytkownika</h3>
+              </div>
+              <p className="text-gray-300 mb-4">
+                Zarządzaj swoim profilem, śledź swoje zgłoszenia i wnioski. Personalizuj ustawienia aplikacji.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>• Historia zgłoszeń</li>
+                <li>• Personalizacja ustawień</li>
+                <li>• Statystyki aktywności</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Dlaczego my? */}
+          <div className="text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">
+              Dlaczego ZgłośPomnik?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-green-400/20 rounded-full flex items-center justify-center mb-4">
+                  <Shield className="w-8 h-8 text-green-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Bezpieczeństwo</h3>
+                <p className="text-gray-300 text-center">
+                  Twoje dane są bezpieczne. Używamy najnowszych standardów szyfrowania i ochrony prywatności.
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-green-400/20 rounded-full flex items-center justify-center mb-4">
+                  <Zap className="w-8 h-8 text-green-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Szybkość</h3>
+                <p className="text-gray-300 text-center">
+                  Proces zgłaszania i tworzenia wniosków nigdy nie był tak szybki i prosty. Wszystko w jednym miejscu.
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-green-400/20 rounded-full flex items-center justify-center mb-4">
+                  <Globe className="w-8 h-8 text-green-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Dostępność</h3>
+                <p className="text-gray-300 text-center">
+                  Dostępne na wszystkich urządzeniach. Pracuj na telefonie, tablecie lub komputerze.
+                </p>
               </div>
             </div>
           </div>
@@ -360,7 +426,7 @@ export const LandingPage = () => {
       <footer className="relative z-10 bg-gray-900/80 backdrop-blur-sm py-4 sm:py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center text-gray-500">
-            <p className="text-xs sm:text-sm">© 2024 ZgłośPomnik. Wszystkie prawa zastrzeżone.</p>
+            <p className="text-xs sm:text-sm">© 2025 ZgłośPomnik. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>
       </footer>
