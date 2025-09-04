@@ -14,7 +14,7 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="hidden sm:block w-48 lg:w-64 bg-white dark:bg-gray-900 shadow-sm border-r border-gray-200 dark:border-gray-700 h-full">
+    <aside className="hidden sm:block w-56 lg:w-72 bg-white dark:bg-gray-900 shadow-sm border-r border-gray-200 dark:border-gray-700 h-full">
       <div className="p-3 sm:p-6">
         <nav className="space-y-1 sm:space-y-2">
           {navItems.map(({ to, icon: Icon, label }) => (

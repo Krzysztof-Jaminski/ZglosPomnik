@@ -2,7 +2,7 @@
 import { Species } from '../types';
 import { authService } from './authService';
 
-const API_BASE_URL = '/api/Species';
+const API_BASE_URL = 'http://192.168.10.117:5174/api/Species';
 
 class SpeciesService {
   private async fetchWithAuth(url: string, options: RequestInit = {}) {

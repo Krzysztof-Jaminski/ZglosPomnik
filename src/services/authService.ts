@@ -1,5 +1,5 @@
 // Serwis autoryzacji do komunikacji z prawdziwym API
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://192.168.10.117:5174/api';
 
 export interface RegisterRequest {
   firstName: string;

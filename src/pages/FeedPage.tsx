@@ -4,6 +4,8 @@ import { TreePost as TreePostType } from '../types';
 import { treesService } from '../services/treesService';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import mockData from '../mockdata.json';
 
 export const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<TreePostType[]>([]);
@@ -13,6 +15,7 @@ export const FeedPage: React.FC = () => {
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [filterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     loadPosts();
@@ -76,7 +79,43 @@ export const FeedPage: React.FC = () => {
         setIsLoading(true);
       }
       
-      const treesData = await treesService.getTrees();
+      let treesData;
+      
+      if (isAuthenticated) {
+        // Użyj prawdziwego API dla zalogowanych użytkowników
+        treesData = await treesService.getTrees();
+      } else {
+        // Użyj mockdata dla niezalogowanych użytkowników
+        treesData = mockData.trees.map(tree => ({
+          id: tree.id,
+          species: tree.commonName,
+          speciesLatin: tree.species,
+          location: {
+            lat: tree.latitude,
+            lng: tree.longitude,
+            address: `Warszawa, ${tree.latitude.toFixed(6)}, ${tree.longitude.toFixed(6)}`
+          },
+          status: tree.status as 'pending' | 'approved' | 'rejected',
+          submissionDate: tree.reportedAt,
+          userData: {
+            userName: tree.reportedBy,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(tree.reportedBy)}&background=10b981&color=fff`
+          },
+          votes: {
+            approve: Math.floor(Math.random() * 20) + 1,
+            reject: Math.floor(Math.random() * 5)
+          },
+          description: tree.notes,
+          images: tree.photos,
+          circumference: Math.floor(Math.random() * 200) + 50, // 50-250 cm
+          height: Math.floor(Math.random() * 20) + 10, // 10-30 m
+          condition: ['Dobra', 'Średnia', 'Zła'][Math.floor(Math.random() * 3)],
+          isAlive: Math.random() > 0.1, // 90% szans na żywe
+          estimatedAge: Math.floor(Math.random() * 100) + 20, // 20-120 lat
+          isMonument: tree.status === 'approved',
+          approvalDate: tree.status === 'approved' ? tree.reportedAt : ''
+        }));
+      }
       
       // Convert trees to posts with social features
       const postsData: TreePostType[] = treesData.map(tree => ({

@@ -2,7 +2,7 @@
 import { Tree } from '../types';
 import { authService } from './authService';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://192.168.10.117:5174/api';
 
 class TreesService {
   // Pobierz wszystkie drzewa
