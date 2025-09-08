@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Trees } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { LoginForm } from '../components/Auth/LoginForm';
 import { RegisterForm } from '../components/Auth/RegisterForm';
@@ -32,51 +32,97 @@ export const AuthPage: React.FC = () => {
     }
   };
 
+  const handleContinueWithoutLogin = () => {
+    // Przejdź do mapy bez logowania - aplikacja będzie używać mock data
+    navigate('/map');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <Link to="/" className="inline-flex items-center space-x-3 mb-8">
-            <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
-              <Trees className="w-8 h-8 text-green-600 dark:text-green-400" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="w-full h-full" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}></div>
+      </div>
+      
+      <div className="relative z-10 w-full max-w-sm">
+        {/* Logo */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-8"
+        >
+          <Link to="/" className="inline-flex items-center space-x-3 group">
+            <div className="bg-green-500/20 backdrop-blur-sm p-6 rounded-full group-hover:bg-green-500/30 transition-all duration-300">
+              <img 
+                src="/favicon-desktop.png" 
+                alt="ZgłośPomnik" 
+                className="w-16 h-16"
+              />
             </div>
-            <span className="text-2xl font-bold text-green-600 dark:text-green-400">ZgłośPomnik</span>
+            <span className="text-2xl font-bold text-white group-hover:text-green-400 transition-colors duration-300" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+              <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
+            </span>
           </Link>
-          
-          <h2 className="text-3xl font-bold text-green-900 dark:text-white mb-2">
-            {isLogin ? 'Zaloguj się' : 'Utwórz konto'}
-          </h2>
-          <p className="text-green-800 dark:text-gray-400">
-            {isLogin 
-              ? 'Witaj ponownie! Zaloguj się do swojego konta.'
-              : 'Dołącz do społeczności ekologów chroniących drzewa.'
-            }
-          </p>
-        </div>
+        </motion.div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-          {error && (
-            <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
-              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        {/* Error message */}
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-6 p-4 bg-red-900/30 backdrop-blur-sm border border-red-700/50 rounded-xl"
+          >
+            <p className="text-sm text-red-300 text-center">{error}</p>
+          </motion.div>
+        )}
+
+        {/* Form */}
+        {isLogin ? (
+          <LoginForm
+            onSubmit={handleLogin}
+            onSwitchToRegister={() => navigate('/auth/register')}
+            onClose={() => navigate('/')}
+            isLoading={isLoading}
+          />
+        ) : (
+          <RegisterForm
+            onSubmit={handleRegister}
+            onSwitchToLogin={() => navigate('/auth/login')}
+            onClose={() => navigate('/')}
+            isLoading={isLoading}
+          />
+        )}
+
+        {/* Continue without login button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-6"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-600" />
             </div>
-          )}
-
-          {isLogin ? (
-            <LoginForm
-              onSubmit={handleLogin}
-              onSwitchToRegister={() => navigate('/auth/register')}
-              onClose={() => navigate('/')}
-              isLoading={isLoading}
-            />
-          ) : (
-            <RegisterForm
-              onSubmit={handleRegister}
-              onSwitchToLogin={() => navigate('/auth/login')}
-              onClose={() => navigate('/')}
-              isLoading={isLoading}
-            />
-          )}
-        </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-900 text-gray-400">lub</span>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleContinueWithoutLogin}
+            className="mt-4 w-full flex justify-center py-3 px-4 border border-gray-600 rounded-lg text-sm font-medium text-gray-300 bg-gray-800/50 hover:bg-gray-700/50 hover:text-white transition-all duration-200 backdrop-blur-sm"
+          >
+            Kontynuuj bez logowania
+          </button>
+          
+          <p className="mt-2 text-xs text-gray-500 text-center">
+            Aplikacja będzie działać z przykładowymi danymi
+          </p>
+        </motion.div>
       </div>
     </div>
   );

@@ -93,7 +93,7 @@ export const ProfilePage: React.FC = () => {
             Zaloguj się aby zobaczyć swój profil
           </p>
           <GlassButton
-            onClick={() => navigate('/auth/login')}
+            onClick={() => navigate('/?action=login')}
             variant="primary"
             size="md"
           >

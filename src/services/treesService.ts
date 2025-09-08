@@ -2,7 +2,7 @@
 import { Tree } from '../types';
 import { authService } from './authService';
 
-const API_BASE_URL = 'http://192.168.10.117:5174/api';
+const API_BASE_URL = 'https://localhost:7274/api';
 
 class TreesService {
   // Pobierz wszystkie drzewa
@@ -111,7 +111,7 @@ class TreesService {
   }
 
   // Głosowanie na drzewo (opcjonalne - jeśli API to obsługuje)
-  async voteOnTree(treeId: string, vote: 'approve' | 'reject'): Promise<void> {
+  async voteOnTree(treeId: string, vote: 'like' | 'dislike'): Promise<void> {
     try {
       const token = authService.getToken();
       if (!token) {

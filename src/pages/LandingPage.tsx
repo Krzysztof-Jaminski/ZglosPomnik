@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Info, MapPin, FileText, Users, BarChart3, Settings, Shield, Heart, Zap, Globe } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Info, MapPin, FileText, Users, BarChart3, Settings, Shield, Zap, Globe } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
 import { useAuth } from '../context/AuthContext';
 import { LoginForm } from '../components/Auth/LoginForm';
@@ -9,25 +10,36 @@ import { RegisterForm } from '../components/Auth/RegisterForm';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register' | 'menu'>('menu');
-  const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
   const [currentScreen, setCurrentScreen] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [error, setError] = useState<string | null>(null);
   
-  // Bezpieczne używanie kontekstu autoryzacji
-  let authContext;
-  try {
-    authContext = useAuth();
-  } catch (error) {
-    // Jeśli kontekst nie jest dostępny, użyj domyślnych wartości
-    authContext = {
-      login: async () => {},
-      register: async () => {},
-      isLoading: false
-    };
-  }
-  
-  const { login, register, isLoading } = authContext;
+  // Używanie kontekstu autoryzacji
+  const { login, register, isAuthenticated, isLoading } = useAuth();
+
+  // Sprawdź czy użytkownik jest już zalogowany i przekieruj
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate('/map');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Obsługa parametrów URL do automatycznego otwierania modala
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'login') {
+      setAuthMode('login');
+      setShowAuthModal(true);
+    } else if (action === 'register') {
+      setAuthMode('register');
+      setShowAuthModal(true);
+    }
+  }, [location.search]);
+
 
   // Dane dla animowanego telefonu
   const phoneScreens = [
@@ -90,14 +102,10 @@ export const LandingPage = () => {
     return () => clearInterval(interval);
   }, [phoneScreens.length]);
 
-  const handleContinueWithoutLogin = () => {
-    setShowAuthModal(true);
-  };
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
 
   const handleLogin = async (credentials: any) => {
     try {
@@ -121,6 +129,25 @@ export const LandingPage = () => {
     }
   };
 
+  const closeModal = () => {
+    setShowAuthModal(false);
+    // Wyczyść parametry URL
+    navigate('/', { replace: true });
+  };
+
+  // Pokaż loading podczas sprawdzania uwierzytelniania
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="text-white text-lg mb-2">Ładowanie...</div>
+          <div className="text-gray-400 text-sm">Sprawdzanie danych logowania</div>
+        </div>
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="min-h-screen relative">
@@ -139,13 +166,15 @@ export const LandingPage = () => {
       <nav className="fixed top-0 left-0 right-0 z-40 py-2 sm:py-3 bg-gray-900/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
               <img 
-                src="/green_tree_icon.svg" 
+                src={Capacitor.isNativePlatform() ? "/favicon-mobile.png" : "/favicon-desktop.png"} 
                 alt="ZgłośPomnik" 
-                className="w-5 h-5 sm:w-6 sm:h-6"
+                className="w-10 h-10 sm:w-12 sm:h-12"
               />
-              <span className="text-xs sm:text-sm font-bold text-white">ZgłośPomnik</span>
+              <span className="text-lg sm:text-2xl font-bold" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
+              </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 text-xs">
               <div className="hidden lg:flex items-center gap-3 sm:gap-4">
@@ -169,14 +198,6 @@ export const LandingPage = () => {
                   className="text-xs px-2 sm:px-3 py-1"
                 >
                   ZALOGUJ
-                </DarkGlassButton>
-                <DarkGlassButton
-                  onClick={handleContinueWithoutLogin}
-                  variant="primary"
-                  size="xs"
-                  className="text-xs px-2 sm:px-3 py-1"
-                >
-                  ROZPOCZNIJ
                 </DarkGlassButton>
               </div>
             </div>
@@ -205,18 +226,15 @@ export const LandingPage = () => {
                       <div className="h-1 sm:h-2"></div>
                       <div className="flex-1 relative px-0.5">
                         <div className="w-full h-full rounded-lg overflow-hidden bg-gray-900">
-                          <AnimatePresence mode="wait">
-                            <motion.img 
-                              key={currentScreen}
-                              src={phoneScreens[currentScreen].image} 
-                              alt={phoneScreens[currentScreen].title}
-                              className="w-full h-full object-contain"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 1 }}
-                            />
-                          </AnimatePresence>
+                          <motion.img 
+                            key={currentScreen}
+                            src={phoneScreens[currentScreen].image} 
+                            alt={phoneScreens[currentScreen].title}
+                            className="w-full h-full object-contain"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 1 }}
+                          />
                         </div>
                       </div>
                       <div className="h-2 sm:h-3"></div>
@@ -230,43 +248,50 @@ export const LandingPage = () => {
 
             {/* Mobile: Description below phone */}
             <div className="lg:hidden order-2 text-center">
+              <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
+              </h2>
               <p className="text-base text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
-                Kompleksowa platforma do ochrony pomników przyrody. Rejestracja, komunikacja, zgłaszanie i tworzenie wniosków w jednym miejscu.
+                Platforma stworzona dla ekologów i miłośników drzew. Szybko zgłaszaj zagrożone drzewa, tworz wnioski o ochronę pomników przyrody i zapobiegaj wycince lasów. Dołącz do społeczności, która aktywnie chroni naszą przyrodę.
               </p>
 
               <div className="flex items-center justify-center mb-8">
                 <DarkGlassButton
-                  onClick={handleContinueWithoutLogin}
+                  onClick={() => navigate('/map')}
                   variant="primary"
                   size="md"
                   className="text-base px-8 py-3"
                 >
-                  DOŁĄCZ DO NAS
+                  KONTYNUUJ
                 </DarkGlassButton>
               </div>
             </div>
 
             {/* Desktop: Content - Right side */}
-            <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-2 lg:order-2">
-              <div className="flex items-center gap-3 mb-4">
-                <Heart className="w-8 h-8 text-green-400" />
-                <h2 className="text-4xl font-bold text-white">
-                  ZgłośPomnik
+            <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-2 lg:order-2 text-center">
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <img 
+                  src="/favicon-desktop.png" 
+                  alt="ZgłośPomnik" 
+                  className="w-12 h-12"
+                />
+                <h2 className="text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                  <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
                 </h2>
               </div>
                 
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                Kompleksowa platforma do ochrony pomników przyrody. Rejestracja, komunikacja, zgłaszanie i tworzenie wniosków w jednym miejscu. Wszystko zaprojektowane specjalnie dla miłośników przyrody.
+                Platforma stworzona dla ekologów i miłośników drzew. Szybko zgłaszaj zagrożone drzewa, tworz wnioski o ochronę pomników przyrody i zapobiegaj wycince lasów. Dołącz do społeczności, która aktywnie chroni naszą przyrodę.
               </p>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center">
                 <DarkGlassButton
-                  onClick={handleContinueWithoutLogin}
+                  onClick={() => navigate('/map')}
                   variant="primary"
                   size="sm"
                   className="text-xs sm:text-sm w-fit px-4 py-2"
                 >
-                  DOŁĄCZ DO NAS
+                  KONTYNUUJ
                 </DarkGlassButton>
               </div>
             </div>
@@ -386,8 +411,8 @@ export const LandingPage = () => {
 
           {/* Dlaczego my? */}
           <div className="text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">
-              Dlaczego ZgłośPomnik?
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+              Dlaczego <span className="text-white">ZgłośPomnik</span>?
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="flex flex-col items-center">
@@ -426,7 +451,7 @@ export const LandingPage = () => {
       <footer className="relative z-10 bg-gray-900/80 backdrop-blur-sm py-4 sm:py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center text-gray-500">
-            <p className="text-xs sm:text-sm">© 2025 ZgłośPomnik. Wszystkie prawa zastrzeżone.</p>
+            <p className="text-xs sm:text-sm">© 2025 <span className="text-gray-500" style={{ fontFamily: 'Exo 2, sans-serif' }}>ZgłośPomnik</span>. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>
       </footer>
@@ -447,7 +472,7 @@ export const LandingPage = () => {
                     {authMode === 'login' ? 'Zaloguj się' : 'Zarejestruj się'}
                   </h2>
                   <button
-                    onClick={() => setShowAuthModal(false)}
+                    onClick={closeModal}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     ✕
@@ -465,14 +490,14 @@ export const LandingPage = () => {
                     <LoginForm
                       onSubmit={handleLogin}
                       onSwitchToRegister={() => setAuthMode('register')}
-                      onClose={() => setShowAuthModal(false)}
+                      onClose={closeModal}
                       isLoading={isLoading}
                     />
                   ) : (
                     <RegisterForm
                       onSubmit={handleRegister}
                       onSwitchToLogin={() => setAuthMode('login')}
-                      onClose={() => setShowAuthModal(false)}
+                      onClose={closeModal}
                       isLoading={isLoading}
                     />
                   )}

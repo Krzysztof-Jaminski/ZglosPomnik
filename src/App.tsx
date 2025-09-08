@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
-import { AuthPage } from './pages/AuthPage';
 import { Header } from './components/Layout/Header';
 import { Sidebar } from './components/Layout/Sidebar';
 import { BottomNavigation } from './components/Layout/BottomNavigation';
@@ -52,7 +51,6 @@ function App() {
           <BackButtonHandler />
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/auth/:mode" element={<AuthPage />} />
             <Route path="/*" element={
               <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden flex flex-col max-w-full">
                 <Header />

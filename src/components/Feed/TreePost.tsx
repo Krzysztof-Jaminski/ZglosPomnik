@@ -37,13 +37,13 @@ export const TreePost: React.FC<TreePostProps> = ({
   const loadComments = async () => {
     setIsLoadingComments(true);
     try {
+      // Load comments for this specific tree using tree ID
       const commentsData = await commentsService.getTreeComments(post.id);
       setComments(commentsData);
       setCommentsLoaded(true);
     } catch (error) {
       console.error('Error loading comments:', error);
-      // Fallback to mock comments if API fails
-      setComments(post.comments);
+      setComments([]);
       setCommentsLoaded(true);
     } finally {
       setIsLoadingComments(false);
@@ -53,7 +53,7 @@ export const TreePost: React.FC<TreePostProps> = ({
   // Find the most popular comment (highest likes)
   const mostPopularComment = comments.length > 0 
     ? comments.reduce((prev, current) => 
-        (current.likesCount > prev.likesCount) ? current : prev
+        (current.votes.like > prev.votes.like) ? current : prev
       )
     : null;
 
@@ -159,7 +159,7 @@ export const TreePost: React.FC<TreePostProps> = ({
             className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
           >
             <MessageCircle className="w-5 h-5" />
-            <span className="text-sm font-medium">{comments.length}</span>
+            <span className="text-sm font-medium">{post.commentsCount}</span>
           </button>
         </div>
         
@@ -220,9 +220,9 @@ export const TreePost: React.FC<TreePostProps> = ({
                 </div>
               ) : (
                 comments
-                  .sort((a, b) => b.likesCount - a.likesCount)
+                  .sort((a, b) => b.votes.like - a.votes.like)
                 .map((comment) => {
-                  const isMostPopular = comment.id === mostPopularComment?.id && comment.likesCount > 0;
+                  const isMostPopular = comment.id === mostPopularComment?.id && comment.votes.like > 0;
                   return (
                 <div key={comment.id} className={`flex space-x-4 ${isMostPopular ? 'bg-green-50 dark:bg-green-900/20 rounded-lg p-3' : ''}`}>
                   <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
@@ -261,7 +261,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                         className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                       >
                         <ThumbsUp className="w-5 h-5" />
-                        <span className="text-sm font-medium">{comment.likesCount}</span>
+                        <span className="text-sm font-medium">{comment.votes.like}</span>
                       </button>
                       
                       <button
@@ -269,7 +269,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                         className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                       >
                         <ThumbsDown className="w-5 h-5" />
-                        <span className="text-sm font-medium">0</span>
+                        <span className="text-sm font-medium">{comment.votes.dislike}</span>
                       </button>
                     </div>
                   </div>

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { TreePost } from '../components/Feed/TreePost';
-import { TreePost as TreePostType } from '../types';
+import { TreePost as TreePostType, Comment } from '../types';
 import { treesService } from '../services/treesService';
+import { commentsService } from '../services/commentsService';
+import { api } from '../services/api';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import mockData from '../mockdata.json';
 
 export const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<TreePostType[]>([]);
+  const [allComments, setAllComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -18,8 +20,41 @@ export const FeedPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    loadPosts();
+    const initializeData = async () => {
+      await loadComments();
+    };
+    initializeData();
   }, []);
+
+  // Reload posts when comments change
+  useEffect(() => {
+    console.log('allComments changed:', allComments.length, 'posts:', posts.length);
+    if (allComments.length > 0 || posts.length > 0) {
+      loadPostsWithComments(allComments);
+    }
+  }, [allComments]);
+
+  // Load all comments on page load
+  const loadComments = async () => {
+    try {
+      if (isAuthenticated) {
+        const comments = await commentsService.getAllComments();
+        console.log('Loaded comments from API:', comments);
+        setAllComments(comments);
+      } else {
+        // For non-authenticated users, use mock comments
+        const mockComments = await api.getComments();
+        console.log('Loaded mock comments:', mockComments);
+        setAllComments(mockComments);
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+      // Fallback to localStorage
+      const comments = commentsService.getCommentsFromStorage();
+      console.log('Fallback comments from localStorage:', comments);
+      setAllComments(comments);
+    }
+  };
 
   // Handle scroll to specific tree from map
   useEffect(() => {
@@ -71,7 +106,8 @@ export const FeedPage: React.FC = () => {
     }
   }, [isLoadingMore, hasMore]);
 
-  const loadPosts = async (isLoadMore = false) => {
+  const loadPostsWithComments = async (comments: Comment[], isLoadMore = false) => {
+    console.log('loadPostsWithComments called with comments:', comments.length);
     try {
       if (isLoadMore) {
         setIsLoadingMore(true);
@@ -84,48 +120,37 @@ export const FeedPage: React.FC = () => {
       if (isAuthenticated) {
         // Użyj prawdziwego API dla zalogowanych użytkowników
         treesData = await treesService.getTrees();
+        console.log('API Trees data:', treesData);
       } else {
-        // Użyj mockdata dla niezalogowanych użytkowników
-        treesData = mockData.trees.map(tree => ({
-          id: tree.id,
-          species: tree.commonName,
-          speciesLatin: tree.species,
-          location: {
-            lat: tree.latitude,
-            lng: tree.longitude,
-            address: `Warszawa, ${tree.latitude.toFixed(6)}, ${tree.longitude.toFixed(6)}`
-          },
-          status: tree.status as 'pending' | 'approved' | 'rejected',
-          submissionDate: tree.reportedAt,
-          userData: {
-            userName: tree.reportedBy,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(tree.reportedBy)}&background=10b981&color=fff`
-          },
-          votes: {
-            approve: Math.floor(Math.random() * 20) + 1,
-            reject: Math.floor(Math.random() * 5)
-          },
-          description: tree.notes,
-          images: tree.photos,
-          circumference: Math.floor(Math.random() * 200) + 50, // 50-250 cm
-          height: Math.floor(Math.random() * 20) + 10, // 10-30 m
-          condition: ['Dobra', 'Średnia', 'Zła'][Math.floor(Math.random() * 3)],
-          isAlive: Math.random() > 0.1, // 90% szans na żywe
-          estimatedAge: Math.floor(Math.random() * 100) + 20, // 20-120 lat
-          isMonument: tree.status === 'approved',
-          approvalDate: tree.status === 'approved' ? tree.reportedAt : ''
-        }));
+        // Użyj mock data dla niezalogowanych użytkowników
+        treesData = await api.getTrees();
+        console.log('Mock Trees data:', treesData);
       }
       
       // Convert trees to posts with social features
-      const postsData: TreePostType[] = treesData.map(tree => ({
-        ...tree,
-        likes: tree.votes.approve,
-        dislikes: tree.votes.reject,
-        userVote: null, // TODO: Implement user voting
-        comments: [], // Comments are now loaded from API in TreePost component
-        legendComment: undefined // Legend comments are now handled by API
-      }));
+      const postsData: TreePostType[] = treesData.map(tree => {
+        // Find comments for this tree (only for counting)
+        const treeComments = comments.filter(comment => {
+          // Search by treeSubmissionId - this is the correct way
+          return comment.treeSubmissionId === tree.id;
+        });
+        
+        // Calculate total likes and dislikes from comments
+        const totalCommentLikes = treeComments.reduce((sum, comment) => sum + comment.votes.like, 0);
+        const totalCommentDislikes = treeComments.reduce((sum, comment) => sum + comment.votes.dislike, 0);
+        
+        console.log(`Tree ${tree.species} has ${treeComments.length} comments (${totalCommentLikes} likes, ${totalCommentDislikes} dislikes)`);
+        
+        return {
+          ...tree,
+          likes: tree.votes.like + totalCommentLikes, // Tree votes + comment likes
+          dislikes: tree.votes.dislike + totalCommentDislikes, // Tree votes + comment dislikes
+          userVote: null, // TODO: Implement user voting
+          comments: [], // Don't load comment details here - load on demand
+          commentsCount: treeComments.length, // Store comment count
+          legendComment: treeComments.find(comment => comment.isLegend)
+        };
+      });
 
       if (isLoadMore) {
         setPosts(prevPosts => [...prevPosts, ...postsData]);
@@ -141,6 +166,10 @@ export const FeedPage: React.FC = () => {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
+  };
+
+  const loadPosts = async (isLoadMore = false) => {
+    return loadPostsWithComments(allComments, isLoadMore);
   };
 
   const loadMorePosts = () => {
@@ -192,15 +221,59 @@ export const FeedPage: React.FC = () => {
   };
 
   const handleComment = async (postId: string, commentText: string) => {
-    // Comments are now handled by the TreePost component via API
-    // This function is kept for compatibility but doesn't do anything
-    console.log('Comment submission handled by TreePost component:', postId, commentText);
+    try {
+      if (isAuthenticated) {
+        const newComment = await commentsService.addTreeComment(postId, commentText);
+        // Add new comment to local state
+        setAllComments(prevComments => [newComment, ...prevComments]);
+        // Update posts with new comment
+        setPosts(prevPosts => 
+          prevPosts.map(post => {
+            if (post.id === postId) {
+              return {
+                ...post,
+                comments: [newComment, ...post.comments]
+              };
+            }
+            return post;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
   const handleCommentVote = async (commentId: string, vote: 'like' | 'dislike') => {
-    // Comment voting is now handled by the TreePost component via API
-    // This function is kept for compatibility but doesn't do anything
-    console.log('Comment vote handled by TreePost component:', commentId, vote);
+    try {
+      if (isAuthenticated) {
+        const voteType = vote === 'like' ? 'Like' : 'Dislike';
+        const updatedVotes = await commentsService.voteComment(commentId, voteType);
+        
+        // Update comment votes in local state
+        setAllComments(prevComments =>
+          prevComments.map(comment =>
+            comment.id === commentId
+              ? { ...comment, votes: updatedVotes }
+              : comment
+          )
+        );
+        
+        // Update posts with updated comment votes
+        setPosts(prevPosts =>
+          prevPosts.map(post => ({
+            ...post,
+            comments: post.comments.map(comment =>
+              comment.id === commentId
+                ? { ...comment, votes: updatedVotes }
+                : comment
+            )
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error voting on comment:', error);
+    }
   };
 
   const filteredAndSortedPosts = posts

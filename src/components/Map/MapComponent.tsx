@@ -2,12 +2,12 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 're
 import { Loader } from '@googlemaps/js-api-loader';
 import { Tree } from '../../types';
 import { treesService } from '../../services/treesService';
+import { api } from '../../services/api';
 import { Satellite, Map as MapIcon } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { TreeInfoPopup } from './TreeInfoPopup';
 import { useAuth } from '../../context/AuthContext';
-import mockData from '../../mockdata.json';
 
 interface MapComponentProps {
   onGoToFeed?: (treeId: string) => void;
@@ -158,36 +158,8 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           // Użyj prawdziwego API dla zalogowanych użytkowników
           treesData = await treesService.getTrees();
         } else {
-          // Użyj mockdata dla niezalogowanych użytkowników
-          treesData = mockData.trees.map(tree => ({
-            id: tree.id,
-            species: tree.commonName,
-            speciesLatin: tree.species,
-            location: {
-              lat: tree.latitude,
-              lng: tree.longitude,
-              address: `Warszawa, ${tree.latitude.toFixed(6)}, ${tree.longitude.toFixed(6)}`
-            },
-            status: tree.status as 'pending' | 'approved' | 'rejected',
-            submissionDate: tree.reportedAt,
-            userData: {
-              userName: tree.reportedBy,
-              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(tree.reportedBy)}&background=10b981&color=fff`
-            },
-            votes: {
-              approve: Math.floor(Math.random() * 20) + 1,
-              reject: Math.floor(Math.random() * 5)
-            },
-            description: tree.notes,
-            images: tree.photos,
-            circumference: Math.floor(Math.random() * 200) + 50, // 50-250 cm
-            height: Math.floor(Math.random() * 20) + 10, // 10-30 m
-            condition: ['Dobra', 'Średnia', 'Zła'][Math.floor(Math.random() * 3)],
-            isAlive: Math.random() > 0.1, // 90% szans na żywe
-            estimatedAge: Math.floor(Math.random() * 100) + 20, // 20-120 lat
-            isMonument: tree.status === 'approved',
-            approvalDate: tree.status === 'approved' ? tree.reportedAt : ''
-          }));
+          // Użyj mock data dla niezalogowanych użytkowników
+          treesData = await api.getTrees();
         }
         
         setTrees(treesData);

@@ -56,182 +56,159 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   return (
-    <div className="p-4">
-      <h2 className="font-bold text-green-200 mb-3 text-center text-lg">
-        Zarejestruj się
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <div>
-          <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
-            Imię
-          </label>
-          <div className="relative">
-            <User className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleInputChange}
-              required
-              className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
-              style={{ fontSize: '10px' }}
-              placeholder="Jan"
-            />
-          </div>
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="relative w-full max-w-sm mx-auto"
+    >
+      {/* Form container */}
+      <div className="w-full">
+        <div className="text-center mb-6">
+          <p className="text-sm text-gray-400">
+            Dołącz do społeczności ekologów
+          </p>
         </div>
 
-        <div>
-          <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
-            Nazwisko
-          </label>
-          <div className="relative">
-            <User className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              required
-              className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
-              style={{ fontSize: '10px' }}
-              placeholder="Kowalski"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
-            Email
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
-              style={{ fontSize: '10px' }}
-              placeholder="jan@example.com"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
-            Hasło
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              required
-              className="w-full pl-7 pr-8 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
-              style={{ fontSize: '10px' }}
-              placeholder="••••••••"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1.5 text-green-400 hover:text-green-300"
-            >
-              {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
-            Potwierdź hasło
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              required
-              className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
-              style={{ fontSize: '10px' }}
-              placeholder="••••••••"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block font-medium text-green-300 mb-1" style={{ fontSize: '10px' }}>
-            Telefon
-          </label>
-          <div className="relative">
-            <Phone className="absolute left-2 top-1.5 w-3 h-3 text-green-400" />
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              required
-              className="w-full pl-7 pr-3 py-1 border border-green-400/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-900/30 text-green-100 placeholder-green-400"
-              style={{ fontSize: '10px' }}
-              placeholder="+48 123 456 789"
-            />
-          </div>
-        </div>
-
-        <div className="flex space-x-2 pt-2">
-          <GlassButton
-            type="button"
-            onClick={onClose}
-            variant="secondary"
-            size="xs"
-            className="flex-1"
-          >
-            <span style={{ fontSize: '10px' }}>Anuluj</span>
-          </GlassButton>
-          <GlassButton
-            type="submit"
-            variant="primary"
-            size="xs"
-            className="flex-1"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center space-x-1">
-                <div className="animate-spin rounded-full h-2 w-2 border-b-2 border-white"></div>
-                <span style={{ fontSize: '10px' }}>Rejestracja...</span>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Name fields in a row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                  placeholder="Imię"
+                />
               </div>
-            ) : (
-              <span style={{ fontSize: '10px' }}>Zarejestruj</span>
-            )}
-          </GlassButton>
-        </div>
-        
-        <div className="text-center pt-2 space-y-2">
-          <button
-            type="button"
-            onClick={onSwitchToLogin}
-            className="text-green-400 hover:text-green-300 block w-full"
-            style={{ fontSize: '10px' }}
-          >
-            Masz już konto? Zaloguj się
-          </button>
-          {onBackToMenu && (
+            </div>
+            <div>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                  placeholder="Nazwisko"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                placeholder="jan@example.com"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                className="w-full pl-10 pr-12 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                placeholder="Hasło"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors duration-200"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                placeholder="Potwierdź hasło"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                placeholder="+48 123 456 789"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <GlassButton
+              type="submit"
+              variant="primary"
+              size="sm"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>Rejestracja...</span>
+                </div>
+              ) : (
+                'Utwórz konto'
+              )}
+            </GlassButton>
+          </div>
+          
+          <div className="text-center pt-2">
             <button
               type="button"
-              onClick={onBackToMenu}
-              className="text-slate-400 hover:text-slate-300 block w-full"
-              style={{ fontSize: '10px' }}
+              onClick={onSwitchToLogin}
+              className="text-sm text-gray-400 hover:text-green-400 transition-colors duration-200"
             >
-              ← Powrót do menu
+              Masz już konto? <span className="text-green-400 hover:text-green-300">Zaloguj się</span>
             </button>
-          )}
-        </div>
-      </form>
-    </div>
+            {onBackToMenu && (
+              <button
+                type="button"
+                onClick={onBackToMenu}
+                className="block w-full text-sm text-gray-500 hover:text-gray-300 mt-2 transition-colors duration-200"
+              >
+                ← Powrót do menu
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    </motion.div>
   );
 };

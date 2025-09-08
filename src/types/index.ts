@@ -23,8 +23,8 @@ export interface Tree {
   submissionDate: string;
   approvalDate: string;
   votes: {
-    approve: number;
-    reject: number;
+    like: number;
+    dislike: number;
   };
 }
 
@@ -82,6 +82,8 @@ export interface User {
 
 export interface Comment {
   id: string;
+  treeSubmissionId: string;
+  treePolishName: string;
   userData: {
     userName: string;
     avatar: string;
@@ -89,7 +91,10 @@ export interface Comment {
   content: string;
   datePosted: string;
   isLegend: boolean;
-  likesCount: number;
+  votes: {
+    like: number;
+    dislike: number;
+  };
 }
 
 export interface TreePost extends Tree {
@@ -97,6 +102,7 @@ export interface TreePost extends Tree {
   dislikes: number;
   userVote?: 'like' | 'dislike' | null;
   comments: Comment[];
+  commentsCount: number;
   legendComment?: Comment;
 }
 

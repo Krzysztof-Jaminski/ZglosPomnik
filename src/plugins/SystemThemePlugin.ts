@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 export interface SystemThemePlugin {
   setStatusBarColor(options: { color: string }): Promise<void>;
@@ -7,37 +8,48 @@ export interface SystemThemePlugin {
 }
 
 class SystemThemePluginWeb implements SystemThemePlugin {
-  async setStatusBarColor(options: { color: string }): Promise<void> {
-    // Web doesn't have system bars
-    console.log('Web: Status bar color would be set to', options.color);
+  async setStatusBarColor(_options: { color: string }): Promise<void> {
   }
 
-  async setNavigationBarColor(options: { color: string }): Promise<void> {
-    // Web doesn't have system bars
-    console.log('Web: Navigation bar color would be set to', options.color);
+  async setNavigationBarColor(_options: { color: string }): Promise<void> {
   }
 
-  async setSystemUITheme(options: { isDark: boolean }): Promise<void> {
-    // Web doesn't have system bars
-    console.log('Web: System UI theme would be set to', options.isDark ? 'dark' : 'light');
+  async setSystemUITheme(_options: { isDark: boolean }): Promise<void> {
   }
 }
 
 class SystemThemePluginNative implements SystemThemePlugin {
   async setStatusBarColor(options: { color: string }): Promise<void> {
-    const { SystemThemePlugin } = await import('@capacitor/core');
-    return (SystemThemePlugin as any).setStatusBarColor(options);
+    try {
+      await StatusBar.setBackgroundColor({ color: options.color });
+      await StatusBar.setOverlaysWebView({ overlay: false });
+    } catch (error) {
+      console.error('Failed to set status bar color:', error);
+    }
   }
 
   async setNavigationBarColor(options: { color: string }): Promise<void> {
-    const { SystemThemePlugin } = await import('@capacitor/core');
-    return (SystemThemePlugin as any).setNavigationBarColor(options);
+    try {
+      await StatusBar.setBackgroundColor({ color: options.color });
+    } catch (error) {
+      console.error('Failed to set navigation bar color:', error);
+    }
   }
 
   async setSystemUITheme(options: { isDark: boolean }): Promise<void> {
-    const { SystemThemePlugin } = await import('@capacitor/core');
-    return (SystemThemePlugin as any).setSystemUITheme(options);
+    try {
+      await StatusBar.setStyle({ 
+        style: options.isDark ? Style.Dark : Style.Light 
+      });
+      
+      await StatusBar.setOverlaysWebView({ overlay: false });
+      
+      await StatusBar.show();
+    } catch (error) {
+      console.error('Failed to set system UI theme:', error);
+    }
   }
+
 }
 
 export const SystemTheme = Capacitor.isNativePlatform() 
