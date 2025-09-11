@@ -109,7 +109,7 @@ const PhoneMockup: React.FC = (): JSX.Element => {
           <div className="flex-1 relative px-1">
             <div className="w-full h-full rounded-lg overflow-hidden bg-gray-900">
               <img 
-                src="/P6.png" 
+                src="/LandPagePhotos/6.jpg" 
                 alt="Screen 6"
                 className="w-full h-full object-cover opacity-95"
               />

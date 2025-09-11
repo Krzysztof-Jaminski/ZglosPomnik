@@ -168,7 +168,7 @@ export const LandingPage = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2 sm:gap-3">
               <img 
-                src={Capacitor.isNativePlatform() ? "/favicon-mobile.png" : "/favicon-desktop.png"} 
+                src="/logo.png" 
                 alt="ZgłośPomnik" 
                 className="w-10 h-10 sm:w-12 sm:h-12"
               />
@@ -271,7 +271,7 @@ export const LandingPage = () => {
             <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-2 lg:order-2 text-center">
               <div className="flex items-center justify-center gap-4 mb-4">
                 <img 
-                  src="/favicon-desktop.png" 
+                  src="/logo.png" 
                   alt="ZgłośPomnik" 
                   className="w-12 h-12"
                 />
@@ -468,7 +468,7 @@ export const LandingPage = () => {
             >
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-2xl font-bold text-blue-900 dark:text-white">
                     {authMode === 'login' ? 'Zaloguj się' : 'Zarejestruj się'}
                   </h2>
                   <button

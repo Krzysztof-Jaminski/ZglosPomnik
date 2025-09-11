@@ -57,7 +57,7 @@ export const AuthPage: React.FC = () => {
           <Link to="/" className="inline-flex items-center space-x-3 group">
             <div className="bg-green-500/20 backdrop-blur-sm p-6 rounded-full group-hover:bg-green-500/30 transition-all duration-300">
               <img 
-                src="/favicon-desktop.png" 
+                src="/logo.png" 
                 alt="ZgłośPomnik" 
                 className="w-16 h-16"
               />

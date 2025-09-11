@@ -1,7 +1,6 @@
 import React from 'react';
 import { Moon, Sun, Monitor, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Capacitor } from '@capacitor/core';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassButton } from '../UI/GlassButton';
 
@@ -30,11 +29,11 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-4 focus:outline-none focus:ring-0 focus:ring-offset-0">
             <Link to="/map" className="flex items-center space-x-1 sm:space-x-2 focus:outline-none focus:ring-0 focus:ring-offset-0">
               <img 
-                src={Capacitor.isNativePlatform() ? "/favicon-mobile.png" : "/favicon-desktop.png"} 
+                src="/logo.png" 
                 alt="ZgłośPomnik" 
                 className="w-12 h-12 sm:w-10 sm:h-10"
               />
-              <h1 className="text-lg sm:text-2xl font-bold focus:outline-none focus:ring-0 focus:ring-offset-0" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+              <h1 className="text-lg sm:text-2xl font-bold focus:outline-none focus:ring-0 focus:ring-offset-0 -mt-1" style={{ fontFamily: 'Exo 2, sans-serif' }}>
                 <span className="text-blue-600 dark:text-blue-500">Zgłoś</span><span className="text-green-600 dark:text-green-400">Pomnik</span>
               </h1>
             </Link>

@@ -125,7 +125,7 @@ export const ApplicationsPage: React.FC = () => {
     // Mock AI generation
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    const aiJustification = `Wnoszę o objęcie ochroną prawną drzewa ${selectedTree.commonName} (${selectedTree.species}) ze względu na jego wyjątkowe walory przyrodnicze i krajobrazowe. Drzewo charakteryzuje się ${selectedTree.notes.toLowerCase()}. Jego zachowanie jest istotne dla lokalnego ekosystemu i dziedzictwa przyrodniczego naszej gminy.`;
+    const aiJustification = `Wnoszę o objęcie ochroną prawną drzewa ${selectedTree.species} (${selectedTree.speciesLatin}) ze względu na jego wyjątkowe walory przyrodnicze i krajobrazowe. Drzewo charakteryzuje się ${selectedTree.description.toLowerCase()}. Jego zachowanie jest istotne dla lokalnego ekosystemu i dziedzictwa przyrodniczego naszej gminy.`;
     
     setApplicationForm(prev => ({
       ...prev,
@@ -326,28 +326,28 @@ export const ApplicationsPage: React.FC = () => {
             }`}
           >
             <div className="flex items-start space-x-2">
-              {tree.photos.length > 0 && (
+              {tree.images && tree.images.length > 0 && (
                 <img
-                  src={tree.photos[0]}
-                  alt={tree.commonName}
+                  src={tree.images[0]}
+                  alt={tree.species}
                   className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg"
                 />
               )}
               <div className="flex-1">
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                  {tree.commonName}
+                  {tree.species}
                 </h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400 italic mb-1">
-                  {tree.species}
+                  {tree.speciesLatin}
                 </p>
                 <p className="text-xs text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-                  {tree.notes}
+                  {tree.description}
                 </p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1">
                     <MapPin className="w-3 h-3 text-gray-400" />
                     <span className="text-xs text-gray-500">
-                      {tree.latitude.toFixed(4)}, {tree.longitude.toFixed(4)}
+                      {tree.location.lat.toFixed(4)}, {tree.location.lng.toFixed(4)}
                     </span>
                   </div>
                   {getStatusIcon(tree.status)}

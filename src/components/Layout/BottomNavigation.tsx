@@ -92,8 +92,8 @@ export const BottomNavigation: React.FC = () => {
             className={({ isActive }) =>
               `flex flex-col items-center justify-center py-2 px-3 min-w-0 flex-1 transition-colors focus:outline-none focus:ring-0 ${
                 isActive
-                  ? 'text-black dark:text-green-400'
-                  : 'text-green-700 dark:text-gray-400'
+                  ? 'text-green-700 dark:text-green-400'
+                  : 'text-blue-600 dark:text-gray-400'
               }`
             }
           >

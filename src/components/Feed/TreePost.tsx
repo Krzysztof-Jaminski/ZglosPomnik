@@ -159,7 +159,10 @@ export const TreePost: React.FC<TreePostProps> = ({
             className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
           >
             <MessageCircle className="w-5 h-5" />
-            <span className="text-sm font-medium">{post.commentsCount}</span>
+            <span className="text-sm font-medium">
+              {showComments ? 'Ukryj' : 'Więcej'}
+              {commentsLoaded && comments.length > 0 && ` (${comments.length})`}
+            </span>
           </button>
         </div>
         

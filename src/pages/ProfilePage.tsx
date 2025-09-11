@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut, Calendar, BarChart3 } from 'lucide-react';
+import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
@@ -42,6 +42,8 @@ export const ProfilePage: React.FC = () => {
   const [editData, setEditData] = useState(additionalData);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleNotificationToggle = (type: 'push' | 'email') => {
     setNotifications(prev => ({
@@ -76,6 +78,10 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     logout();
     navigate('/');
   };
@@ -390,9 +396,11 @@ export const ProfilePage: React.FC = () => {
             
             <div className="space-y-3">
               <GlassButton
+                onClick={() => setShowChangePasswordModal(true)}
                 variant="secondary"
                 size="xs"
                 className="w-full text-left"
+                icon={Key}
               >
                 <span className="text-gray-700 dark:text-gray-300 text-sm">
                   Zmień hasło
@@ -421,12 +429,12 @@ export const ProfilePage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-green-800/20 backdrop-blur-md border border-green-400/20 rounded-xl shadow-xl p-6 max-w-sm w-full"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
             >
-              <h3 className="text-green-900 dark:text-green-200 mb-3 font-semibold text-lg">
+              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
                 Potwierdź zmiany
               </h3>
-              <p className="text-green-800 dark:text-green-300 mb-4 text-base">
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
                 Wprowadź hasło aby potwierdzić zmiany.
               </p>
               <input
@@ -434,7 +442,7 @@ export const ProfilePage: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Hasło"
-                className="w-full px-4 py-3 border border-green-300 dark:border-green-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50 dark:bg-green-900/30 text-green-900 dark:text-green-100 mb-4 text-base" 
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4 text-base" 
               />
               <div className="flex space-x-3">
                 <GlassButton
@@ -453,6 +461,100 @@ export const ProfilePage: React.FC = () => {
                   icon={Save}
                 >
                   <span className="text-base">Potwierdź</span>
+                </GlassButton>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Change Password Modal */}
+        {showChangePasswordModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
+            >
+              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
+                Zmień hasło
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
+                Wprowadź nowe hasło dla swojego konta.
+              </p>
+              <div className="space-y-4">
+                <input
+                  type="password"
+                  placeholder="Aktualne hasło"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                />
+                <input
+                  type="password"
+                  placeholder="Nowe hasło"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                />
+                <input
+                  type="password"
+                  placeholder="Potwierdź nowe hasło"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                />
+              </div>
+              <div className="flex space-x-3 mt-6">
+                <GlassButton
+                  onClick={() => setShowChangePasswordModal(false)}
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <span className="text-base">Anuluj</span>
+                </GlassButton>
+                <GlassButton
+                  onClick={() => {
+                    // TODO: Implement password change logic
+                    setShowChangePasswordModal(false);
+                  }}
+                  variant="primary"
+                  size="sm"
+                  className="flex-1"
+                  icon={Save}
+                >
+                  <span className="text-base">Zapisz</span>
+                </GlassButton>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
+            >
+              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
+                Potwierdź wylogowanie
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
+                Czy na pewno chcesz się wylogować?
+              </p>
+              <div className="flex space-x-3">
+                <GlassButton
+                  onClick={() => setShowLogoutModal(false)}
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <span className="text-base">Anuluj</span>
+                </GlassButton>
+                <GlassButton
+                  onClick={confirmLogout}
+                  variant="danger"
+                  size="sm"
+                  className="flex-1"
+                  icon={LogOut}
+                >
+                  <span className="text-base">Wyloguj się</span>
                 </GlassButton>
               </div>
             </motion.div>

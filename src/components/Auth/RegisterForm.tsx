@@ -82,7 +82,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   value={formData.firstName}
                   onChange={handleInputChange}
                   required
-                  className="w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                  className="w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-blue-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-blue-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
                   placeholder="Imię"
                 />
               </div>
@@ -96,7 +96,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   value={formData.lastName}
                   onChange={handleInputChange}
                   required
-                  className="w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                  className="w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-blue-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-blue-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
                   placeholder="Nazwisko"
                 />
               </div>
@@ -112,7 +112,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-blue-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-blue-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
                 placeholder="jan@example.com"
               />
             </div>
@@ -127,7 +127,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 value={formData.password}
                 onChange={handleInputChange}
                 required
-                className="w-full pl-10 pr-12 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                className="w-full pl-10 pr-12 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-blue-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-blue-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
                 placeholder="Hasło"
               />
               <button
@@ -149,7 +149,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-blue-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-blue-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
                 placeholder="Potwierdź hasło"
               />
             </div>
@@ -164,7 +164,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 value={formData.phone}
                 onChange={handleInputChange}
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-600/50 rounded-xl text-blue-900 dark:text-white placeholder-gray-400 autofill:bg-gray-800/50 autofill:text-blue-900 dark:autofill:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
                 placeholder="+48 123 456 789"
               />
             </div>

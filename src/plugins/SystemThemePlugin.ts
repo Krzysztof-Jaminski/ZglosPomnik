@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { NavigationBar } from '@capgo/capacitor-navigation-bar';
 
 export interface SystemThemePlugin {
   setStatusBarColor(options: { color: string }): Promise<void>;
@@ -30,7 +31,12 @@ class SystemThemePluginNative implements SystemThemePlugin {
 
   async setNavigationBarColor(options: { color: string }): Promise<void> {
     try {
-      await StatusBar.setBackgroundColor({ color: options.color });
+      // Use dedicated NavigationBar plugin
+      const isDarkColor = options.color === '#000000' || options.color === '#111827';
+      await NavigationBar.setNavigationBarColor({ 
+        color: options.color,
+        darkButtons: !isDarkColor // Invert logic: light background = dark buttons, dark background = light buttons
+      });
     } catch (error) {
       console.error('Failed to set navigation bar color:', error);
     }

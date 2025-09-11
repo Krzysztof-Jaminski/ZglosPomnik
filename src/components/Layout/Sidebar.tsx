@@ -24,8 +24,8 @@ const Sidebar: React.FC = () => {
               className={({ isActive }) =>
                 `flex items-center space-x-2 sm:space-x-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-green-50 dark:bg-green-900/20 text-black dark:text-green-400 border-l-4 border-green-600'
-                    : 'text-green-800 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    ? 'bg-blue-50 dark:bg-green-900/20 text-blue-900 dark:text-green-400 border-l-4 border-blue-600'
+                    : 'text-blue-800 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800'
                 }`
               }
             >
