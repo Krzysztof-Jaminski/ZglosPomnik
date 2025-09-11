@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TreePost } from '../components/Feed/TreePost';
-import { TreePost as TreePostType, Comment } from '../types';
+import { TreePost as TreePostType } from '../types';
 import { treesService } from '../services/treesService';
 import { commentsService } from '../services/commentsService';
 import { api } from '../services/api';
@@ -10,51 +10,58 @@ import { useAuth } from '../context/AuthContext';
 
 export const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<TreePostType[]>([]);
-  const [allComments, setAllComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [filterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const location = useLocation();
   const { isAuthenticated } = useAuth();
 
+  // Load trees only once on page load
   useEffect(() => {
-    const initializeData = async () => {
-      await loadComments();
-    };
-    initializeData();
-  }, []);
+    const loadTrees = async () => {
+      setIsLoading(true);
+      try {
+        // Load trees from API
+        const treesData = await treesService.getTrees();
+        
+        // Sort trees by submission date (newest first)
+        const sortedTrees = treesData.sort((a, b) => {
+          const dateA = new Date(a.submissionDate || 0);
+          const dateB = new Date(b.submissionDate || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
 
-  // Reload posts when comments change
-  useEffect(() => {
-    console.log('allComments changed:', allComments.length, 'posts:', posts.length);
-    if (allComments.length > 0 || posts.length > 0) {
-      loadPostsWithComments(allComments);
-    }
-  }, [allComments]);
+        // Convert trees to posts format
+        const postsData: TreePostType[] = sortedTrees.map(tree => ({
+          ...tree,
+          likes: tree.votes?.like || 0,
+          dislikes: tree.votes?.dislike || 0,
+          userVote: null, // Will be set by API if user has voted
+          comments: [], // Comments will be loaded on demand
+          commentsCount: 0
+        }));
 
-  // Load all comments on page load
-  const loadComments = async () => {
-    try {
-      if (isAuthenticated) {
-        const comments = await commentsService.getAllComments();
-        console.log('Loaded comments from API:', comments);
-        setAllComments(comments);
-      } else {
-        // For non-authenticated users, use mock comments
-        const mockComments = await api.getComments();
-        console.log('Loaded mock comments:', mockComments);
-        setAllComments(mockComments);
+        setPosts(postsData);
+      } catch (error) {
+        console.error('Error loading trees:', error);
+        // Fallback to mock data if API fails
+        const mockTrees = await api.getTrees();
+        const postsData: TreePostType[] = mockTrees.map(tree => ({
+          ...tree,
+          likes: tree.votes?.like || 0,
+          dislikes: tree.votes?.dislike || 0,
+          userVote: null,
+          comments: [],
+          commentsCount: 0
+        }));
+        setPosts(postsData);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading comments:', error);
-      // Fallback to localStorage
-      const comments = commentsService.getCommentsFromStorage();
-      console.log('Fallback comments from localStorage:', comments);
-      setAllComments(comments);
-    }
-  };
+    };
+
+    loadTrees();
+  }, []);
 
   // Handle scroll to specific tree from map
   useEffect(() => {
@@ -64,175 +71,138 @@ export const FeedPage: React.FC = () => {
       setTimeout(() => {
         const treeElement = document.getElementById(`tree-post-${scrollToTreeId}`);
         if (treeElement) {
-          treeElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-          // Highlight the post briefly
-          treeElement.classList.add('ring-2', 'ring-green-500', 'ring-opacity-50');
+          treeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight effect
+          treeElement.classList.add('ring-4', 'ring-green-500', 'ring-opacity-50');
           setTimeout(() => {
-            treeElement.classList.remove('ring-2', 'ring-green-500', 'ring-opacity-50');
+            treeElement.classList.remove('ring-4', 'ring-green-500', 'ring-opacity-50');
           }, 3000);
         }
       }, 500);
     }
   }, [posts, location.state]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      // Sprawdzamy scroll na głównym kontenerze aplikacji
-      const mainContainer = document.querySelector('main.overflow-y-auto');
-      if (mainContainer) {
-        const { scrollTop, scrollHeight, clientHeight } = mainContainer;
-        console.log('Scroll event:', { scrollTop, scrollHeight, clientHeight, threshold: scrollHeight - 200 });
-        if (scrollTop + clientHeight >= scrollHeight - 200) {
-          console.log('Triggering loadMorePosts');
-          loadMorePosts();
-        }
-      }
-    };
-
-    // Nasłuchuj scroll na głównym kontenerze
-    const mainContainer = document.querySelector('main.overflow-y-auto');
-    if (mainContainer) {
-      console.log('Added scroll listener to main container');
-      mainContainer.addEventListener('scroll', handleScroll);
-      return () => {
-        console.log('Removed scroll listener');
-        mainContainer.removeEventListener('scroll', handleScroll);
-      };
-    } else {
-      console.log('Main container not found');
-    }
-  }, [isLoadingMore, hasMore]);
-
-  const loadPostsWithComments = async (comments: Comment[], isLoadMore = false) => {
-    console.log('loadPostsWithComments called with comments:', comments.length);
-    try {
-      if (isLoadMore) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(true);
-      }
-      
-      let treesData;
-      
-      if (isAuthenticated) {
-        // Użyj prawdziwego API dla zalogowanych użytkowników
-        treesData = await treesService.getTrees();
-        console.log('API Trees data:', treesData);
-      } else {
-        // Użyj mock data dla niezalogowanych użytkowników
-        treesData = await api.getTrees();
-        console.log('Mock Trees data:', treesData);
-      }
-      
-      // Convert trees to posts with social features
-      const postsData: TreePostType[] = treesData.map(tree => {
-        // Find comments for this tree (only for counting)
-        const treeComments = comments.filter(comment => {
-          // Search by treeSubmissionId - this is the correct way
-          return comment.treeSubmissionId === tree.id;
-        });
-        
-        // Calculate total likes and dislikes from comments
-        const totalCommentLikes = treeComments.reduce((sum, comment) => sum + comment.votes.like, 0);
-        const totalCommentDislikes = treeComments.reduce((sum, comment) => sum + comment.votes.dislike, 0);
-        
-        console.log(`Tree ${tree.species} has ${treeComments.length} comments (${totalCommentLikes} likes, ${totalCommentDislikes} dislikes)`);
-        
-        return {
-          ...tree,
-          likes: tree.votes.like + totalCommentLikes, // Tree votes + comment likes
-          dislikes: tree.votes.dislike + totalCommentDislikes, // Tree votes + comment dislikes
-          userVote: null, // TODO: Implement user voting
-          comments: [], // Don't load comment details here - load on demand
-          commentsCount: treeComments.length, // Store comment count
-          legendComment: treeComments.find(comment => comment.isLegend)
-        };
-      });
-
-      if (isLoadMore) {
-        setPosts(prevPosts => [...prevPosts, ...postsData]);
-      } else {
-        setPosts(postsData);
-      }
-      
-      // Symulujemy ograniczoną liczbę postów (dla demo)
-      setHasMore(postsData.length > 0);
-    } catch (error) {
-      console.error('Error loading posts:', error);
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  };
-
-  const loadPosts = async (isLoadMore = false) => {
-    return loadPostsWithComments(allComments, isLoadMore);
-  };
-
-  const loadMorePosts = () => {
-    console.log('loadMorePosts called', { isLoadingMore, hasMore });
-    if (!isLoadingMore && hasMore) {
-      console.log('Loading more posts...');
-      loadPosts(true);
-    }
-  };
-
-
-
+  // Handle tree voting
   const handleLike = async (postId: string) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          const wasLiked = post.userVote === 'like';
-          const wasDisliked = post.userVote === 'dislike';
-          
-          return {
-            ...post,
-            likes: wasLiked ? post.likes - 1 : post.likes + 1,
-            dislikes: wasDisliked ? post.dislikes - 1 : post.dislikes,
-            userVote: wasLiked ? null : 'like'
-          };
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      const wasLiked = post.userVote === 'like';
+      const wasDisliked = post.userVote === 'dislike';
+
+      if (isAuthenticated) {
+        let updatedVotes;
+        if (wasLiked) {
+          // Remove existing like
+          updatedVotes = await treesService.removeVoteFromTree(postId);
+        } else {
+          // Add like (or change from dislike to like)
+          updatedVotes = await treesService.voteOnTree(postId, 'like');
         }
-        return post;
-      })
-    );
+
+        // Update local state with API response
+        setPosts(prevPosts =>
+          prevPosts.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                likes: updatedVotes.like,
+                dislikes: updatedVotes.dislike,
+                userVote: wasLiked ? null : 'like'
+              };
+            }
+            return p;
+          })
+        );
+      } else {
+        // Fallback to local state update for non-authenticated users
+        setPosts(prevPosts =>
+          prevPosts.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                likes: wasLiked ? p.likes - 1 : p.likes + 1,
+                dislikes: wasDisliked ? p.dislikes - 1 : p.dislikes,
+                userVote: wasLiked ? null : 'like'
+              };
+            }
+            return p;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
   };
 
   const handleDislike = async (postId: string) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          const wasLiked = post.userVote === 'like';
-          const wasDisliked = post.userVote === 'dislike';
-          
-          return {
-            ...post,
-            likes: wasLiked ? post.likes - 1 : post.likes,
-            dislikes: wasDisliked ? post.dislikes - 1 : post.dislikes + 1,
-            userVote: wasDisliked ? null : 'dislike'
-          };
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      const wasLiked = post.userVote === 'like';
+      const wasDisliked = post.userVote === 'dislike';
+
+      if (isAuthenticated) {
+        let updatedVotes;
+        if (wasDisliked) {
+          // Remove existing dislike
+          updatedVotes = await treesService.removeVoteFromTree(postId);
+        } else {
+          // Add dislike (or change from like to dislike)
+          updatedVotes = await treesService.voteOnTree(postId, 'dislike');
         }
-        return post;
-      })
-    );
+
+        // Update local state with API response
+        setPosts(prevPosts =>
+          prevPosts.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                likes: updatedVotes.like,
+                dislikes: updatedVotes.dislike,
+                userVote: wasDisliked ? null : 'dislike'
+              };
+            }
+            return p;
+          })
+        );
+      } else {
+        // Fallback to local state update for non-authenticated users
+        setPosts(prevPosts =>
+          prevPosts.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                likes: wasLiked ? p.likes - 1 : p.likes,
+                dislikes: wasDisliked ? p.dislikes - 1 : p.dislikes + 1,
+                userVote: wasDisliked ? null : 'dislike'
+              };
+            }
+            return p;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error disliking post:', error);
+    }
   };
 
-  const handleComment = async (postId: string, commentText: string) => {
+  // Handle comment creation
+  const handleComment = async (postId: string, commentText: string, userId?: string) => {
     try {
       if (isAuthenticated) {
-        const newComment = await commentsService.addTreeComment(postId, commentText);
-        // Add new comment to local state
-        setAllComments(prevComments => [newComment, ...prevComments]);
-        // Update posts with new comment
-        setPosts(prevPosts => 
+        const newComment = await commentsService.addTreeComment(postId, commentText, userId);
+        
+        // Update local state
+        setPosts(prevPosts =>
           prevPosts.map(post => {
             if (post.id === postId) {
               return {
                 ...post,
-                comments: [newComment, ...post.comments]
+                comments: [newComment, ...post.comments],
+                commentsCount: post.commentsCount + 1
               };
             }
             return post;
@@ -244,38 +214,8 @@ export const FeedPage: React.FC = () => {
     }
   };
 
-  const handleCommentVote = async (commentId: string, vote: 'like' | 'dislike') => {
-    try {
-      if (isAuthenticated) {
-        const voteType = vote === 'like' ? 'Like' : 'Dislike';
-        const updatedVotes = await commentsService.voteComment(commentId, voteType);
-        
-        // Update comment votes in local state
-        setAllComments(prevComments =>
-          prevComments.map(comment =>
-            comment.id === commentId
-              ? { ...comment, votes: updatedVotes }
-              : comment
-          )
-        );
-        
-        // Update posts with updated comment votes
-        setPosts(prevPosts =>
-          prevPosts.map(post => ({
-            ...post,
-            comments: post.comments.map(comment =>
-              comment.id === commentId
-                ? { ...comment, votes: updatedVotes }
-                : comment
-            )
-          }))
-        );
-      }
-    } catch (error) {
-      console.error('Error voting on comment:', error);
-    }
-  };
 
+  // Filter and sort posts
   const filteredAndSortedPosts = posts
     .filter(post => filterStatus === 'all' || post.status === filterStatus)
     .sort((a, b) => {
@@ -297,38 +237,42 @@ export const FeedPage: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-6 overflow-y-auto">
-      <div className="max-w-lg mx-auto px-6">
-        {/* Filters */}
-        <div className="flex justify-center gap-4 mb-6">
-          <GlassButton
-            onClick={() => setSortBy('recent')}
-            variant={sortBy === 'recent' ? 'primary' : 'secondary'}
-            size="xs"
-          >
-            Najnowsze
-          </GlassButton>
-          <GlassButton
-            onClick={() => setSortBy('popular')}
-            variant={sortBy === 'popular' ? 'primary' : 'secondary'}
-            size="xs"
-          >
-            Popularne
-          </GlassButton>
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-end">
+          <div className="flex items-center space-x-2">
+            <GlassButton
+              onClick={() => setSortBy('recent')}
+              variant={sortBy === 'recent' ? 'primary' : 'secondary'}
+              size="sm"
+            >
+              Najnowsze
+            </GlassButton>
+            <GlassButton
+              onClick={() => setSortBy('popular')}
+              variant={sortBy === 'popular' ? 'primary' : 'secondary'}
+              size="sm"
+            >
+              Popularne
+            </GlassButton>
+          </div>
         </div>
+      </div>
 
-        {/* Posts */}
+      {/* Posts */}
+      <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-6">
           {filteredAndSortedPosts.map((post) => (
             <div
               key={post.id}
+              id={`tree-post-${post.id}`}
             >
               <TreePost
                 post={post}
                 onLike={handleLike}
                 onDislike={handleDislike}
                 onComment={handleComment}
-                onCommentVote={handleCommentVote}
               />
             </div>
           ))}
@@ -338,23 +282,6 @@ export const FeedPage: React.FC = () => {
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400 text-lg">
               Brak zgłoszeń spełniających kryteria
-            </p>
-          </div>
-        )}
-
-        {/* Loading more indicator */}
-        {isLoadingMore && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Ładowanie więcej...</p>
-          </div>
-        )}
-
-        {/* End of feed indicator */}
-        {!hasMore && filteredAndSortedPosts.length > 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              To wszystkie dostępne zgłoszenia
             </p>
           </div>
         )}

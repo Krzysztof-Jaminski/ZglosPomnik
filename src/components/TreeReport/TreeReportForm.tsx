@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X, Search, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TreeSpecies, NewTreeReport } from '../../types';
+import { TreeSpecies, NewTreeReport, ApiTreeSubmission } from '../../types';
 import { api } from '../../services/api';
+import { treesService } from '../../services/treesService';
 import { storage } from '../../utils/storage';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { GlassButton } from '../UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 interface TreeReportFormProps {
   latitude?: number;
@@ -31,13 +33,18 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const [pierśnica, setPierśnica] = useState<string>('');
   const [height, setHeight] = useState<string>('');
   const [plotNumber, setPlotNumber] = useState<string>('');
+  const [condition, setCondition] = useState<string>('good');
+  const [isAlive, setIsAlive] = useState<boolean>(true);
+  const [estimatedAge, setEstimatedAge] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isOnline = useOnlineStatus();
   const navigate = useNavigate();
+  const { isAuthenticated, user, isLoading } = useAuth();
 
   // Load all species when component mounts
   React.useEffect(() => {
@@ -103,27 +110,71 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     e.preventDefault();
     if (!selectedSpecies || !latitude || !longitude) return;
 
-    setIsSubmitting(true);
+    // Check authentication status
+    console.log('Auth status:', { isAuthenticated, user: user?.email });
+    if (!isAuthenticated) {
+      console.error('User is not authenticated');
+      return;
+    }
 
-    const report: NewTreeReport = {
-      species: selectedSpecies.scientificName,
-      commonName: selectedSpecies.commonName,
-      latitude,
-      longitude,
-      notes,
-      photos,
-      pierśnica: pierśnica ? parseFloat(pierśnica) : undefined,
-      height: height ? parseFloat(height) : undefined,
-      plotNumber: plotNumber || undefined
-    };
+    setIsSubmitting(true);
 
     try {
       if (isOnline) {
-        await api.addTree(report);
+        // Upload photos first if any
+        let imageUrls: string[] = [];
+        if (photos.length > 0) {
+          for (const photo of photos) {
+            try {
+              const uploadedUrl = await api.uploadPhoto(photo);
+              imageUrls.push(uploadedUrl);
+            } catch (error) {
+              console.error('Error uploading photo:', error);
+              // Continue with other photos even if one fails
+            }
+          }
+        }
+
+        // Transform data to match API specification
+        const apiTreeData: ApiTreeSubmission = {
+          speciesId: selectedSpecies.id,
+          location: {
+            lat: latitude,
+            lng: longitude,
+            address: '' // We don't have address in the form, could be added later
+          },
+          circumference: pierśnica ? parseFloat(pierśnica) : 0,
+          height: height ? parseFloat(height) : 0,
+          condition: condition,
+          isAlive: isAlive,
+          estimatedAge: estimatedAge ? parseInt(estimatedAge) : 0,
+          description: notes,
+          images: imageUrls
+        };
+
+        // Submit to API
+        await treesService.submitTreeReport(apiTreeData);
+        setSubmitSuccess(true);
+        setTimeout(() => setSubmitSuccess(false), 3000); // Hide success message after 3 seconds
       } else {
+        // Offline mode - store for later sync
+        const report: NewTreeReport = {
+          species: selectedSpecies.scientificName,
+          commonName: selectedSpecies.commonName,
+          latitude,
+          longitude,
+          notes,
+          photos,
+          pierśnica: pierśnica ? parseFloat(pierśnica) : undefined,
+          height: height ? parseFloat(height) : undefined,
+          plotNumber: plotNumber || undefined
+        };
         storage.addPendingReport(report);
+        setSubmitSuccess(true);
+        setTimeout(() => setSubmitSuccess(false), 3000); // Hide success message after 3 seconds
       }
       
+      // Reset form
       setSelectedSpecies(null);
       setSpeciesQuery('');
       setNotes('');
@@ -131,6 +182,9 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       setPierśnica('');
       setHeight('');
       setPlotNumber('');
+      setCondition('good');
+      setIsAlive(true);
+      setEstimatedAge('');
       onSubmit?.();
     } catch (error) {
       console.error('Error submitting report:', error);
@@ -138,6 +192,18 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  // Show loading state while AuthProvider is initializing
+  if (isLoading) {
+    return (
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 sm:p-8 w-full mx-auto">
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          <span className="ml-3 text-gray-600 dark:text-gray-300">Ładowanie...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -165,6 +231,19 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         >
           <p className="text-green-800 dark:text-green-200">
             Tryb offline - zgłoszenie zostanie zsynchronizowane po powrocie internetu
+          </p>
+        </motion.div>
+      )}
+
+      {submitSuccess && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-5 mb-6 sm:mb-8 text-base sm:text-lg"
+        >
+          <p className="text-green-800 dark:text-green-200">
+            ✅ Zgłoszenie zostało pomyślnie wysłane!
           </p>
         </motion.div>
       )}
@@ -445,6 +524,53 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               value={plotNumber}
               onChange={(e) => setPlotNumber(e.target.value)}
               placeholder="np. 123/4"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Tree condition and status */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div>
+            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Stan drzewa
+            </label>
+            <select
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+            >
+              <option value="excellent">Doskonały</option>
+              <option value="good">Dobry</option>
+              <option value="average">Średni</option>
+              <option value="poor">Słaby</option>
+              <option value="critical">Krytyczny</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Czy drzewo żyje?
+            </label>
+            <select
+              value={isAlive ? 'true' : 'false'}
+              onChange={(e) => setIsAlive(e.target.value === 'true')}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+            >
+              <option value="true">Tak</option>
+              <option value="false">Nie</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Szacowany wiek <span className="text-gray-500">(lata)</span>
+            </label>
+            <input
+              type="number"
+              value={estimatedAge}
+              onChange={(e) => setEstimatedAge(e.target.value)}
+              placeholder="np. 50"
+              min="0"
+              step="1"
               className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>

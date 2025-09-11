@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, Share2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { MessageCircle, Share2, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 import { TreePost as TreePostType, Comment } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { commentsService } from '../../services/commentsService';
+import { useAuth } from '../../context/AuthContext';
 
 interface TreePostProps {
   post: TreePostType;
   onLike: (postId: string) => void;
   onDislike: (postId: string) => void;
-  onComment: (postId: string, comment: string) => void;
-  onCommentVote: (commentId: string, vote: 'like' | 'dislike') => void;
+  onComment: (postId: string, comment: string, userId?: string) => void;
 }
 
 export const TreePost: React.FC<TreePostProps> = ({
   post,
   onLike,
   onDislike,
-  onComment,
-  onCommentVote
+  onComment
 }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -26,6 +25,7 @@ export const TreePost: React.FC<TreePostProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const { user } = useAuth();
 
   // Load comments when showComments becomes true
   useEffect(() => {
@@ -37,13 +37,29 @@ export const TreePost: React.FC<TreePostProps> = ({
   const loadComments = async () => {
     setIsLoadingComments(true);
     try {
-      // Load comments for this specific tree using tree ID
-      const commentsData = await commentsService.getTreeComments(post.id);
-      setComments(commentsData);
+      // Load comments for this specific tree using API
+      const commentsData = await commentsService.getTreeCommentsFromAPI(post.id);
+      console.log(`Loaded comments for tree ${post.id}:`, commentsData);
+      
+      // Remove duplicates based on comment ID
+      const uniqueComments = commentsData.filter((comment, index, self) => 
+        index === self.findIndex(c => c.id === comment.id)
+      );
+      
+      setComments(uniqueComments);
       setCommentsLoaded(true);
     } catch (error) {
-      console.error('Error loading comments:', error);
-      setComments([]);
+      console.error('Error loading comments from API:', error);
+      // Fallback to localStorage
+      const commentsData = commentsService.getTreeComments(post.id);
+      console.log(`Fallback comments for tree ${post.id}:`, commentsData);
+      
+      // Remove duplicates based on comment ID
+      const uniqueComments = commentsData.filter((comment, index, self) => 
+        index === self.findIndex(c => c.id === comment.id)
+      );
+      
+      setComments(uniqueComments);
       setCommentsLoaded(true);
     } finally {
       setIsLoadingComments(false);
@@ -62,9 +78,122 @@ export const TreePost: React.FC<TreePostProps> = ({
     if (!newComment.trim()) return;
 
     setIsSubmittingComment(true);
-    await onComment(post.id, newComment);
-    setNewComment('');
-    setIsSubmittingComment(false);
+    try {
+      // Pass userId to the comment creation
+      if (user?.id) {
+        await onComment(post.id, newComment, user.id);
+      } else {
+        await onComment(post.id, newComment);
+      }
+      setNewComment('');
+      // Reload comments after adding new one
+      await loadComments();
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleCommentVote = async (commentId: string, vote: 'like' | 'dislike') => {
+    try {
+      const comment = comments.find(c => c.id === commentId);
+      if (!comment) return;
+
+      const wasLiked = comment.userVote === 'like';
+      const wasDisliked = comment.userVote === 'dislike';
+
+      // Update local state immediately for better UX
+      setComments(prevComments =>
+        prevComments.map(c =>
+          c.id === commentId
+            ? {
+                ...c,
+                votes: {
+                  like: vote === 'like' && !wasLiked ? c.votes.like + 1 : 
+                        vote === 'like' && wasLiked ? c.votes.like - 1 : c.votes.like,
+                  dislike: vote === 'dislike' && !wasDisliked ? c.votes.dislike + 1 : 
+                           vote === 'dislike' && wasDisliked ? c.votes.dislike - 1 : c.votes.dislike
+                },
+                userVote: (vote === 'like' && wasLiked) || (vote === 'dislike' && wasDisliked) 
+                  ? null 
+                  : vote
+              }
+            : c
+        )
+      );
+
+      // Call API in background
+      try {
+        let updatedVotes;
+        if (vote === 'like' && wasLiked) {
+          // Remove existing like
+          updatedVotes = await commentsService.removeVoteFromComment(commentId);
+        } else if (vote === 'dislike' && wasDisliked) {
+          // Remove existing dislike
+          updatedVotes = await commentsService.removeVoteFromComment(commentId);
+        } else {
+          // Add vote (or change from one type to another)
+          const voteType = vote === 'like' ? 'Like' : 'Dislike';
+          updatedVotes = await commentsService.voteComment(commentId, voteType);
+        }
+
+        // Update with API response
+        setComments(prevComments =>
+          prevComments.map(c =>
+            c.id === commentId
+              ? { 
+                  ...c, 
+                  votes: updatedVotes,
+                  userVote: (vote === 'like' && wasLiked) || (vote === 'dislike' && wasDisliked) 
+                    ? null 
+                    : vote
+                }
+              : c
+          )
+        );
+      } catch (error) {
+        console.error('Error voting on comment:', error);
+        // Revert local changes on error
+        setComments(prevComments =>
+          prevComments.map(c =>
+            c.id === commentId
+              ? {
+                  ...c,
+                  votes: {
+                    like: vote === 'like' && !wasLiked ? c.votes.like - 1 : 
+                          vote === 'like' && wasLiked ? c.votes.like + 1 : c.votes.like,
+                    dislike: vote === 'dislike' && !wasDisliked ? c.votes.dislike - 1 : 
+                             vote === 'dislike' && wasDisliked ? c.votes.dislike + 1 : c.votes.dislike
+                  },
+                  userVote: wasLiked ? 'like' : wasDisliked ? 'dislike' : null
+                }
+              : c
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error voting on comment:', error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      // Remove from local state immediately
+      setComments(prevComments => prevComments.filter(c => c.id !== commentId));
+      
+      // Call API in background
+      try {
+        await commentsService.deleteComment(commentId);
+        console.log(`Comment ${commentId} deleted successfully`);
+      } catch (error) {
+        console.error('Error deleting comment:', error);
+        // Revert local changes on error
+        await loadComments();
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
   };
 
   return (
@@ -258,22 +387,43 @@ export const TreePost: React.FC<TreePostProps> = ({
                     <p className="text-gray-700 dark:text-gray-300 text-base mb-3">
                       {comment.content}
                     </p>
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={() => onCommentVote(comment.id, 'like')}
-                        className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                      >
-                        <ThumbsUp className="w-5 h-5" />
-                        <span className="text-sm font-medium">{comment.votes.like}</span>
-                      </button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => handleCommentVote(comment.id, 'like')}
+                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                            comment.userVote === 'like' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          <ThumbsUp className="w-5 h-5" />
+                          <span className="text-sm font-medium min-w-[20px] text-center">{comment.votes.like}</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleCommentVote(comment.id, 'dislike')}
+                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                            comment.userVote === 'dislike' 
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          <ThumbsDown className="w-5 h-5" />
+                          <span className="text-sm font-medium min-w-[20px] text-center">{comment.votes.dislike}</span>
+                        </button>
+                      </div>
                       
-                      <button
-                        onClick={() => onCommentVote(comment.id, 'dislike')}
-                        className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                      >
-                        <ThumbsDown className="w-5 h-5" />
-                        <span className="text-sm font-medium">{comment.votes.dislike}</span>
-                      </button>
+                      {/* Delete button - only show if user is the comment creator */}
+                      {user && comment.userId === user.id && (
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title="Usuń komentarz"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

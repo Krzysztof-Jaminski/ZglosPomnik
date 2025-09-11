@@ -52,10 +52,6 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       if (!mapRef.current) return;
 
       const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      
-      if (!apiKey) {
-        throw new Error('Google Maps API key is not configured. Please set VITE_GOOGLE_MAPS_API_KEY in your .env file.');
-      }
 
       const loader = new Loader({
         apiKey: apiKey,

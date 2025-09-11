@@ -2,7 +2,7 @@
 import { Species } from '../types';
 import { authService } from './authService';
 
-const API_BASE_URL = 'https://localhost:7274/api/Species';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/Species`;
 
 class SpeciesService {
   private async fetchWithAuth(url: string, options: RequestInit = {}) {

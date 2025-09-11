@@ -42,11 +42,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Sprawdź czy token istnieje w localStorage
         const token = localStorage.getItem('auth_token');
-        console.log('Initializing auth with token:', token ? 'exists' : 'not found');
         
         if (token) {
           // Jeśli mamy token, ustaw podstawowe dane użytkownika bez wywoływania API
-          console.log('Token found, setting user as authenticated');
           setUser({
             id: 'temp',
             email: 'user@example.com',
@@ -57,13 +55,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             verificationsCount: 0
           });
         } else {
-          console.log('No token found, user not authenticated');
+          // No token found
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
         // Wyloguj tylko jeśli token jest nieprawidłowy przy inicjalizacji
         if (error instanceof Error && error.message.includes('Authentication token expired')) {
-          console.log('Token expired, logging out');
           authService.logout();
         } else {
           // Dla innych błędów (np. sieciowych), nie wylogowuj automatycznie
@@ -72,7 +69,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // ustaw użytkownika jako zalogowanego na podstawie tokenu
           const token = localStorage.getItem('auth_token');
           if (token) {
-            console.log('Network error but token exists, setting user as authenticated');
             // Ustaw podstawowe dane użytkownika na podstawie tokenu
             setUser({
               id: 'temp',
@@ -96,14 +92,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginRequest) => {
     try {
       setIsLoading(true);
-      console.log('Starting login process...');
       const response: AuthResponse = await authService.login(credentials);
-      console.log('Login successful, setting user:', response.user);
       setUser(response.user);
       
-      // Sprawdź czy token został zapisany
-      const savedToken = localStorage.getItem('auth_token');
-      console.log('Token saved in localStorage:', savedToken ? 'YES' : 'NO');
+      // Verify token was saved
+      const savedToken = authService.getToken();
+      console.log('Token after login:', savedToken ? 'saved' : 'not saved');
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -115,14 +109,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: RegisterRequest) => {
     try {
       setIsLoading(true);
-      console.log('Starting registration process...');
       const response: AuthResponse = await authService.register(userData);
-      console.log('Registration successful, setting user:', response.user);
       setUser(response.user);
       
-      // Sprawdź czy token został zapisany
-      const savedToken = localStorage.getItem('auth_token');
-      console.log('Token saved in localStorage:', savedToken ? 'YES' : 'NO');
+      // Token is automatically saved by authService
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -132,7 +122,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    console.log('Logging out user');
     authService.logout();
     setUser(null);
   };
@@ -140,7 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshUser = async () => {
     // Nie wywołuj getCurrentUser - po prostu sprawdź czy użytkownik jest zalogowany
     if (authService.isAuthenticated()) {
-      console.log('User is authenticated, no need to refresh data');
+      // User is authenticated, no need to refresh data
     }
   };
 

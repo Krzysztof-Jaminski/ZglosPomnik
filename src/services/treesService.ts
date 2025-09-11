@@ -2,7 +2,7 @@
 import { Tree } from '../types';
 import { authService } from './authService';
 
-const API_BASE_URL = 'https://localhost:7274/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class TreesService {
   // Pobierz wszystkie drzewa
@@ -110,8 +110,8 @@ class TreesService {
     }
   }
 
-  // Głosowanie na drzewo (opcjonalne - jeśli API to obsługuje)
-  async voteOnTree(treeId: string, vote: 'like' | 'dislike'): Promise<void> {
+  // Głosowanie na drzewo - PUT /api/Trees/{id}/vote
+  async voteOnTree(treeId: string, voteType: 'like' | 'dislike'): Promise<{ like: number; dislike: number }> {
     try {
       const token = authService.getToken();
       if (!token) {
@@ -119,24 +119,98 @@ class TreesService {
       }
 
       const response = await fetch(`${API_BASE_URL}/Trees/${treeId}/vote`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        },
+        body: JSON.stringify({ 
+          type: voteType === 'like' ? 'Like' : 'Dislike' 
+        })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication token expired');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`Vote ${voteType} on tree ${treeId}:`, data);
+      return data;
+    } catch (error) {
+      console.error('Vote on tree error:', error);
+      throw error;
+    }
+  }
+
+  // Usuwanie głosu na drzewo - DELETE /api/Trees/{id}/vote
+  async removeVoteFromTree(treeId: string): Promise<{ like: number; dislike: number }> {
+    try {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/Trees/${treeId}/vote`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'accept': '*/*'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication token expired');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`Removed vote from tree ${treeId}:`, data);
+      return data;
+    } catch (error) {
+      console.error('Remove vote from tree error:', error);
+      throw error;
+    }
+  }
+
+  // Submit tree report to API
+  async submitTreeReport(treeData: any): Promise<any> {
+    try {
+      const token = authService.getToken();
+      console.log('Token from authService:', token ? 'exists' : 'null');
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      console.log('Submitting tree report to API:', treeData);
+
+      const response = await fetch(`/api/Trees`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'accept': '*/*'
         },
-        body: JSON.stringify({ vote })
+        body: JSON.stringify(treeData)
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Token wygasł - nie wylogowuj automatycznie, tylko rzuć błąd
           throw new Error('Authentication token expired');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log('Tree report submitted successfully:', data);
+      return data;
     } catch (error) {
-      console.error('Vote on tree error:', error);
+      console.error('Submit tree report error:', error);
       throw error;
     }
   }

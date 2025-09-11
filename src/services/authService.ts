@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://localhost:7274/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface RegisterRequest {
   firstName: string;
@@ -88,11 +88,16 @@ class AuthService {
     }
 
     const data = await response.json();
+    console.log('Login response data:', data);
     const token = data.token || data.accessToken || data.access_token || data.jwt || data.authToken;
+    console.log('Extracted token:', token ? 'found' : 'not found');
     
     if (token) {
       this.token = token;
       localStorage.setItem('auth_token', token);
+      console.log('Token saved to localStorage');
+    } else {
+      console.error('No token found in login response');
     }
 
     return data;
@@ -118,6 +123,14 @@ class AuthService {
   }
 
   getToken(): string | null {
+    // Always get the latest token from localStorage to ensure synchronization
+    if (typeof localStorage !== 'undefined') {
+      const storedToken = localStorage.getItem('auth_token');
+      if (storedToken !== this.token) {
+        this.token = storedToken;
+      }
+      return storedToken;
+    }
     return this.token;
   }
 

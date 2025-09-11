@@ -11,7 +11,12 @@ const config: CapacitorConfig = {
     }
   },
   android: {
-    icon: 'resources/android/icon/drawable-mdpi-icon.png'
+    icon: 'resources/android/icon/drawable-mdpi-icon.png',
+    allowMixedContent: true,
+    webContentsDebuggingEnabled: true
+  },
+  server: {
+    androidScheme: 'http'
   }
 };
 
