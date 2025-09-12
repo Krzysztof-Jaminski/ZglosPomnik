@@ -181,7 +181,7 @@ export const AdminPage: React.FC = () => {
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-      <div className="max-w-5xl sm:max-w-none mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -226,7 +226,7 @@ export const AdminPage: React.FC = () => {
 
           <div className="p-2 sm:p-6">
             {activeTab === 'reports' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6">
                 {trees.map((tree, index) => (
                   <motion.div
                     key={tree.id}
@@ -352,7 +352,7 @@ export const AdminPage: React.FC = () => {
             )}
 
             {activeTab === 'users' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6">
                 {users.map((user, index) => (
                   <motion.div
                     key={user.id}

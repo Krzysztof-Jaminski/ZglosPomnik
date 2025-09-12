@@ -38,7 +38,7 @@ export const FeedPage: React.FC = () => {
           dislikes: tree.votes?.dislike || 0,
           userVote: null, // Will be set by API if user has voted
           comments: [], // Comments will be loaded on demand
-          commentsCount: 0
+          commentCount: tree.commentCount || 0
         }));
 
         setPosts(postsData);
@@ -52,7 +52,7 @@ export const FeedPage: React.FC = () => {
           dislikes: tree.votes?.dislike || 0,
           userVote: null,
           comments: [],
-          commentsCount: 0
+          commentCount: tree.commentCount || 0
         }));
         setPosts(postsData);
       } finally {
@@ -202,7 +202,7 @@ export const FeedPage: React.FC = () => {
               return {
                 ...post,
                 comments: [newComment, ...post.comments],
-                commentsCount: post.commentsCount + 1
+                commentCount: post.commentCount + 1
               };
             }
             return post;
@@ -212,6 +212,11 @@ export const FeedPage: React.FC = () => {
     } catch (error) {
       console.error('Error adding comment:', error);
     }
+  };
+
+  // Handle post deletion
+  const handleDeletePost = (postId: string) => {
+    setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
   };
 
 
@@ -238,10 +243,10 @@ export const FeedPage: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-end">
-          <div className="flex items-center space-x-2">
+        {/* Header */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-center">
+            <div className="flex items-center space-x-2">
             <GlassButton
               onClick={() => setSortBy('recent')}
               variant={sortBy === 'recent' ? 'primary' : 'secondary'}
@@ -258,11 +263,10 @@ export const FeedPage: React.FC = () => {
             </GlassButton>
           </div>
         </div>
-      </div>
 
       {/* Posts */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-6">
+      <div className="flex-1 overflow-y-auto px-2 py-4">
+        <div className="space-y-8 sm:space-y-12 w-full px-2 sm:px-4 lg:px-6">
           {filteredAndSortedPosts.map((post) => (
             <div
               key={post.id}
@@ -273,6 +277,7 @@ export const FeedPage: React.FC = () => {
                 onLike={handleLike}
                 onDislike={handleDislike}
                 onComment={handleComment}
+                onDelete={handleDeletePost}
               />
             </div>
           ))}
@@ -285,6 +290,7 @@ export const FeedPage: React.FC = () => {
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

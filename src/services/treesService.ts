@@ -214,6 +214,65 @@ class TreesService {
       throw error;
     }
   }
+
+  // Usuń post drzewa - DELETE /api/Trees/{id}
+  async deleteTree(treeId: string): Promise<void> {
+    try {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      console.log('Attempting to delete tree:', {
+        treeId,
+        url: `/api/Trees/${treeId}`,
+        token: token ? 'exists' : 'missing'
+      });
+
+      const response = await fetch(`/api/Trees/${treeId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'accept': '*/*'
+        }
+      });
+
+      console.log('Delete tree response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication token expired');
+        }
+        if (response.status === 403) {
+          throw new Error('You can only delete your own tree posts');
+        }
+        if (response.status === 404) {
+          throw new Error('Tree post not found');
+        }
+        if (response.status === 500) {
+          // Try to get error details from response
+          let errorMessage = 'Internal server error';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (e) {
+            // If we can't parse JSON, use default message
+          }
+          throw new Error(`Server error: ${errorMessage}`);
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log(`Deleted tree post ${treeId}`);
+    } catch (error) {
+      console.error('Delete tree error:', error);
+      throw error;
+    }
+  }
 }
 
 // Eksportuj singleton instance

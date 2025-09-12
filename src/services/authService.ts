@@ -15,15 +15,7 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    avatar: string;
-    registrationDate: string;
-    submissionsCount: number;
-    verificationsCount: number;
-  };
+  user: User;
   token: string;
 }
 
@@ -31,19 +23,55 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  postalCode: string | null;
   avatar: string;
   registrationDate: string;
-  submissionsCount: number;
-  verificationsCount: number;
+  submissionsCount?: number;
+  verificationsCount?: number;
 }
 
 class AuthService {
   private token: string | null = null;
+  private user: User | null = null;
 
   constructor() {
     if (typeof localStorage !== 'undefined') {
       this.token = localStorage.getItem('auth_token');
+      this.user = this.getStoredUser();
     }
+  }
+
+  private getStoredUser(): User | null {
+    if (typeof localStorage === 'undefined') return null;
+    
+    try {
+      const stored = localStorage.getItem('user_data');
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.error('Error parsing stored user data:', error);
+      return null;
+    }
+  }
+
+  private saveUser(user: User): void {
+    this.user = user;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('user_data', JSON.stringify(user));
+    }
+  }
+
+  private clearUser(): void {
+    this.user = null;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('user_data');
+    }
+  }
+
+  getCurrentUserData(): User | null {
+    return this.user;
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
@@ -67,6 +95,11 @@ class AuthService {
     if (token) {
       this.token = token;
       localStorage.setItem('auth_token', token);
+    }
+
+    // Save user data
+    if (data.user) {
+      this.saveUser(data.user);
     }
 
     return data;
@@ -100,11 +133,18 @@ class AuthService {
       console.error('No token found in login response');
     }
 
+    // Save user data
+    if (data.user) {
+      this.saveUser(data.user);
+      console.log('User data saved to localStorage:', data.user);
+    }
+
     return data;
   }
 
   logout(): void {
     this.token = null;
+    this.clearUser();
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('auth_token');
     }
@@ -162,6 +202,10 @@ class AuthService {
           id: 'temp',
           email: 'user@example.com',
           name: 'User',
+          phone: null,
+          address: null,
+          city: null,
+          postalCode: null,
           avatar: '',
           registrationDate: new Date().toISOString(),
           submissionsCount: 0,

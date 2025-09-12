@@ -46,6 +46,7 @@ export const Header: React.FC = () => {
               variant="secondary"
               title={`Current theme: ${theme}`}
               icon={ThemeIcon}
+              className="flex items-center justify-center"
             >
               <span className="sr-only">Toggle theme</span>
             </GlassButton>
@@ -55,6 +56,7 @@ export const Header: React.FC = () => {
                 variant="secondary"
                 title="Profil użytkownika"
                 icon={User}
+                className="flex items-center justify-center"
               >
                 <span className="sr-only">Profil</span>
               </GlassButton>

@@ -29,7 +29,8 @@ const mockTrees: Tree[] = [
     votes: {
       like: 15,
       dislike: 2
-    }
+    },
+    commentCount: 4
   },
   {
     id: '2',
@@ -58,7 +59,8 @@ const mockTrees: Tree[] = [
     votes: {
       like: 8,
       dislike: 1
-    }
+    },
+    commentCount: 2
   },
   {
     id: '3',
@@ -87,7 +89,8 @@ const mockTrees: Tree[] = [
     votes: {
       like: 3,
       dislike: 5
-    }
+    },
+    commentCount: 1
   }
 ];
 
@@ -96,6 +99,7 @@ const mockComments: Comment[] = [
     id: 'comment-1',
     treeSubmissionId: '1',
     treePolishName: 'Dąb szypułkowy',
+    userId: 'user-1',
     userData: {
       userName: 'Miłośnik Drzew',
       avatar: 'https://ui-avatars.com/api/?name=Tree&background=10b981&color=fff'
@@ -106,12 +110,14 @@ const mockComments: Comment[] = [
     votes: {
       like: 12,
       dislike: 0
-    }
+    },
+    userVote: null
   },
   {
     id: 'comment-2',
     treeSubmissionId: '1',
     treePolishName: 'Dąb szypułkowy',
+    userId: 'user-2',
     userData: {
       userName: 'Eko Aktywista',
       avatar: 'https://ui-avatars.com/api/?name=Eco&background=10b981&color=fff'
@@ -122,12 +128,14 @@ const mockComments: Comment[] = [
     votes: {
       like: 8,
       dislike: 1
-    }
+    },
+    userVote: null
   },
   {
     id: 'comment-3',
     treeSubmissionId: '2',
     treePolishName: 'Lipa drobnolistna',
+    userId: 'user-3',
     userData: {
       userName: 'Przyrodnik',
       avatar: 'https://ui-avatars.com/api/?name=Nature&background=10b981&color=fff'
@@ -138,12 +146,14 @@ const mockComments: Comment[] = [
     votes: {
       like: 5,
       dislike: 0
-    }
+    },
+    userVote: null
   },
   {
     id: 'comment-4',
     treeSubmissionId: '2',
     treePolishName: 'Lipa drobnolistna',
+    userId: 'user-4',
     userData: {
       userName: 'Mieszkaniec',
       avatar: 'https://ui-avatars.com/api/?name=Resident&background=10b981&color=fff'
@@ -154,7 +164,8 @@ const mockComments: Comment[] = [
     votes: {
       like: 3,
       dislike: 0
-    }
+    },
+    userVote: null
   }
 ];
 
@@ -189,72 +200,6 @@ const mockApplications = [
   }
 ];
 
-const mockSpecies = [
-  {
-    id: '1',
-    scientificName: 'Quercus robur',
-    commonName: 'Dąb szypułkowy',
-    family: 'Fagaceae',
-    description: 'Majestatyczne drzewo liściaste o charakterystycznych klapowanych liściach',
-    images: ['https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg'],
-    characteristics: {
-      height: '25-40m',
-      lifespan: '500-1000 lat',
-      leaves: 'Klapowane, głęboko wcięte',
-      bark: 'Szara, głęboko bruzdowana'
-    },
-    habitat: 'Lasy liściaste, parki',
-    conservationStatus: 'Stabilny'
-  },
-  {
-    id: '2',
-    scientificName: 'Acer platanoides',
-    commonName: 'Klon zwyczajny',
-    family: 'Sapindaceae',
-    description: 'Popularne drzewo ozdobne o pięknych jesiennych barwach',
-    images: ['https://images.pexels.com/photos/1172675/pexels-photo-1172675.jpeg'],
-    characteristics: {
-      height: '20-30m',
-      lifespan: '150-200 lat',
-      leaves: 'Dłoniaste, 5-klapowe',
-      bark: 'Szaro-brązowa, gładka'
-    },
-    habitat: 'Parki, aleje, lasy mieszane',
-    conservationStatus: 'Stabilny'
-  },
-  {
-    id: '3',
-    scientificName: 'Betula pendula',
-    commonName: 'Brzoza brodawkowata',
-    family: 'Betulaceae',
-    description: 'Charakterystyczne drzewo o białej korze i zwisających gałązkach',
-    images: ['https://images.pexels.com/photos/1172675/pexels-photo-1172675.jpeg'],
-    characteristics: {
-      height: '15-25m',
-      lifespan: '80-120 lat',
-      leaves: 'Rombowate, ząbkowane',
-      bark: 'Biała, papierowata'
-    },
-    habitat: 'Lasy, tereny podmokłe',
-    conservationStatus: 'Stabilny'
-  },
-  {
-    id: '4',
-    scientificName: 'Pinus sylvestris',
-    commonName: 'Sosna zwyczajna',
-    family: 'Pinaceae',
-    description: 'Wiecznie zielone drzewo iglaste o charakterystycznej korze',
-    images: ['https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg'],
-    characteristics: {
-      height: '20-35m',
-      lifespan: '200-400 lat',
-      leaves: 'Igły w parach, niebiesko-zielone',
-      bark: 'Pomarańczowo-czerwona u góry'
-    },
-    habitat: 'Lasy iglaste, bory',
-    conservationStatus: 'Stabilny'
-  }
-];
 
 const mockApplicationTemplates = [
   {
@@ -391,11 +336,6 @@ export const api = {
     throw new Error('Application not found');
   },
 
-  // Species
-  async getSpecies() {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockSpecies;
-  },
 
   // Application Templates
   async getApplicationTemplates() {

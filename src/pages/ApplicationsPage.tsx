@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, ExternalLink, Clock, CheckCircle, XCircle, ArrowLeft, ArrowRight, Plus, Bot, MapPin, User, Mail, Phone, FileCheck, MessageCircle, X, Send } from 'lucide-react';
+import { FileText, Download, ExternalLink, Clock, CheckCircle, XCircle, ArrowLeft, ArrowRight, Plus, MapPin, User, Mail, Phone, FileCheck } from 'lucide-react';
 import { Tree, ApplicationTemplate, Municipality } from '../types';
 import { api } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,12 +16,6 @@ interface ApplicationForm {
   templateId: string;
 }
 
-interface ChatMessage {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
 
 export const ApplicationsPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<ApplicationStep>(() => {
@@ -48,11 +42,6 @@ export const ApplicationsPage: React.FC = () => {
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
-  const [isAiHelping, setIsAiHelping] = useState(false);
-  const [showAiAssistant, setShowAiAssistant] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [isAiTyping, setIsAiTyping] = useState(false);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
 
   // Save progress to localStorage
@@ -118,21 +107,6 @@ export const ApplicationsPage: React.FC = () => {
     setCurrentStep('select-municipality');
   };
 
-  const handleAiHelp = async () => {
-    if (!selectedTree) return;
-    
-    setIsAiHelping(true);
-    // Mock AI generation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const aiJustification = `Wnoszę o objęcie ochroną prawną drzewa ${selectedTree.species} (${selectedTree.speciesLatin}) ze względu na jego wyjątkowe walory przyrodnicze i krajobrazowe. Drzewo charakteryzuje się ${selectedTree.description.toLowerCase()}. Jego zachowanie jest istotne dla lokalnego ekosystemu i dziedzictwa przyrodniczego naszej gminy.`;
-    
-    setApplicationForm(prev => ({
-      ...prev,
-      justification: aiJustification
-    }));
-    setIsAiHelping(false);
-  };
 
   const handleGeneratePdf = async () => {
     setIsGenerating(true);
@@ -148,46 +122,6 @@ export const ApplicationsPage: React.FC = () => {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!chatInput.trim()) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      text: chatInput,
-      isUser: true,
-      timestamp: new Date()
-    };
-
-    setChatMessages(prev => [...prev, userMessage]);
-    setChatInput('');
-    setIsAiTyping(true);
-
-    // Mock AI response
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        text: getAiResponse(chatInput),
-        isUser: false,
-        timestamp: new Date()
-      };
-      setChatMessages(prev => [...prev, aiResponse]);
-      setIsAiTyping(false);
-    }, 1500);
-  };
-
-  const getAiResponse = (question: string): string => {
-    const q = question.toLowerCase();
-    if (q.includes('epuap') || q.includes('wysłać')) {
-      return 'Aby wysłać wniosek przez ePUAP: 1) Zaloguj się na epuap.gov.pl, 2) Znajdź swoją gminę, 3) Wybierz usługę "Pomniki przyrody", 4) Załącz wygenerowany PDF i wypełnij formularz online.';
-    }
-    if (q.includes('gmina') || q.includes('urząd')) {
-      return 'Możesz też wysłać wniosek tradycyjnie - pocztą lub osobiście do urzędu gminy. Adres znajdziesz w instrukcjach po wygenerowaniu PDF.';
-    }
-    if (q.includes('pdf') || q.includes('dokument')) {
-      return 'PDF zawiera wszystkie potrzebne informacje o drzewie i Twoich danych. Pamiętaj, żeby go podpisać przed wysłaniem!';
-    }
-    return 'Jestem tutaj, żeby pomóc! Możesz zapytać mnie o proces wysyłania wniosku, ePUAP, lub wymagane dokumenty.';
-  };
 
   const clearProgress = () => {
     localStorage.removeItem('applicationStep');
@@ -241,7 +175,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl sm:max-w-none mx-auto px-1 sm:px-0"
+      className="max-w-7xl mx-auto px-1 sm:px-0"
     >
       <div className="text-center mb-4 sm:mb-6">
         <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-2" />
@@ -303,7 +237,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl sm:max-w-none mx-auto px-1 sm:px-0"
+      className="max-w-7xl mx-auto px-1 sm:px-0"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -375,7 +309,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl sm:max-w-none mx-auto px-1 sm:px-0"
+      className="max-w-7xl mx-auto px-1 sm:px-0"
     >
       <div className="text-center mb-2 sm:mb-3">
         <h2 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
@@ -447,7 +381,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl sm:max-w-none mx-auto px-1 sm:px-0"
+      className="max-w-7xl mx-auto px-1 sm:px-0"
     >
       <div className="text-center mb-2 sm:mb-3">
         <h2 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
@@ -521,19 +455,10 @@ export const ApplicationsPage: React.FC = () => {
 
           <div className="space-y-2 sm:space-y-3">
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="mb-1">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                   Uzasadnienie wniosku
                 </label>
-                <GlassButton
-                  onClick={handleAiHelp}
-                  disabled={isAiHelping || !selectedTree}
-                  variant="secondary"
-                  size="xs"
-                  icon={Bot}
-                >
-                  <span style={{ fontSize: '9px' }}>{isAiHelping ? 'Generowanie...' : 'Pomoc AI'}</span>
-                </GlassButton>
               </div>
               <textarea
                 value={applicationForm.justification}
@@ -586,7 +511,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl sm:max-w-none mx-auto px-1 sm:px-0"
+      className="max-w-7xl mx-auto px-1 sm:px-0"
     >
       <div className="mb-2 sm:mb-3 text-center">
         <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mx-auto mb-1" />
@@ -835,95 +760,6 @@ export const ApplicationsPage: React.FC = () => {
     </div>
   );
 
-  const renderAiAssistant = () => (
-    <div className="fixed bottom-4 right-4 z-50">
-      {showAiAssistant ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-80 h-96 flex flex-col"
-        >
-          <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-2">
-              <Bot className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-gray-900 dark:text-white">Asystent AI</h3>
-            </div>
-            <button
-              onClick={() => setShowAiAssistant(false)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {chatMessages.length === 0 && (
-              <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
-                Cześć! Jestem tutaj, żeby pomóc Ci z procesem wysyłania wniosku. Zadaj mi pytanie!
-              </div>
-            )}
-            {chatMessages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] p-2 rounded-lg text-sm ${
-                    message.isUser
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                  }`}
-                >
-                  {message.text}
-                </div>
-              </div>
-            ))}
-            {isAiTyping && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Zadaj pytanie..."
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!chatInput.trim()}
-                className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      ) : (
-        <GlassButton
-          onClick={() => setShowAiAssistant(true)}
-          variant="primary"
-          size="sm"
-          icon={MessageCircle}
-          className="!rounded-full !p-3"
-        >
-          <span className="sr-only">Otwórz asystenta AI</span>
-        </GlassButton>
-      )}
-    </div>
-  );
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 overflow-y-auto">
@@ -943,8 +779,6 @@ export const ApplicationsPage: React.FC = () => {
           {currentStep === 'completed' && renderCompleted()}
         </AnimatePresence>
 
-        {/* AI Assistant */}
-        {currentStep !== 'overview' && renderAiAssistant()}
 
         {/* Instructions Modal */}
         {showInstructionsModal && renderInstructionsModal()}

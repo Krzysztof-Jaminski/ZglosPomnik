@@ -93,16 +93,7 @@ class CommentsService {
 
       const comments = await response.json();
       
-      // Add userId to comments if not present
-      const currentUser = await authService.getCurrentUser();
-      const commentsWithUserId = comments.map((comment: Comment) => {
-        if (!comment.userId && currentUser) {
-          comment.userId = currentUser.id;
-        }
-        return comment;
-      });
-      
-      return commentsWithUserId;
+      return comments;
     } catch (error) {
       console.error('Get tree comments error:', error);
       // Fallback to localStorage
@@ -295,12 +286,25 @@ class CommentsService {
         throw new Error('No authentication token');
       }
 
-      const response = await fetch(`${API_BASE_URL}/Comments/${commentId}`, {
+      console.log('Attempting to delete comment:', {
+        commentId,
+        url: `/api/Comments/${commentId}`,
+        token: token ? 'exists' : 'missing',
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
+      });
+
+      const response = await fetch(`/api/Comments/${commentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
           'accept': '*/*'
         }
+      });
+
+      console.log('Delete comment response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
       });
 
       if (!response.ok) {
@@ -309,6 +313,17 @@ class CommentsService {
         }
         if (response.status === 403) {
           throw new Error('You can only delete your own comments');
+        }
+        if (response.status === 404) {
+          // Try to get error details from response
+          let errorMessage = 'Comment not found';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          } catch (e) {
+            // If we can't parse JSON, use default message
+          }
+          throw new Error(`Comment not found: ${errorMessage}`);
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }

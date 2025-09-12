@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, X, Search, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Camera, Upload, X, Search, ChevronDown, ChevronUp, ZoomIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TreeSpecies, NewTreeReport, ApiTreeSubmission } from '../../types';
+import { Species, NewTreeReport, ApiTreeSubmission } from '../../types';
+import { speciesService } from '../../services/speciesService';
 import { api } from '../../services/api';
 import { treesService } from '../../services/treesService';
 import { storage } from '../../utils/storage';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { GlassButton } from '../UI/GlassButton';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 interface TreeReportFormProps {
@@ -23,10 +23,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   onSubmit,
   onCancel
 }) => {
-  const [selectedSpecies, setSelectedSpecies] = useState<TreeSpecies | null>(null);
+  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
   const [speciesQuery, setSpeciesQuery] = useState('');
-  const [allSpecies, setAllSpecies] = useState<TreeSpecies[]>([]);
-  const [filteredSpecies, setFilteredSpecies] = useState<TreeSpecies[]>([]);
+  const [allSpecies, setAllSpecies] = useState<Species[]>([]);
+  const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
   const [showSpeciesPanel, setShowSpeciesPanel] = useState(false);
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
@@ -39,11 +39,11 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isOnline = useOnlineStatus();
-  const navigate = useNavigate();
   const { isAuthenticated, user, isLoading } = useAuth();
 
   // Load all species when component mounts
@@ -51,7 +51,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     const loadAllSpecies = async () => {
       setIsLoadingSpecies(true);
       try {
-        const species = await api.getSpecies();
+        const species = await speciesService.getSpecies();
         setAllSpecies(species);
         setFilteredSpecies(species);
       } catch (error) {
@@ -73,8 +73,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
 
     const query = speciesQuery.toLowerCase();
     const filtered = allSpecies.filter(species => 
-      species.commonName.toLowerCase().includes(query) ||
-      species.scientificName.toLowerCase().includes(query) ||
+      species.polishName.toLowerCase().includes(query) ||
+      species.latinName.toLowerCase().includes(query) ||
       species.family.toLowerCase().includes(query)
     );
     setFilteredSpecies(filtered);
@@ -84,16 +84,12 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     setShowSpeciesPanel(true);
   };
 
-  const handleSpeciesSelect = (species: TreeSpecies) => {
+  const handleSpeciesSelect = (species: Species) => {
     setSelectedSpecies(species);
-    setSpeciesQuery(`${species.commonName} (${species.scientificName})`);
+    setSpeciesQuery(`${species.polishName} (${species.latinName})`);
     setShowSpeciesPanel(false);
   };
 
-  const handleSpeciesCardClick = (species: TreeSpecies) => {
-    // Navigate to encyclopedia with the specific species
-    navigate('/encyclopedia', { state: { selectedSpecies: species.id } });
-  };
 
   const handlePhotoAdd = (files: FileList | null) => {
     if (files) {
@@ -159,8 +155,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       } else {
         // Offline mode - store for later sync
         const report: NewTreeReport = {
-          species: selectedSpecies.scientificName,
-          commonName: selectedSpecies.commonName,
+          species: selectedSpecies.latinName,
+          commonName: selectedSpecies.polishName,
           latitude,
           longitude,
           notes,
@@ -282,12 +278,12 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 overflow-hidden"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 overflow-hidden"
               >
                 <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-medium text-gray-900 dark:text-white">
-                      Wybierz gatunek z encyklopedii
+                      Gatunki
                     </h3>
                     <span className="text-base text-gray-500">
                       {filteredSpecies.length} gatunków
@@ -295,7 +291,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                   </div>
                 </div>
 
-                <div className="max-h-48 sm:max-h-96 overflow-y-auto p-3 sm:p-6">
+                <div className="max-h-96 sm:max-h-[28rem] overflow-y-auto p-3 sm:p-6">
                   {isLoadingSpecies ? (
                     <div className="flex items-center justify-center py-4 sm:py-8">
                       <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-600"></div>
@@ -306,44 +302,71 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                       {filteredSpecies.map((species) => (
                         <div
                           key={species.id}
-                          className="group relative bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer p-3 sm:p-4"
+                          className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer overflow-hidden border border-gray-200 dark:border-gray-700"
                         >
                           {/* Species card for selection */}
                           <div
                             onClick={() => handleSpeciesSelect(species)}
-                            className="flex items-center space-x-3 sm:space-x-4"
+                            className="p-4 sm:p-6"
                           >
-                            <div className="flex-shrink-0">
-                              <img
-                                src={species.images[0]}
-                                alt={species.commonName}
-                                className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded-md"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 dark:text-white text-base mb-1 truncate">
-                                {species.commonName}
+                            {/* Header with name and family */}
+                            <div className="mb-4">
+                              <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">
+                                {species.polishName}
                               </h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-1 truncate">
-                                {species.scientificName}
+                              <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-1">
+                                {species.latinName}
                               </p>
-                              <p className="text-sm text-gray-500 truncate">
-                                {species.family}
+                              <p className="text-sm text-gray-500">
+                                Rodzina: {species.family}
                               </p>
                             </div>
+
+                            {/* Images Grid - up to 4 images */}
+                            <div className="grid grid-cols-2 gap-2 mb-4">
+                              {species.images.slice(0, 4).map((image, index) => {
+                                const typeLabels = {
+                                  'Tree': 'Całościowe',
+                                  'Leaf': 'Liście', 
+                                  'Bark': 'Kora',
+                                  'Fruit': 'Owoce',
+                                  'Flower': 'Kwiaty'
+                                };
+                                return (
+                                  <div key={index} className="relative group">
+                                    <img
+                                      src={image.imageUrl}
+                                      alt={image.altText || `${species.polishName} - ${typeLabels[image.type] || 'Zdjęcie'}`}
+                                      className="w-full h-16 sm:h-20 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEnlargedImage(image.imageUrl);
+                                      }}
+                                    />
+                                    <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
+                                      {typeLabels[image.type] || 'Zdjęcie'}
+                                    </div>
+                                    <div className="absolute top-1 right-1 bg-black/70 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <ZoomIn className="w-3 h-3" />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              
+                              {/* Fill empty slots if less than 4 images */}
+                              {Array.from({ length: Math.max(0, 4 - species.images.length) }).map((_, index) => (
+                                <div key={`empty-${index}`} className="w-full h-16 sm:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs text-gray-500">Brak zdjęcia</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Description */}
+                            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+                              {species.description}
+                            </p>
                           </div>
 
-                          {/* Encyclopedia link overlay */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSpeciesCardClick(species);
-                            }}
-                            className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1 bg-white dark:bg-gray-800 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-700"
-                            title="Zobacz w encyklopedii"
-                          >
-                            <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300" />
-                          </button>
                         </div>
                       ))}
                     </div>
@@ -370,16 +393,16 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             >
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <img
-                  src={selectedSpecies.images[0]}
-                  alt={selectedSpecies.commonName}
+                  src={selectedSpecies.images[0]?.imageUrl || '/logo.png'}
+                  alt={selectedSpecies.images[0]?.altText || selectedSpecies.polishName}
                   className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
                 />
                 <div className="flex-1">
                   <h4 className="text-base sm:text-lg font-medium text-green-900 dark:text-green-300">
-                    {selectedSpecies.commonName}
+                    {selectedSpecies.polishName}
                   </h4>
                   <p className="text-sm sm:text-base text-green-700 dark:text-green-400 italic">
-                    {selectedSpecies.scientificName}
+                    {selectedSpecies.latinName}
                   </p>
                   <p className="text-sm text-green-600 dark:text-green-500">
                     Rodzina: {selectedSpecies.family}
@@ -489,7 +512,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Pierśnica (130 cm) <span className="text-gray-500">(cm)</span>
+              Pierśnica (cm)
             </label>
             <input
               type="number"
@@ -503,7 +526,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </div>
           <div>
             <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Wysokość drzewa <span className="text-gray-500">(m)</span>
+              Wysokość drzewa (m)
             </label>
             <input
               type="number"
@@ -535,34 +558,29 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
               Stan drzewa
             </label>
-            <select
+            <input
+              type="text"
               value={condition}
               onChange={(e) => setCondition(e.target.value)}
+              placeholder="np. dobry, średni, słaby"
               className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
-            >
-              <option value="excellent">Doskonały</option>
-              <option value="good">Dobry</option>
-              <option value="average">Średni</option>
-              <option value="poor">Słaby</option>
-              <option value="critical">Krytyczny</option>
-            </select>
+            />
           </div>
           <div>
             <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
               Czy drzewo żyje?
             </label>
-            <select
-              value={isAlive ? 'true' : 'false'}
-              onChange={(e) => setIsAlive(e.target.value === 'true')}
+            <input
+              type="text"
+              value={isAlive ? 'tak' : 'nie'}
+              onChange={(e) => setIsAlive(e.target.value.toLowerCase() === 'tak')}
+              placeholder="tak / nie"
               className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
-            >
-              <option value="true">Tak</option>
-              <option value="false">Nie</option>
-            </select>
+            />
           </div>
           <div>
             <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Szacowany wiek <span className="text-gray-500">(lata)</span>
+              Szacowany wiek (lata)
             </label>
             <input
               type="number"
@@ -621,6 +639,39 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </GlassButton>
         </div>
       </form>
+
+      {/* Enlarged Image Modal */}
+      <AnimatePresence>
+        {enlargedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              className="relative max-w-4xl max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={enlargedImage}
+                alt="Powiększone zdjęcie"
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+              <button
+                onClick={() => setEnlargedImage(null)}
+                className="absolute top-4 right-4 bg-black/70 text-white p-2 rounded-full hover:bg-black/90 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

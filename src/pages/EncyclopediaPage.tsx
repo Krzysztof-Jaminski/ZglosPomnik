@@ -134,7 +134,7 @@ export const EncyclopediaPage: React.FC = () => {
   if (selectedSpecies) {
     return (
       <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="w-full px-2 sm:px-4 lg:px-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -160,7 +160,7 @@ export const EncyclopediaPage: React.FC = () => {
                 <img
                   src={selectedSpecies.images[selectedImageIndex]?.imageUrl}
                   alt={selectedSpecies.images[selectedImageIndex]?.altText || selectedSpecies.polishName}
-                  className="w-full h-80 sm:h-96 md:h-[28rem] lg:h-[32rem] xl:h-[36rem] object-cover cursor-pointer"
+                  className="w-full h-96 sm:h-[40rem] md:h-[48rem] lg:h-[56rem] xl:h-[64rem] 2xl:h-[72rem] object-cover cursor-pointer"
                   onClick={() => openImageViewer(selectedImageIndex)}
                 />
               </div>
@@ -367,7 +367,7 @@ export const EncyclopediaPage: React.FC = () => {
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-2 sm:px-4 lg:px-6">
 
 
         {/* Search */}
@@ -385,7 +385,7 @@ export const EncyclopediaPage: React.FC = () => {
         </div>
 
         {/* Species grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
           {filteredSpecies.map((speciesItem) => (
             <div key={speciesItem.id}>
               <SpeciesCard 

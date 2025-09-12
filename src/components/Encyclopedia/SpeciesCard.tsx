@@ -19,7 +19,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, onClick }) =>
         <img
           src={species.images[0]?.imageUrl || '/logo.png'}
           alt={species.images[0]?.altText || species.polishName}
-          className="w-full h-24 sm:h-52 object-cover transition-transform duration-300 hover:scale-105"
+          className="w-full h-24 sm:h-64 md:h-96 lg:h-[28rem] xl:h-[32rem] 2xl:h-[36rem] object-cover transition-transform duration-300 hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
       </div>

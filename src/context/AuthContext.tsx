@@ -44,16 +44,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const token = localStorage.getItem('auth_token');
         
         if (token) {
-          // Jeśli mamy token, ustaw podstawowe dane użytkownika bez wywoływania API
-          setUser({
-            id: 'temp',
-            email: 'user@example.com',
-            name: 'User',
-            avatar: '',
-            registrationDate: new Date().toISOString(),
-            submissionsCount: 0,
-            verificationsCount: 0
-          });
+          // Jeśli mamy token, sprawdź czy mamy zapisane dane użytkownika
+          const userData = authService.getCurrentUserData();
+          if (userData) {
+            setUser(userData);
+          } else {
+            // Fallback do podstawowych danych jeśli nie ma zapisanych danych
+            setUser({
+              id: 'temp',
+              email: 'user@example.com',
+              name: 'User',
+              phone: null,
+              address: null,
+              city: null,
+              postalCode: null,
+              avatar: '',
+              registrationDate: new Date().toISOString(),
+              submissionsCount: 0,
+              verificationsCount: 0
+            });
+          }
         } else {
           // No token found
         }
@@ -69,16 +79,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // ustaw użytkownika jako zalogowanego na podstawie tokenu
           const token = localStorage.getItem('auth_token');
           if (token) {
-            // Ustaw podstawowe dane użytkownika na podstawie tokenu
-            setUser({
-              id: 'temp',
-              email: 'user@example.com',
-              name: 'User',
-              avatar: '',
-              registrationDate: new Date().toISOString(),
-              submissionsCount: 0,
-              verificationsCount: 0
-            });
+            // Sprawdź czy mamy zapisane dane użytkownika
+            const userData = authService.getCurrentUserData();
+            if (userData) {
+              setUser(userData);
+            } else {
+              // Ustaw podstawowe dane użytkownika na podstawie tokenu
+              setUser({
+                id: 'temp',
+                email: 'user@example.com',
+                name: 'User',
+                phone: null,
+                address: null,
+                city: null,
+                postalCode: null,
+                avatar: '',
+                registrationDate: new Date().toISOString(),
+                submissionsCount: 0,
+                verificationsCount: 0
+              });
+            }
           }
         }
       } finally {

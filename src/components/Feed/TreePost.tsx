@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, Share2, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
+import { MessageCircle, Share2, ThumbsUp, ThumbsDown, Trash2, X } from 'lucide-react';
 import { TreePost as TreePostType, Comment } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
+import { DeleteConfirmationModal } from '../UI/DeleteConfirmationModal';
 import { commentsService } from '../../services/commentsService';
+import { treesService } from '../../services/treesService';
 import { useAuth } from '../../context/AuthContext';
 
 interface TreePostProps {
@@ -11,13 +13,15 @@ interface TreePostProps {
   onLike: (postId: string) => void;
   onDislike: (postId: string) => void;
   onComment: (postId: string, comment: string, userId?: string) => void;
+  onDelete?: (postId: string) => void;
 }
 
 export const TreePost: React.FC<TreePostProps> = ({
   post,
   onLike,
   onDislike,
-  onComment
+  onComment,
+  onDelete
 }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -25,6 +29,11 @@ export const TreePost: React.FC<TreePostProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Load comments when showComments becomes true
@@ -66,12 +75,16 @@ export const TreePost: React.FC<TreePostProps> = ({
     }
   };
 
-  // Find the most popular comment (highest likes)
-  const mostPopularComment = comments.length > 0 
-    ? comments.reduce((prev, current) => 
-        (current.votes.like > prev.votes.like) ? current : prev
-      )
-    : null;
+  // Find the most popular comment and check if it should be marked as legend
+  const sortedComments = comments.sort((a, b) => b.votes.like - a.votes.like);
+  const mostPopularComment = sortedComments.length > 0 ? sortedComments[0] : null;
+  const secondMostPopularComment = sortedComments.length > 1 ? sortedComments[1] : null;
+  
+  // Check if the most popular comment should be marked as legend
+  const shouldShowLegend = mostPopularComment && 
+    mostPopularComment.votes.like > 0 && 
+    (!secondMostPopularComment || 
+     (mostPopularComment.votes.like - secondMostPopularComment.votes.like) >= 3);
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,17 +190,55 @@ export const TreePost: React.FC<TreePostProps> = ({
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
+  const handleDeleteCommentClick = (commentId: string) => {
+    // TODO: TEMPORARY - Always try to delete, let API handle permission validation
+    // TODO: In the future, this should be: user && comment?.userId && comment.userId === user.id
+    setCommentToDelete(commentId);
+    setShowDeleteCommentModal(true);
+  };
+
+  const handleDeleteComment = async () => {
+    if (!commentToDelete) return;
+    
+    const comment = comments.find(c => c.id === commentToDelete);
+    // TODO: TEMPORARY - Always try to delete, let API handle permission validation
+    const hasPermission = true; // Always try to delete for now
+    
+    console.log('Attempting to delete comment:', {
+      hasPermission,
+      user: user?.id,
+      userName: user?.name,
+      userFullData: user,
+      commentUserName: comment?.userData?.userName,
+      commentUserId: comment?.userId, // This might be null/undefined for now
+      commentId: commentToDelete,
+      comment: comment
+    });
+    
     try {
       // Remove from local state immediately
-      setComments(prevComments => prevComments.filter(c => c.id !== commentId));
+      setComments(prevComments => prevComments.filter(c => c.id !== commentToDelete));
       
       // Call API in background
       try {
-        await commentsService.deleteComment(commentId);
-        console.log(`Comment ${commentId} deleted successfully`);
-      } catch (error) {
+        await commentsService.deleteComment(commentToDelete);
+        console.log(`Comment ${commentToDelete} deleted successfully`);
+        setShowDeleteCommentModal(false);
+        setCommentToDelete(null);
+      } catch (error: any) {
         console.error('Error deleting comment:', error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('403')) {
+          console.log('403 Error - No permission to delete this comment');
+        } else if (error.message?.includes('404') || error.message?.includes('Comment not found')) {
+          console.log('404 Error - Comment not found:', error.message);
+        } else if (error.message?.includes('401')) {
+          console.log('401 Error - Session expired');
+        } else {
+          console.log('Other error:', error.message);
+        }
+        
         // Revert local changes on error
         await loadComments();
       }
@@ -196,13 +247,62 @@ export const TreePost: React.FC<TreePostProps> = ({
     }
   };
 
+  // Handle tree post deletion
+  const handleDeletePost = async () => {
+    if (!onDelete) return;
+    
+    // TODO: TEMPORARY - Always try to delete, let API handle permission validation
+    // TODO: In the future, this should check: user && post.userData.userId && post.userData.userId === user.id
+    const hasPermission = true; // Always try to delete for now
+    console.log('Attempting to delete post:', {
+      hasPermission,
+      user: user?.id,
+      userName: user?.name,
+      userFullData: user,
+      postUserName: post.userData.userName,
+      postUserId: post.userData.userId, // This is null/undefined for now
+      postId: post.id,
+      post: post
+    });
+    
+    setIsDeleting(true);
+    try {
+      await treesService.deleteTree(post.id);
+      console.log('Post deleted successfully');
+      onDelete(post.id);
+      setShowDeleteModal(false);
+    } catch (error: any) {
+      console.error('Error deleting post:', error);
+      
+      // Handle specific error cases
+      if (error.message?.includes('403')) {
+        console.log('403 Error - No permission to delete this post');
+      } else if (error.message?.includes('404')) {
+        console.log('404 Error - Post not found');
+      } else if (error.message?.includes('401')) {
+        console.log('401 Error - Session expired');
+      } else if (error.message?.includes('500') || error.message?.includes('Server error')) {
+        console.log('500 Error - Server error:', error.message);
+      } else {
+        console.log('Other error:', error.message);
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // TODO: TEMPORARY - Show delete button for everyone, validation happens on click
+  // TODO: In the future, this should be: user && post.userData.userId && post.userData.userId === user.id
+  // TODO: API should include userId in post.userData for proper security validation
+  const canDeletePost = true; // Always show delete button for now
+
   return (
     <div 
       id={`tree-post-${post.id}`}
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-600 mb-3 p-3"
+      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-600 mb-3 p-3 sm:p-4 lg:p-6"
     >
       {/* Header */}
-      <div className="flex items-center space-x-4 mb-4">
+      <div className="flex items-center space-x-4 mb-4 sm:mb-6">
         <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center overflow-hidden">
           {post.userData.avatar ? (
             <img 
@@ -226,81 +326,110 @@ export const TreePost: React.FC<TreePostProps> = ({
             </span>
           </div>
         </div>
+        <div className="flex items-center justify-between">
+           <button
+             className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+             title="Udostępnij"
+           >
+             <Share2 className="w-5 h-5" />
+           </button>
+          
+          {/* Delete button - only show if user has permission */}
+          {canDeletePost && (
+            <button
+              onClick={() => {
+                console.log('Delete post clicked:', {
+                  hasPermission: canDeletePost,
+                  user: user?.id,
+                  userName: user?.name,
+                  postUserName: post.userData.userName,
+                  postUserId: post.userData.userId, // This is null/undefined for now
+                  postId: post.id
+                });
+                setShowDeleteModal(true);
+              }}
+               className="p-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+               title="Usuń post"
+             >
+               <Trash2 className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Photos */}
-      {post.images.length > 0 && (
-        <div className="mb-4">
-          <img
-            src={post.images[0]}
-            alt="Tree photo"
-            className="w-full h-48 object-cover rounded-lg"
-          />
-        </div>
-      )}
-
       {/* Content */}
-      <div className="mb-4">
-        <h3 className="font-medium text-gray-900 dark:text-white text-lg mb-2">
+      <div className="mb-4 sm:mb-6">
+        <h3 className="font-medium text-gray-900 dark:text-white text-lg sm:text-xl lg:text-2xl mb-2 sm:mb-3">
           {post.species}
         </h3>
-        <p className="text-sm italic text-gray-500 dark:text-gray-400 mb-2">
+        <p className="text-sm sm:text-base italic text-gray-500 dark:text-gray-400 mb-2 sm:mb-3">
           {post.speciesLatin}
         </p>
         {post.description && (
-          <p className="text-base text-gray-600 dark:text-gray-400 mb-2">
+          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
             {post.description}
           </p>
         )}
       </div>
 
+      {/* Photos */}
+        {post.images.length > 0 && (
+          <div className="mb-4 sm:mb-6">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+              {post.images.map((image, index) => (
+                <img
+                  key={index}
+                  src={image}
+                  alt={`Tree photo ${index + 1}`}
+                  className="rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                  style={{ maxHeight: '80vh', maxWidth: '100%', objectFit: 'contain' }}
+                  onClick={() => setEnlargedImage(image)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
 
 
       {/* Actions */}
-      <div className="flex items-center justify-between space-x-2">
+      <div className="flex items-center justify-between space-x-2 sm:space-x-4">
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => onLike(post.id)}
-            className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all ${
-              post.userVote === 'like' 
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            <ThumbsUp className="w-5 h-5" />
-            <span className="text-sm font-medium">{post.likes}</span>
-          </button>
+           <button
+             onClick={() => onLike(post.id)}
+             className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all ${
+               post.userVote === 'like' 
+                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                 : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+             }`}
+           >
+             <ThumbsUp className="w-6 h-6" />
+             <span className="text-sm font-medium">{post.likes}</span>
+           </button>
           
-          <button
-            onClick={() => onDislike(post.id)}
-            className={`danger flex items-center space-x-1 px-3 py-2 rounded-lg transition-all ${
-              post.userVote === 'dislike' 
-                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            <ThumbsDown className="w-5 h-5" />
-            <span className="text-sm font-medium">{post.dislikes}</span>
-          </button>
+           <button
+             onClick={() => onDislike(post.id)}
+             className={`danger flex items-center space-x-1 px-3 py-2 rounded-lg transition-all ${
+               post.userVote === 'dislike' 
+                 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
+                 : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+             }`}
+           >
+             <ThumbsDown className="w-6 h-6" />
+             <span className="text-sm font-medium">{post.dislikes}</span>
+           </button>
           
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-          >
-            <MessageCircle className="w-5 h-5" />
-            <span className="text-sm font-medium">
-              {showComments ? 'Ukryj' : 'Więcej'}
-              {commentsLoaded && comments.length > 0 && ` (${comments.length})`}
-            </span>
-          </button>
+           <button
+             onClick={() => setShowComments(!showComments)}
+             className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors min-w-[120px]"
+           >
+             <MessageCircle className="w-5 h-5" />
+             <span className="text-sm font-medium">
+               {showComments ? 'Ukryj' : 'Komentarze'}
+               {post.commentCount > 0 && ` (${post.commentCount})`}
+             </span>
+           </button>
         </div>
-        
-        <button
-          className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-        >
-          <Share2 className="w-5 h-5" />
-          <span className="text-sm font-medium">Udostępnij</span>
-        </button>
       </div>
 
       {/* Comments Section */}
@@ -354,10 +483,14 @@ export const TreePost: React.FC<TreePostProps> = ({
                 comments
                   .sort((a, b) => b.votes.like - a.votes.like)
                 .map((comment) => {
-                  const isMostPopular = comment.id === mostPopularComment?.id && comment.votes.like > 0;
+                  const isMostPopular = comment.id === mostPopularComment?.id && shouldShowLegend;
                   return (
-                <div key={comment.id} className={`flex space-x-4 ${isMostPopular ? 'bg-green-50 dark:bg-green-900/20 rounded-lg p-3' : ''}`}>
-                  <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                <div key={comment.id} className={`flex space-x-4 ${isMostPopular ? 'bg-green-50 dark:bg-green-900/20 rounded-lg' : ''}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
+                    isMostPopular 
+                      ? 'bg-green-100 dark:bg-green-900/30' 
+                      : 'bg-gray-100 dark:bg-gray-700'
+                  }`}>
                     {comment.userData.avatar ? (
                       <img 
                         src={comment.userData.avatar} 
@@ -365,26 +498,42 @@ export const TreePost: React.FC<TreePostProps> = ({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-gray-600 dark:text-gray-400 font-semibold text-base">
+                      <span className={`font-semibold text-base ${
+                        isMostPopular 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-gray-600 dark:text-gray-400'
+                      }`}>
                         {comment.userData.userName.charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className="font-medium text-gray-900 dark:text-white text-base">
+                      <span className={`font-medium text-base ${
+                        isMostPopular 
+                          ? 'text-green-800 dark:text-green-200' 
+                          : 'text-gray-900 dark:text-white'
+                      }`}>
                         {comment.userData.userName}
                       </span>
-                      <span className="text-base text-gray-500">
+                      <span className={`text-base ${
+                        isMostPopular 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-gray-500'
+                      }`}>
                         {new Date(comment.datePosted).toLocaleDateString('pl-PL')}
                       </span>
-                      {comment.isLegend && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs rounded-full">
+                      {isMostPopular && (
+                        <span className="px-2 py-1 bg-green-200 text-green-800 dark:bg-green-800/30 dark:text-green-300 text-xs rounded-full">
                           Legenda
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 text-base mb-3">
+                    <p className={`text-base mb-3 ${
+                      isMostPopular 
+                        ? 'text-green-700 dark:text-green-300' 
+                        : 'text-gray-700 dark:text-gray-300'
+                    }`}>
                       {comment.content}
                     </p>
                     <div className="flex items-center justify-between">
@@ -414,11 +563,16 @@ export const TreePost: React.FC<TreePostProps> = ({
                         </button>
                       </div>
                       
-                      {/* Delete button - only show if user is the comment creator */}
-                      {user && comment.userId === user.id && (
+                      {/* Delete button - show for everyone, validation happens on click */}
+                      {/* TODO: TEMPORARY - Show delete button for everyone, validation happens on click */}
+                      {/* TODO: In the future, this should be: user && comment.userId === user.id */}
+                      {user && (
                         <button
-                          onClick={() => handleDeleteComment(comment.id)}
-                          className="p-2 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                          onClick={() => {
+                            // TODO: TEMPORARY - Always try to delete, let API handle permission validation
+                            handleDeleteCommentClick(comment.id);
+                          }}
+                          className="p-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
                           title="Usuń komentarz"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -431,6 +585,66 @@ export const TreePost: React.FC<TreePostProps> = ({
                 })
               )}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Post Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeletePost}
+        title="Usuń post"
+        message="Czy na pewno chcesz usunąć ten post? Ta akcja jest nieodwracalna."
+        confirmText="Usuń post"
+        cancelText="Anuluj"
+        isLoading={isDeleting}
+      />
+
+      {/* Delete Comment Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteCommentModal}
+        onClose={() => {
+          setShowDeleteCommentModal(false);
+          setCommentToDelete(null);
+        }}
+        onConfirm={handleDeleteComment}
+        title="Usuń komentarz"
+        message="Czy na pewno chcesz usunąć ten komentarz? Ta akcja jest nieodwracalna."
+        confirmText="Usuń komentarz"
+        cancelText="Anuluj"
+        isLoading={false}
+      />
+
+      {/* Enlarged Image Modal */}
+      <AnimatePresence>
+        {enlargedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              className="relative max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={enlargedImage}
+                alt="Powiększone zdjęcie"
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+              <button
+                onClick={() => setEnlargedImage(null)}
+                className="absolute top-4 right-4 bg-black/70 text-white p-2 rounded-full hover:bg-black/90 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
