@@ -144,7 +144,56 @@ export interface Municipality {
 export interface ApplicationTemplate {
   id: string;
   name: string;
-  template: string;
+  description?: string;
+  template?: string;
+  isActive?: boolean;
+  municipalityId?: string;
+}
+
+export interface Application {
+  id: string;
+  applicationTemplateId: string;
+  templateName: string;
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+  submittedAt?: string;
+  formData?: Record<string, any>;
+}
+
+export interface FormField {
+  name: string;
+  label: string;
+  type: 'Text' | 'TextArea' | 'Phone' | 'Email' | 'Number' | 'Select' | 'Checkbox' | 'Date';
+  isRequired: boolean;
+  defaultValue?: any;
+  placeholder?: string;
+  options?: string[];
+  validation?: {
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    min?: number;
+    max?: number;
+    validationMessage?: string;
+  };
+  helpText?: string;
+  order: number;
+}
+
+export interface FormSchema {
+  applicationId: string;
+  applicationTemplateId: string;
+  templateName: string;
+  requiredFields: FormField[];
+}
+
+export interface ApplicationSubmission {
+  formData: Record<string, any>;
+}
+
+export interface PdfResponse {
+  pdfUrl: string;
 }
 
 export interface NewTreeReport {

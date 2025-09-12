@@ -39,6 +39,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +61,14 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         setIsAlive(formData.isAlive !== undefined ? formData.isAlive : true);
         setEstimatedAge(formData.estimatedAge || '');
         setNotes(formData.notes || '');
-        // Note: photos can't be restored from localStorage as they are File objects
+        
+        // Restore photos from base64
+        if (formData.photos && Array.isArray(formData.photos)) {
+          const restoredPhotos = formData.photos.map((base64: string, index: number) => 
+            base64ToFile(base64, `photo_${index}.jpg`)
+          );
+          setPhotos(restoredPhotos);
+        }
       } catch (error) {
         console.error('Error loading saved form data:', error);
       }
@@ -75,6 +83,26 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         const species = await speciesService.getSpecies();
         setAllSpecies(species);
         setFilteredSpecies(species);
+        
+        // Check if we need to restore selected species from localStorage
+        const savedData = localStorage.getItem('treeReportFormData');
+        if (savedData) {
+          try {
+            const formData = JSON.parse(savedData);
+            if (formData.speciesQuery) {
+              // Find matching species by Polish or Latin name (case-insensitive)
+              const matchingSpecies = species.find(s => 
+                s.polishName.toLowerCase().trim() === formData.speciesQuery.toLowerCase().trim() ||
+                s.latinName.toLowerCase().trim() === formData.speciesQuery.toLowerCase().trim()
+              );
+              if (matchingSpecies) {
+                setSelectedSpecies(matchingSpecies);
+              }
+            }
+          } catch (error) {
+            console.error('Error restoring selected species:', error);
+          }
+        }
       } catch (error) {
         console.error('Error loading species:', error);
       } finally {
@@ -89,6 +117,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   React.useEffect(() => {
     if (!speciesQuery.trim()) {
       setFilteredSpecies(allSpecies);
+      setSelectedSpecies(null); // Clear selection when query is empty
       return;
     }
 
@@ -99,23 +128,76 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       species.family.toLowerCase().includes(query)
     );
     setFilteredSpecies(filtered);
+
+    // Auto-select species if exact match found (case-insensitive)
+    const exactMatch = allSpecies.find(species => 
+      species.polishName.toLowerCase().trim() === query.trim() ||
+      species.latinName.toLowerCase().trim() === query.trim()
+    );
+    
+    if (exactMatch) {
+      console.log('Found exact match for species:', exactMatch.polishName, 'ID:', exactMatch.id);
+      setSelectedSpecies(exactMatch);
+    } else {
+      console.log('No exact match found for query:', query);
+      console.log('Available species:', allSpecies.map(s => s.polishName));
+      setSelectedSpecies(null);
+    }
   }, [speciesQuery, allSpecies]);
 
   // Auto-save form data to localStorage
   React.useEffect(() => {
-    const formData = {
-      speciesQuery,
-      pierśnica,
-      height,
-      plotNumber,
-      condition,
-      isAlive,
-      estimatedAge,
-      notes,
-      photos: photos.length
+    const saveFormData = async () => {
+      try {
+        // Convert photos to base64
+        const photoBase64s = await Promise.all(
+          photos.map(file => fileToBase64(file))
+        );
+        
+        const formData = {
+          speciesQuery,
+          pierśnica,
+          height,
+          plotNumber,
+          condition,
+          isAlive,
+          estimatedAge,
+          notes,
+          photos: photoBase64s,
+          latitude,
+          longitude
+        };
+        localStorage.setItem('treeReportFormData', JSON.stringify(formData));
+      } catch (error) {
+        console.error('Error saving form data:', error);
+      }
     };
-    localStorage.setItem('treeReportFormData', JSON.stringify(formData));
-  }, [speciesQuery, pierśnica, height, plotNumber, condition, isAlive, estimatedAge, notes, photos.length]);
+    
+    saveFormData();
+  }, [speciesQuery, pierśnica, height, plotNumber, condition, isAlive, estimatedAge, notes, photos, latitude, longitude]);
+
+  // Convert File to base64 for localStorage
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Convert base64 back to File
+  const base64ToFile = (base64: string, filename: string): File => {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
 
   const handleSpeciesInputFocus = () => {
     setShowSpeciesPanel(true);
@@ -123,7 +205,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
 
   const handleSpeciesSelect = (species: Species) => {
     setSelectedSpecies(species);
-    setSpeciesQuery(`${species.polishName} (${species.latinName})`);
+    setSpeciesQuery(species.polishName); // Only Polish name
     setShowSpeciesPanel(false);
   };
 
@@ -151,6 +233,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     }
 
     setIsSubmitting(true);
+    setSubmitError(null); // Clear any previous errors
 
     try {
       if (isOnline) {
@@ -168,13 +251,23 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           }
         }
 
+        // Generate random UUID for the tree
+        const generateUUID = () => {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        };
+
         // Transform data to match API specification
         const apiTreeData: ApiTreeSubmission = {
-          speciesId: selectedSpecies.id,
+          id: generateUUID(), // Generate random UUID
+          speciesId: selectedSpecies.id.toUpperCase(), // Convert to uppercase for backend
           location: {
             lat: latitude,
             lng: longitude,
-            address: '' // We don't have address in the form, could be added later
+            address: plotNumber.trim() || 'Unknown address' // Use plot number as address, fallback to "Unknown address"
           },
           circumference: pierśnica ? parseFloat(pierśnica) : 0,
           height: height ? parseFloat(height) : 0,
@@ -186,9 +279,41 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         };
 
         // Submit to API
-        await treesService.submitTreeReport(apiTreeData);
+        console.log('=== TREE SUBMISSION DEBUG ===');
+        console.log('Generated tree ID:', apiTreeData.id);
+        console.log('Species ID (original):', selectedSpecies.id);
+        console.log('Species ID (uppercase):', apiTreeData.speciesId);
+        console.log('Species name:', selectedSpecies.polishName);
+        console.log('Plot number:', plotNumber);
+        console.log('Address:', apiTreeData.location.address);
+        console.log('Location:', apiTreeData.location);
+        console.log('Full API data:', apiTreeData);
+        
+        const result = await treesService.submitTreeReport(apiTreeData);
+        console.log('Tree report submitted successfully:', result);
+        
         setSubmitSuccess(true);
-        setTimeout(() => setSubmitSuccess(false), 3000); // Hide success message after 3 seconds
+        
+        // Clear localStorage after successful submission
+        localStorage.removeItem('treeReportFormData');
+        
+        // Reset form
+        setSelectedSpecies(null);
+        setSpeciesQuery('');
+        setNotes('');
+        setPhotos([]);
+        setPierśnica('');
+        setHeight('');
+        setPlotNumber('');
+        setCondition('dobry');
+        setIsAlive(true);
+        setEstimatedAge('');
+        
+        // Navigate to map after 4 seconds
+        setTimeout(() => {
+          setSubmitSuccess(false);
+          onSubmit?.();
+        }, 4000);
       } else {
         // Offline mode - store for later sync
         const report: NewTreeReport = {
@@ -204,23 +329,53 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         };
         storage.addPendingReport(report);
         setSubmitSuccess(true);
-        setTimeout(() => setSubmitSuccess(false), 3000); // Hide success message after 3 seconds
+        
+        // Reset form
+        setSelectedSpecies(null);
+        setSpeciesQuery('');
+        setNotes('');
+        setPhotos([]);
+        setPierśnica('');
+        setHeight('');
+        setPlotNumber('');
+        setCondition('dobry');
+        setIsAlive(true);
+        setEstimatedAge('');
+        
+        // Navigate to map after 4 seconds
+        setTimeout(() => {
+          setSubmitSuccess(false);
+          onSubmit?.();
+        }, 4000);
       }
-      
-      // Reset form
-      setSelectedSpecies(null);
-      setSpeciesQuery('');
-      setNotes('');
-      setPhotos([]);
-      setPierśnica('');
-      setHeight('');
-      setPlotNumber('');
-      setCondition('good');
-      setIsAlive(true);
-      setEstimatedAge('');
-      onSubmit?.();
     } catch (error) {
       console.error('Error submitting report:', error);
+      
+      // Set user-friendly error message
+      let errorMessage = 'Wystąpił błąd podczas wysyłania zgłoszenia.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Authentication token expired')) {
+          errorMessage = 'Sesja wygasła. Zaloguj się ponownie.';
+        } else if (error.message.includes('401')) {
+          errorMessage = 'Brak autoryzacji. Zaloguj się ponownie.';
+        } else if (error.message.includes('403')) {
+          errorMessage = 'Brak uprawnień do wykonania tej operacji.';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'Nie znaleziono gatunku drzewa.';
+        } else if (error.message.includes('400')) {
+          errorMessage = 'Nieprawidłowe dane. Sprawdź wypełnione pola.';
+        } else if (error.message.includes('500')) {
+          errorMessage = 'Błąd serwera. Spróbuj ponownie za chwilę.';
+        } else if (error.message.includes('Network')) {
+          errorMessage = 'Brak połączenia z internetem. Sprawdź połączenie.';
+        } else {
+          errorMessage = `Błąd: ${error.message}`;
+        }
+      }
+      
+      setSubmitError(errorMessage);
+      setTimeout(() => setSubmitError(null), 8000); // Hide error message after 8 seconds
     } finally {
       setIsSubmitting(false);
     }
@@ -268,18 +423,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         </motion.div>
       )}
 
-      {submitSuccess && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-5 mb-6 sm:mb-8 text-base sm:text-lg"
-        >
-          <p className="text-green-800 dark:text-green-200">
-            ✅ Zgłoszenie zostało pomyślnie wysłane!
-          </p>
-        </motion.div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         {/* Species selection */}
@@ -398,30 +541,41 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                               ))}
                             </div>
 
-                            {/* Go to Encyclopedia Button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Save current form data to localStorage
-                                const formData = {
-                                  speciesQuery,
-                                  pierśnica,
-                                  height,
-                                  plotNumber,
-                                  condition,
-                                  isAlive,
-                                  estimatedAge,
-                                  notes,
-                                  photos: photos.length
-                                };
-                                localStorage.setItem('treeReportFormData', JSON.stringify(formData));
-                                // Navigate to encyclopedia
-                                window.location.href = `/encyclopedia?species=${species.id}&returnTo=report`;
-                              }}
-                              className="w-full mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
-                            >
-                              Przejdź do encyklopedii
-                            </button>
+                            {/* More Information Button */}
+                            <div className="mt-3">
+                              <GlassButton
+                                onClick={async () => {
+                                  try {
+                                    // Convert photos to base64 and save
+                                    const photoBase64s = await Promise.all(
+                                      photos.map(file => fileToBase64(file))
+                                    );
+                                    
+                                    const formData = {
+                                      speciesQuery,
+                                      pierśnica,
+                                      height,
+                                      plotNumber,
+                                      condition,
+                                      isAlive,
+                                      estimatedAge,
+                                      notes,
+                                      photos: photoBase64s
+                                    };
+                                    localStorage.setItem('treeReportFormData', JSON.stringify(formData));
+                                    // Navigate to encyclopedia
+                                    window.location.href = `/encyclopedia?species=${species.id}&returnTo=report`;
+                                  } catch (error) {
+                                    console.error('Error saving form data:', error);
+                                  }
+                                }}
+                                variant="primary"
+                                size="sm"
+                                className="w-full"
+                              >
+                                Więcej informacji
+                              </GlassButton>
+                            </div>
                           </div>
 
                         </div>
@@ -685,7 +839,17 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           )}
           <GlassButton
             type="submit"
-            disabled={!selectedSpecies || !latitude || !longitude || isSubmitting}
+            disabled={
+              !selectedSpecies || 
+              !latitude || 
+              !longitude || 
+              !pierśnica.trim() || 
+              !height.trim() || 
+              !condition.trim() || 
+              !estimatedAge.trim() || 
+              !notes.trim() || 
+              isSubmitting
+            }
             className="flex-1"
             size="sm"
             variant="primary"
@@ -701,6 +865,34 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </GlassButton>
         </div>
       </form>
+
+      {/* Success/Error Messages */}
+      {submitSuccess && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-5 mt-4 sm:mt-6 text-base sm:text-lg"
+        >
+          <p className="text-green-800 dark:text-green-200">
+            ✅ Zgłoszenie zostało pomyślnie wysłane do bazy danych!<br/>
+            <span className="text-sm">Za chwilę zostaniesz przekierowany na mapę...</span>
+          </p>
+        </motion.div>
+      )}
+
+      {submitError && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-5 mt-4 sm:mt-6 text-base sm:text-lg"
+        >
+          <p className="text-red-800 dark:text-red-200">
+            ❌ {submitError}
+          </p>
+        </motion.div>
+      )}
 
       {/* Enlarged Image Modal */}
       <AnimatePresence>
