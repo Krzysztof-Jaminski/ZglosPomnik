@@ -13,6 +13,7 @@ export const FeedPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [filterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const { isAuthenticated } = useAuth();
 
@@ -220,9 +221,24 @@ export const FeedPage: React.FC = () => {
   };
 
 
+  // Search function
+  const searchPosts = (posts: TreePostType[], query: string) => {
+    if (!query.trim()) return posts;
+    
+    const lowercaseQuery = query.toLowerCase();
+    
+    return posts.filter(post => {
+      return post.species?.toLowerCase().includes(lowercaseQuery) ||
+             post.speciesLatin?.toLowerCase().includes(lowercaseQuery) ||
+             post.userData?.userName?.toLowerCase().includes(lowercaseQuery) ||
+             post.description?.toLowerCase().includes(lowercaseQuery);
+    });
+  };
+
   // Filter and sort posts
   const filteredAndSortedPosts = posts
     .filter(post => filterStatus === 'all' || post.status === filterStatus)
+    .filter(post => searchPosts([post], searchQuery).length > 0)
     .sort((a, b) => {
       if (sortBy === 'popular') {
         return (b.likes - b.dislikes) - (a.likes - a.dislikes);
@@ -264,9 +280,35 @@ export const FeedPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Search */}
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex gap-3">
+            {/* Search Input */}
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Szukaj postów..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+            
+            {/* Clear Search Button */}
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors"
+              >
+                Wyczyść
+              </button>
+            )}
+          </div>
+        </div>
+
       {/* Posts */}
-      <div className="flex-1 overflow-y-auto px-2 py-4">
-        <div className="space-y-8 sm:space-y-12 w-full px-2 sm:px-4 lg:px-6">
+      <div className="flex-1 overflow-y-auto py-4">
+        <div className="space-y-8 sm:space-y-12 w-full sm:px-4 lg:px-6">
           {filteredAndSortedPosts.map((post) => (
             <div
               key={post.id}
@@ -283,10 +325,19 @@ export const FeedPage: React.FC = () => {
           ))}
         </div>
 
+        {/* Search Results Info */}
+        {searchQuery && (
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Znaleziono {filteredAndSortedPosts.length} wyników dla "{searchQuery}"
+            </p>
+          </div>
+        )}
+
         {filteredAndSortedPosts.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400 text-lg">
-              Brak zgłoszeń spełniających kryteria
+              {searchQuery ? 'Brak wyników wyszukiwania' : 'Brak zgłoszeń spełniających kryteria'}
             </p>
           </div>
         )}

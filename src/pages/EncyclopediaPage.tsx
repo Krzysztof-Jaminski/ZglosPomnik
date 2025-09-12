@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowLeft, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Species } from '../types';
 import { speciesService } from '../services/speciesService';
 import { SpeciesCard } from '../components/Encyclopedia/SpeciesCard';
@@ -25,10 +25,18 @@ export const EncyclopediaPage: React.FC = () => {
         setSpecies(data);
         setFilteredSpecies(data);
         
-        // Check if we should show a specific species
-        const selectedSpeciesId = location.state?.selectedSpecies;
-        if (selectedSpeciesId) {
-          const speciesItem = data.find(s => s.id === selectedSpeciesId);
+        // Check if we should show a specific species from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const speciesId = urlParams.get('species');
+        
+        if (speciesId) {
+          const speciesItem = data.find(s => s.id === speciesId);
+          if (speciesItem) {
+            setSelectedSpecies(speciesItem);
+          }
+        } else if (location.state?.selectedSpecies) {
+          // Fallback to location state
+          const speciesItem = data.find(s => s.id === location.state.selectedSpecies);
           if (speciesItem) {
             setSelectedSpecies(speciesItem);
           }
@@ -141,12 +149,26 @@ export const EncyclopediaPage: React.FC = () => {
             className="mb-4"
           >
             <GlassButton
-              onClick={() => setSelectedSpecies(null)}
+              onClick={() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const returnTo = urlParams.get('returnTo');
+                
+                if (returnTo === 'report') {
+                  // Return to report page
+                  window.location.href = '/report';
+                } else {
+                  // Return to encyclopedia list
+                  setSelectedSpecies(null);
+                }
+              }}
               variant="secondary"
-              size="sm"
+              size="xs"
               icon={ArrowLeft}
             >
-              Powrót do listy
+              {new URLSearchParams(window.location.search).get('returnTo') === 'report' 
+                ? 'Powrót do zgłoszenia' 
+                : 'Powrót do encyklopedii'
+              }
             </GlassButton>
           </motion.div>
 
@@ -371,21 +393,33 @@ export const EncyclopediaPage: React.FC = () => {
 
 
         {/* Search */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 mb-3 sm:mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Szukaj gatunku..."
-              className="w-full pl-9 sm:pl-10 pr-3 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
-            />
+        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 mb-3 sm:mb-4">
+          <div className="flex gap-3">
+            {/* Search Input */}
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Szukaj gatunku..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+            
+            {/* Clear Search Button */}
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors"
+              >
+                Wyczyść
+              </button>
+            )}
           </div>
         </div>
 
         {/* Species grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
           {filteredSpecies.map((speciesItem) => (
             <div key={speciesItem.id}>
               <SpeciesCard 

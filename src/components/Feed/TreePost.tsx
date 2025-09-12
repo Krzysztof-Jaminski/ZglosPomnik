@@ -321,7 +321,7 @@ export const TreePost: React.FC<TreePostProps> = ({
             <span className="font-medium text-gray-900 dark:text-white text-base">
               {post.userData.userName}
             </span>
-            <span className="text-base text-gray-500">
+            <span className="text-sm text-gray-500">
               {new Date(post.submissionDate).toLocaleDateString('pl-PL')}
             </span>
           </div>

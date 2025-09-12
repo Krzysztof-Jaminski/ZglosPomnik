@@ -33,7 +33,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const [pierśnica, setPierśnica] = useState<string>('');
   const [height, setHeight] = useState<string>('');
   const [plotNumber, setPlotNumber] = useState<string>('');
-  const [condition, setCondition] = useState<string>('good');
+  const [condition, setCondition] = useState<string>('dobry');
   const [isAlive, setIsAlive] = useState<boolean>(true);
   const [estimatedAge, setEstimatedAge] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +45,27 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isOnline = useOnlineStatus();
   const { isAuthenticated, user, isLoading } = useAuth();
+
+  // Load form data from localStorage on mount
+  React.useEffect(() => {
+    const savedData = localStorage.getItem('treeReportFormData');
+    if (savedData) {
+      try {
+        const formData = JSON.parse(savedData);
+        setSpeciesQuery(formData.speciesQuery || '');
+        setPierśnica(formData.pierśnica || '');
+        setHeight(formData.height || '');
+        setPlotNumber(formData.plotNumber || '');
+        setCondition(formData.condition || 'dobry');
+        setIsAlive(formData.isAlive !== undefined ? formData.isAlive : true);
+        setEstimatedAge(formData.estimatedAge || '');
+        setNotes(formData.notes || '');
+        // Note: photos can't be restored from localStorage as they are File objects
+      } catch (error) {
+        console.error('Error loading saved form data:', error);
+      }
+    }
+  }, []);
 
   // Load all species when component mounts
   React.useEffect(() => {
@@ -79,6 +100,22 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     );
     setFilteredSpecies(filtered);
   }, [speciesQuery, allSpecies]);
+
+  // Auto-save form data to localStorage
+  React.useEffect(() => {
+    const formData = {
+      speciesQuery,
+      pierśnica,
+      height,
+      plotNumber,
+      condition,
+      isAlive,
+      estimatedAge,
+      notes,
+      photos: photos.length
+    };
+    localStorage.setItem('treeReportFormData', JSON.stringify(formData));
+  }, [speciesQuery, pierśnica, height, plotNumber, condition, isAlive, estimatedAge, notes, photos.length]);
 
   const handleSpeciesInputFocus = () => {
     setShowSpeciesPanel(true);
@@ -253,19 +290,19 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           
           {/* Search input */}
           <div className="relative">
-            <Search className="absolute left-3 sm:left-4 top-3 sm:top-4 w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+            <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 text-gray-400" />
             <input
               type="text"
               value={speciesQuery}
               onChange={(e) => setSpeciesQuery(e.target.value)}
               onFocus={handleSpeciesInputFocus}
-              placeholder="Wpisz nazwę gatunku po polsku lub łacinie..."
-              className="w-full pl-10 sm:pl-12 pr-10 sm:pr-14 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              placeholder="Polska lub łacińska nazwa"
+              className="w-full pl-8 sm:pl-10 pr-10 sm:pr-14 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
             />
             <button
               type="button"
               onClick={() => setShowSpeciesPanel(!showSpeciesPanel)}
-              className="absolute right-3 sm:right-4 top-3 sm:top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               {showSpeciesPanel ? <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" /> : <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
@@ -291,7 +328,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                   </div>
                 </div>
 
-                <div className="max-h-96 sm:max-h-[28rem] overflow-y-auto p-3 sm:p-6">
+                <div className="max-h-[32rem] sm:max-h-[40rem] overflow-y-auto p-3 sm:p-6">
                   {isLoadingSpecies ? (
                     <div className="flex items-center justify-center py-4 sm:py-8">
                       <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-600"></div>
@@ -323,7 +360,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                             </div>
 
                             {/* Images Grid - up to 4 images */}
-                            <div className="grid grid-cols-2 gap-2 mb-4">
+                            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8 mb-4">
                               {species.images.slice(0, 4).map((image, index) => {
                                 const typeLabels = {
                                   'Tree': 'Całościowe',
@@ -333,21 +370,21 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                                   'Flower': 'Kwiaty'
                                 };
                                 return (
-                                  <div key={index} className="relative group">
+                                  <div key={index} className="relative group aspect-square sm:aspect-[4/3] lg:aspect-square">
                                     <img
                                       src={image.imageUrl}
                                       alt={image.altText || `${species.polishName} - ${typeLabels[image.type] || 'Zdjęcie'}`}
-                                      className="w-full h-16 sm:h-20 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                      className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setEnlargedImage(image.imageUrl);
                                       }}
                                     />
-                                    <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
+                                    <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
                                       {typeLabels[image.type] || 'Zdjęcie'}
                                     </div>
-                                    <div className="absolute top-1 right-1 bg-black/70 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <ZoomIn className="w-3 h-3" />
+                                    <div className="absolute top-1 right-1 bg-black/70 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <ZoomIn className="w-4 h-4" />
                                     </div>
                                   </div>
                                 );
@@ -355,16 +392,36 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                               
                               {/* Fill empty slots if less than 4 images */}
                               {Array.from({ length: Math.max(0, 4 - species.images.length) }).map((_, index) => (
-                                <div key={`empty-${index}`} className="w-full h-16 sm:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                <div key={`empty-${index}`} className="aspect-square sm:aspect-[4/3] lg:aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                                   <span className="text-xs text-gray-500">Brak zdjęcia</span>
                                 </div>
                               ))}
                             </div>
 
-                            {/* Description */}
-                            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-                              {species.description}
-                            </p>
+                            {/* Go to Encyclopedia Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Save current form data to localStorage
+                                const formData = {
+                                  speciesQuery,
+                                  pierśnica,
+                                  height,
+                                  plotNumber,
+                                  condition,
+                                  isAlive,
+                                  estimatedAge,
+                                  notes,
+                                  photos: photos.length
+                                };
+                                localStorage.setItem('treeReportFormData', JSON.stringify(formData));
+                                // Navigate to encyclopedia
+                                window.location.href = `/encyclopedia?species=${species.id}&returnTo=report`;
+                              }}
+                              className="w-full mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                            >
+                              Przejdź do encyklopedii
+                            </button>
                           </div>
 
                         </div>
@@ -601,10 +658,15 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </label>
           <textarea
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={(e) => {
+              setNotes(e.target.value);
+              // Auto-resize
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
             placeholder="Opisz stan drzewa, potrzebne działania, szczególne cechy..."
-            rows={3}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-none transition-all"
+            rows={5}
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[120px]"
           />
         </div>
 

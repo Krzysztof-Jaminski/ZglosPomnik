@@ -167,8 +167,6 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
 
           // Add markers for trees
           treesData.forEach(tree => {
-            const isOwnReport = tree.userData.userName === 'current-user'; // TODO: Compare with current user
-            
             const marker = new (window as any).google.maps.Marker({
               position: { lat: tree.location.lat, lng: tree.location.lng },
               map: map,
@@ -176,7 +174,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
               icon: {
                 path: (window as any).google.maps.SymbolPath.CIRCLE,
                 scale: 8,
-                fillColor: getMarkerColor(tree.status, isOwnReport),
+                fillColor: getMarkerColor(),
                 fillOpacity: 0.8,
                 strokeColor: '#ffffff',
                 strokeWeight: 2
@@ -207,11 +205,9 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
     }
   }, [map, isAuthenticated]);
 
-  const getMarkerColor = (status: string, isOwnReport: boolean) => {
-    if (status === 'Monument') return '#10b981'; // Green for monuments
-    if (status === 'approved') return '#10b981'; // Green for approved
-    if (isOwnReport) return '#3b82f6'; // Blue for own reports
-    return '#f59e0b'; // Amber for others' reports
+  const getMarkerColor = () => {
+    // All trees are now considered approved/green
+    return '#10b981'; // Green for all trees
   };
 
 
