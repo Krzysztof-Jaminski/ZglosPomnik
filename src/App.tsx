@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { Header } from './components/Layout/Header';
@@ -15,6 +15,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { AdminPage } from './pages/AdminPage';
 import { App as CapacitorApp } from '@capacitor/app';
 import { useKeyboardStatus } from './hooks/useKeyboardStatus';
+import { useSystemTheme } from './hooks/useSystemTheme';
 
 // Komponent do obsługi przycisku wstecz
 const BackButtonHandler: React.FC = () => {
@@ -46,6 +47,10 @@ const BackButtonHandler: React.FC = () => {
 
 const MainContent: React.FC = () => {
   const isKeyboardOpen = useKeyboardStatus();
+  const { actualTheme } = useTheme();
+  
+  // Update system theme for main content (not landing page)
+  useSystemTheme(actualTheme);
 
   return (
     <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden flex flex-col max-w-full">

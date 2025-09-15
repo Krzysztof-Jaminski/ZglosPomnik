@@ -2,12 +2,16 @@
   "name": "Zgłoś Pomnik",
   "short_name": "ZgłośPomnik",
   "description": "Professional PWA for ecological tree reporting and municipal applications",
-  "theme_color": "#059669",
-  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "background_color": "#111827",
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
   "orientation": "portrait-primary",
+  "display_override": ["standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "icons": [
     {
       "src": "/icon-192x192.png",

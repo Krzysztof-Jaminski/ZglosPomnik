@@ -396,10 +396,17 @@ Z poważaniem,
     return mockComments;
   },
 
-  // File upload
-  async uploadPhoto(_file: File) {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    // Mock photo upload - return a placeholder URL
-    return `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo-${Math.floor(Math.random() * 1000000)}.jpeg`;
+  // File upload - TYMCZASOWE: używa ImgBB
+  async uploadPhoto(file: File) {
+    // Import tymczasowego serwisu
+    const { tempImageService } = await import('./tempImageService');
+    
+    const result = await tempImageService.uploadImage(file);
+    
+    if (result.success && result.url) {
+      return result.url;
+    } else {
+      throw new Error(result.error || 'Upload failed');
+    }
   }
 };

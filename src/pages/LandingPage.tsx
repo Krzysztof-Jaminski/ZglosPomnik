@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Info, MapPin, FileText, Users, BarChart3, Settings, Shield, Zap, Globe } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Capacitor } from '@capacitor/core';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
 import { useAuth } from '../context/AuthContext';
 import { LoginForm } from '../components/Auth/LoginForm';
 import { RegisterForm } from '../components/Auth/RegisterForm';
+import { useSystemTheme } from '../hooks/useSystemTheme';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -18,6 +18,9 @@ export const LandingPage = () => {
   
   // Używanie kontekstu autoryzacji
   const { login, register, isAuthenticated, isLoading } = useAuth();
+  
+  // Landing page always uses dark theme for system UI
+  useSystemTheme('dark');
 
   // Sprawdź czy użytkownik jest już zalogowany i przekieruj
   useEffect(() => {

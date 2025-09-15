@@ -133,27 +133,31 @@ export interface TreePost extends Tree {
 export interface Municipality {
   id: string;
   name: string;
-  contact: {
-    email: string;
-    phone: string;
-    address: string;
-  };
-  ePuapInstructions: string;
+  address: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  phone: string;
+  email: string;
+  website: string;
+  isActive: boolean;
 }
 
 export interface ApplicationTemplate {
   id: string;
+  municipalityId: string;
   name: string;
-  description?: string;
-  template?: string;
-  isActive?: boolean;
-  municipalityId?: string;
+  description: string;
+  htmlTemplate: string;
+  fields: FormField[];
+  isActive: boolean;
 }
 
 export interface Application {
   id: string;
+  treeSubmissionId: string;
   applicationTemplateId: string;
-  templateName: string;
+  title: string;
   status: 'draft' | 'submitted' | 'approved' | 'rejected';
   createdAt: string;
   updatedAt: string;

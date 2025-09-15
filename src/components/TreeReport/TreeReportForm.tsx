@@ -210,9 +210,26 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   };
 
 
-  const handlePhotoAdd = (files: FileList | null) => {
+  const handlePhotoAdd = async (files: FileList | null) => {
     if (files) {
       const newPhotos = Array.from(files).slice(0, 5 - photos.length);
+      
+      // Walidacja plików
+      for (const file of newPhotos) {
+        // Import tymczasowego serwisu
+        const { tempImageService } = await import('../../services/tempImageService');
+        
+        if (!tempImageService.isValidImageFile(file)) {
+          alert(`Plik ${file.name} nie jest prawidłowym obrazem. Dozwolone formaty: JPEG, PNG, GIF, WebP`);
+          return;
+        }
+        
+        if (!tempImageService.isValidFileSize(file, 5)) {
+          alert(`Plik ${file.name} jest za duży. Maksymalny rozmiar: 5MB`);
+          return;
+        }
+      }
+      
       setPhotos(prev => [...prev, ...newPhotos]);
     }
   };
@@ -240,15 +257,22 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         // Upload photos first if any
         let imageUrls: string[] = [];
         if (photos.length > 0) {
-          for (const photo of photos) {
+          console.log(`Uploading ${photos.length} photos...`);
+          for (let i = 0; i < photos.length; i++) {
+            const photo = photos[i];
             try {
+              console.log(`Uploading photo ${i + 1}/${photos.length}: ${photo.name}`);
               const uploadedUrl = await api.uploadPhoto(photo);
               imageUrls.push(uploadedUrl);
+              console.log(`Photo ${i + 1} uploaded successfully: ${uploadedUrl}`);
             } catch (error) {
-              console.error('Error uploading photo:', error);
-              // Continue with other photos even if one fails
+              console.error(`Error uploading photo ${i + 1}:`, error);
+              setSubmitError(`Błąd podczas uploadu zdjęcia ${i + 1}: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+              setIsSubmitting(false);
+              return;
             }
           }
+          console.log(`All photos uploaded successfully. URLs:`, imageUrls);
         }
 
         // Generate random UUID for the tree

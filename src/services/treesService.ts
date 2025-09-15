@@ -188,11 +188,9 @@ class TreesService {
       }
 
       console.log('Submitting tree report to API:', treeData);
-      console.log('Request URL:', '/api/Trees');
-      console.log('Full URL would be:', window.location.origin + '/api/Trees');
-      console.log('Vite proxy should redirect to: http://192.168.10.116:5174/api/Trees');
+      console.log('Request URL:', `${API_BASE_URL}/Trees`);
 
-      const response = await fetch('/api/Trees', {
+      const response = await fetch(`${API_BASE_URL}/Trees`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -230,11 +228,11 @@ class TreesService {
 
       console.log('Attempting to delete tree:', {
         treeId,
-        url: `/api/Trees/${treeId}`,
+        url: `${API_BASE_URL}/Trees/${treeId}`,
         token: token ? 'exists' : 'missing'
       });
 
-      const response = await fetch(`/api/Trees/${treeId}`, {
+      const response = await fetch(`${API_BASE_URL}/Trees/${treeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

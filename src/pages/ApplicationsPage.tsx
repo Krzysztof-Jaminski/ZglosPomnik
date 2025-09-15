@@ -1,87 +1,117 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, ExternalLink, Clock, CheckCircle, XCircle, ArrowLeft, ArrowRight, Plus, MapPin, User, Mail, Phone, FileCheck } from 'lucide-react';
-import { Tree, ApplicationTemplate, Municipality } from '../types';
-import { api } from '../services/api';
+import { FileText, Download, ExternalLink, Clock, CheckCircle, XCircle, ArrowLeft, ArrowRight, Plus, MapPin, Loader2, X } from 'lucide-react';
+import { Tree, ApplicationTemplate, Municipality, Application, FormSchema } from '../types';
+import { applicationsService } from '../services/applicationsService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
+import { DynamicForm } from '../components/Applications/DynamicForm';
+import { TemplateSelector } from '../components/Applications/TemplateSelector';
 
-type ApplicationStep = 'overview' | 'select-tree' | 'select-municipality' | 'fill-form' | 'generate-pdf' | 'instructions' | 'completed';
+type ApplicationStep = 'overview' | 'select-tree' | 'select-municipality' | 'select-template' | 'fill-form' | 'submitted' | 'completed';
 
-interface ApplicationForm {
-  applicantName: string;
-  applicantEmail: string;
-  applicantPhone: string;
-  justification: string;
-  additionalInfo: string;
-  templateId: string;
-}
 
 
 export const ApplicationsPage: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<ApplicationStep>(() => {
-    return (localStorage.getItem('applicationStep') as ApplicationStep) || 'overview';
-  });
+  const [currentStep, setCurrentStep] = useState<ApplicationStep>('overview');
   const [trees, setTrees] = useState<Tree[]>([]);
   const [templates, setTemplates] = useState<ApplicationTemplate[]>([]);
   const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
-  const [selectedTree, setSelectedTree] = useState<Tree | null>(() => {
-    const saved = localStorage.getItem('selectedTree');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(() => {
-    const saved = localStorage.getItem('selectedMunicipality');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [applicationForm, setApplicationForm] = useState<ApplicationForm>({
-    applicantName: 'Anna Kowalska',
-    applicantEmail: 'anna.kowalska@example.com',
-    applicantPhone: '+48 123 456 789',
-    justification: '',
-    additionalInfo: '',
-    templateId: ''
-  });
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
+  const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
+  const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<ApplicationTemplate | null>(null);
+  const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
+  const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  const [showAllTrees, setShowAllTrees] = useState(false);
 
-  // Save progress to localStorage
-  useEffect(() => {
-    localStorage.setItem('applicationStep', currentStep);
-  }, [currentStep]);
+  // Save progress to localStorage (commented for testing)
+  // useEffect(() => {
+  //   localStorage.setItem('applicationStep', currentStep);
+  // }, [currentStep]);
 
-  useEffect(() => {
-    if (selectedTree) {
-      localStorage.setItem('selectedTree', JSON.stringify(selectedTree));
-    }
-  }, [selectedTree]);
+  // useEffect(() => {
+  //   if (selectedTree) {
+  //     localStorage.setItem('selectedTree', JSON.stringify(selectedTree));
+  //   }
+  // }, [selectedTree]);
 
-  useEffect(() => {
-    if (selectedMunicipality) {
-      localStorage.setItem('selectedMunicipality', JSON.stringify(selectedMunicipality));
-    }
-  }, [selectedMunicipality]);
+  // useEffect(() => {
+  //   if (selectedMunicipality) {
+  //     localStorage.setItem('selectedMunicipality', JSON.stringify(selectedMunicipality));
+  //   }
+  // }, [selectedMunicipality]);
+
+  // useEffect(() => {
+  //   if (selectedTemplate) {
+  //     localStorage.setItem('selectedTemplate', JSON.stringify(selectedTemplate));
+  //   }
+  // }, [selectedTemplate]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [treesData, templatesData, municipalitiesData] = await Promise.all([
-          api.getTrees(),
-          api.getApplicationTemplates(),
-          api.getMunicipalities()
-        ]);
+        setIsLoading(true);
+        // Sprawdź czy użytkownik jest zalogowany
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('No auth token found, skipping data load');
+          return;
+        }
+        
+        // Pierwszy krok: pobierz drzewa użytkownika
+        const treesData = await applicationsService.getUserTrees();
         setTrees(treesData);
-        setTemplates(templatesData);
-        setMunicipalities(municipalitiesData);
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading user trees:', error);
+        // Nie pokazuj alertu jeśli to błąd autoryzacji - użytkownik może nie być zalogowany
+        if (error instanceof Error && !error.message.includes('autoryzacji')) {
+          alert(`Błąd podczas ładowania drzew: ${error.message}`);
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadData();
   }, []);
 
+  // Load templates when municipality is selected
+  useEffect(() => {
+    if (selectedMunicipality) {
+      const loadTemplates = async () => {
+        try {
+          setIsLoading(true);
+          const templatesData = await applicationsService.getMunicipalityTemplates(selectedMunicipality.id);
+          setTemplates(templatesData);
+        } catch (error) {
+          console.error('Error loading templates:', error);
+          // Sprawdź różne typy błędów
+          if (error instanceof Error) {
+            if (error.message.includes('404')) {
+              console.warn('No templates found for municipality:', selectedMunicipality.id);
+              setTemplates([]);
+            } else if (error.message.includes('400')) {
+              console.error('Bad request for municipality:', selectedMunicipality.id);
+              alert(`Nieprawidłowe żądanie dla gminy ${selectedMunicipality.name}. Sprawdź czy gmina ma dostępne szablony.`);
+              setTemplates([]);
+            } else {
+              alert(`Błąd podczas ładowania szablonów: ${error.message}`);
+            }
+          } else {
+            alert(`Błąd podczas ładowania szablonów: Nieznany błąd`);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadTemplates();
+    }
+  }, [selectedMunicipality]);
+
   const getStepNumber = (step: ApplicationStep): number => {
-    const steps = ['overview', 'select-tree', 'select-municipality', 'fill-form', 'generate-pdf', 'instructions', 'completed'];
+    const steps = ['overview', 'select-tree', 'select-municipality', 'select-template', 'fill-form', 'submitted', 'completed'];
     return steps.indexOf(step) + 1;
   };
 
@@ -98,56 +128,141 @@ export const ApplicationsPage: React.FC = () => {
     }
   };
 
-  const handleTreeSelect = (tree: Tree) => {
+  const handleTreeSelect = async (tree: Tree) => {
+    // Pozwól na tworzenie wniosków dla dowolnego drzewa
     setSelectedTree(tree);
-    // Auto-select municipality based on tree location (mock logic)
-    if (municipalities.length > 0) {
-      setSelectedMunicipality(municipalities[0]);
-    }
     setCurrentStep('select-municipality');
+    
+    // Load municipalities after tree selection (auth required)
+    try {
+      setIsLoading(true);
+      const municipalitiesData = await applicationsService.getMunicipalities();
+      // Wyświetl wszystkie gminy (dla testowania)
+      console.log('Total municipalities:', municipalitiesData.length);
+      setMunicipalities(municipalitiesData);
+    } catch (error) {
+      console.error('Error loading municipalities:', error);
+      if (error instanceof Error && error.message.includes('autoryzacji')) {
+        alert('Musisz być zalogowany aby zobaczyć dostępne gminy.');
+      } else {
+        alert(`Błąd podczas ładowania gmin: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  const handleTemplateSelect = (template: ApplicationTemplate) => {
+    setSelectedTemplate(template);
+  };
+
+  const handleLoadAllTrees = async () => {
+    try {
+      setIsLoading(true);
+      const allTreesData = await applicationsService.getAllTrees();
+      console.log('Loaded all trees:', allTreesData);
+      console.log('Number of trees:', allTreesData.length);
+      if (allTreesData.length > 0) {
+        console.log('First tree:', allTreesData[0]);
+        console.log('First tree ID:', allTreesData[0].id);
+      }
+      setTrees(allTreesData);
+      setShowAllTrees(true);
+    } catch (error) {
+      console.error('Error loading all trees:', error);
+      alert(`Błąd podczas ładowania drzew: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateApplication = async () => {
+    if (!selectedTemplate || !selectedTree) return;
+    
+    try {
+      setIsLoading(true);
+      console.log('Creating application with:');
+      console.log('Selected tree:', selectedTree);
+      console.log('Selected template:', selectedTemplate);
+      console.log('Tree ID:', selectedTree.id);
+      console.log('Template ID:', selectedTemplate.id);
+      
+      const application = await applicationsService.createApplication(
+        selectedTemplate.id,
+        selectedTree.id,
+        `Wniosek dla drzewa ${selectedTree.species}`
+      );
+      setCurrentApplication(application);
+      
+      // Get form schema
+      const schema = await applicationsService.getFormSchema(application.id);
+      setFormSchema(schema);
+      
+      setCurrentStep('fill-form');
+    } catch (error) {
+      console.error('Error creating application:', error);
+      alert(`Błąd podczas tworzenia wniosku: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (formData: Record<string, any>) => {
+    if (!currentApplication) return;
+    
+    try {
+      setIsSubmitting(true);
+      await applicationsService.submitApplication(currentApplication.id, { formData });
+      setCurrentStep('submitted');
+    } catch (error) {
+      console.error('Error submitting application:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleGeneratePdf = async () => {
-    setIsGenerating(true);
+    if (!currentApplication) return;
+    
     try {
-      // Mock PDF generation
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      setGeneratedPdfUrl('mock-pdf-url');
-      setCurrentStep('instructions');
+      setIsLoading(true);
+      const pdfResponse = await applicationsService.generatePdf(currentApplication.id);
+      
+      // Download the PDF file
+      const link = document.createElement('a');
+      link.href = pdfResponse.pdfUrl;
+      link.download = `wniosek_${currentApplication.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
 
 
   const clearProgress = () => {
-    localStorage.removeItem('applicationStep');
-    localStorage.removeItem('selectedTree');
-    localStorage.removeItem('selectedMunicipality');
+    // localStorage.removeItem('applicationStep');
+    // localStorage.removeItem('selectedTree');
+    // localStorage.removeItem('selectedMunicipality');
+    // localStorage.removeItem('selectedTemplate');
     setCurrentStep('overview');
     setSelectedTree(null);
     setSelectedMunicipality(null);
-    setApplicationForm({
-      applicantName: 'Anna Kowalska',
-      applicantEmail: 'anna.kowalska@example.com',
-      applicantPhone: '+48 123 456 789',
-      justification: '',
-      additionalInfo: '',
-      templateId: ''
-    });
-    setGeneratedPdfUrl(null);
+    setSelectedTemplate(null);
+    setCurrentApplication(null);
+    setFormSchema(null);
   };
 
   const renderProgressBar = () => {
     const currentStepNumber = getStepNumber(currentStep);
-    const totalSteps = 6; // We show 6 main steps in progress bar (excluding overview)
+    const totalSteps = 5; // We show 5 main steps in progress bar (excluding overview and completed)
     
     return (
       <div className="flex items-center justify-center">
-        {[1, 2, 3, 4, 5, 6].map((step, index) => (
+        {[1, 2, 3, 4, 5].map((step, index) => (
           <React.Fragment key={step}>
             <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 ${
               step <= currentStepNumber 
@@ -192,7 +307,7 @@ export const ApplicationsPage: React.FC = () => {
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
             1
           </div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Znajdź drzewo</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Wybierz drzewo</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Wybierz swoje drzewo oczekujące na weryfikację lub pomnik przyrody
           </p>
@@ -202,9 +317,9 @@ export const ApplicationsPage: React.FC = () => {
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
             2
           </div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Wypełnij dane</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Wybierz gminę</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Uzupełnij informacje o gminie i uzasadnienie
+            Wybierz gminę, do której chcesz wysłać wniosek
           </p>
         </div>
 
@@ -212,9 +327,9 @@ export const ApplicationsPage: React.FC = () => {
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
             3
           </div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Wygeneruj PDF</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Wypełnij formularz</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Pobierz gotowy wniosek i wyślij do gminy
+            Wypełnij dynamiczny formularz na podstawie wybranego szablonu
           </p>
         </div>
       </div>
@@ -244,10 +359,34 @@ export const ApplicationsPage: React.FC = () => {
           Wybierz drzewo
         </h2>
         <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-          Wybierz drzewo, dla którego chcesz utworzyć wniosek
+          {showAllTrees ? 'Wszystkie dostępne drzewa' : 'Wybierz drzewo, dla którego chcesz utworzyć wniosek'}
         </p>
       </div>
 
+      {trees.length === 0 ? (
+        <div className="text-center py-8">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl p-6 mb-4 shadow-lg">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Nie zgłosiłeś jeszcze żadnych drzew
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Aby utworzyć wniosek, musisz najpierw zgłosić drzewo w aplikacji lub wybrać z już istniejących.
+            </p>
+            <div className="space-y-2">
+              <GlassButton
+                onClick={handleLoadAllTrees}
+                disabled={isLoading}
+                variant="primary"
+                size="sm"
+                icon={isLoading ? Loader2 : Plus}
+              >
+                {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
+              </GlassButton>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
         {trees.map(tree => (
           <motion.div
@@ -255,8 +394,8 @@ export const ApplicationsPage: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleTreeSelect(tree)}
-            className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg cursor-pointer transition-all p-2 sm:p-3 ${
-              selectedTree?.id === tree.id ? 'ring-2 ring-green-500' : 'hover:shadow-xl'
+                className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 sm:p-4 ${
+                  selectedTree?.id === tree.id ? 'ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
             }`}
           >
             <div className="flex items-start space-x-2">
@@ -292,6 +431,23 @@ export const ApplicationsPage: React.FC = () => {
         ))}
       </div>
 
+          {!showAllTrees && (
+            <div className="text-center mt-4">
+              <GlassButton
+                onClick={handleLoadAllTrees}
+                disabled={isLoading}
+                variant="secondary"
+                size="sm"
+                icon={isLoading ? Loader2 : Plus}
+                className="px-6 py-2"
+              >
+                {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
+              </GlassButton>
+            </div>
+          )}
+        </>
+      )}
+
       <div className="flex justify-between mt-2 sm:mt-3">
         <GlassButton
           onClick={() => setCurrentStep('overview')}
@@ -326,19 +482,24 @@ export const ApplicationsPage: React.FC = () => {
             key={municipality.id}
             whileHover={{ scale: 1.01 }}
             onClick={() => setSelectedMunicipality(municipality)}
-            className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg cursor-pointer transition-all p-2 sm:p-3 ${
-              selectedMunicipality?.id === municipality.id ? 'ring-2 ring-green-500' : 'hover:shadow-xl'
+            className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 sm:p-4 ${
+              selectedMunicipality?.id === municipality.id ? 'ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
             }`}
           >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-1">
                   {municipality.name}
+                  {!municipality.isActive && (
+                    <span className="ml-2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
+                      Niedostępna
+                    </span>
+                  )}
                 </h3>
                 <div className="space-y-0.5 text-xs text-gray-600 dark:text-gray-400">
-                  <p>Email: {municipality.contact.email}</p>
-                  <p>Telefon: {municipality.contact.phone}</p>
-                  <p>Adres: {municipality.contact.address}</p>
+                  <p>Email: {municipality.email}</p>
+                  <p>Telefon: {municipality.phone}</p>
+                  <p>Adres: {municipality.address}, {municipality.city}</p>
                 </div>
               </div>
               <div className={`w-4 h-4 rounded-full border-2 ${
@@ -365,7 +526,7 @@ export const ApplicationsPage: React.FC = () => {
           <span style={{ fontSize: '10px' }}>Wstecz</span>
         </GlassButton>
         <GlassButton
-          onClick={() => setCurrentStep('fill-form')}
+          onClick={() => setCurrentStep('select-template')}
           disabled={!selectedMunicipality}
           variant="primary"
           size="xs"
@@ -377,281 +538,140 @@ export const ApplicationsPage: React.FC = () => {
     </motion.div>
   );
 
-  const renderFormFilling = () => (
+  const renderTemplateSelection = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="max-w-7xl mx-auto px-1 sm:px-0"
     >
-      <div className="text-center mb-2 sm:mb-3">
-        <h2 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
-          Wypełnij dane wniosku
-        </h2>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
-          Uzupełnij swoje dane i uzasadnienie wniosku
-        </p>
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 sm:p-3">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-          <div className="space-y-2 sm:space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <User className="w-3 h-3 inline mr-1" />
-                Imię i nazwisko
-              </label>
-              <input
-                type="text"
-                value={applicationForm.applicantName}
-                onChange={(e) => setApplicationForm(prev => ({ ...prev, applicantName: e.target.value }))}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <Mail className="w-3 h-3 inline mr-1" />
-                Email
-              </label>
-              <input
-                type="email"
-                value={applicationForm.applicantEmail}
-                onChange={(e) => setApplicationForm(prev => ({ ...prev, applicantEmail: e.target.value }))}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <Phone className="w-3 h-3 inline mr-1" />
-                Numer telefonu
-              </label>
-              <input
-                type="tel"
-                value={applicationForm.applicantPhone}
-                onChange={(e) => setApplicationForm(prev => ({ ...prev, applicantPhone: e.target.value }))}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Typ wniosku
-              </label>
-              <select
-                value={applicationForm.templateId}
-                onChange={(e) => setApplicationForm(prev => ({ ...prev, templateId: e.target.value }))}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">Wybierz typ wniosku</option>
-                {templates.map(template => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-2 sm:space-y-3">
-            <div>
-              <div className="mb-1">
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                  Uzasadnienie wniosku
-                </label>
-              </div>
-              <textarea
-                value={applicationForm.justification}
-                onChange={(e) => setApplicationForm(prev => ({ ...prev, justification: e.target.value }))}
-                rows={3}
-                placeholder="Opisz dlaczego to drzewo zasługuje na ochronę..."
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Dodatkowe informacje
-              </label>
-              <textarea
-                value={applicationForm.additionalInfo}
-                onChange={(e) => setApplicationForm(prev => ({ ...prev, additionalInfo: e.target.value }))}
-                rows={2}
-                placeholder="Dodatkowe uwagi, kontekst historyczny, itp..."
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
-              />
-            </div>
-          </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
         </div>
-      </div>
-
-      <div className="flex justify-between mt-2 sm:mt-3">
-        <GlassButton
-          onClick={() => setCurrentStep('select-municipality')}
-          variant="secondary"
-          size="xs"
-          icon={ArrowLeft}
-        >
-          <span style={{ fontSize: '10px' }}>Wstecz</span>
-        </GlassButton>
-        <GlassButton
-          onClick={handleGeneratePdf}
-          disabled={!applicationForm.applicantName || !applicationForm.justification || !applicationForm.templateId || isGenerating}
-          variant="primary"
-          size="xs"
-          icon={FileCheck}
-        >
-          <span style={{ fontSize: '10px' }}>{isGenerating ? 'Generowanie PDF...' : 'Wygeneruj PDF'}</span>
-        </GlassButton>
-      </div>
+      ) : (
+        <TemplateSelector
+          templates={templates}
+          selectedTemplate={selectedTemplate}
+          onTemplateSelect={handleTemplateSelect}
+          onBack={() => setCurrentStep('select-municipality')}
+          onNext={handleCreateApplication}
+        />
+      )}
     </motion.div>
   );
 
-  const renderInstructions = () => (
+  const renderFormFilling = () => {
+    if (!formSchema) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-7xl mx-auto px-1 sm:px-0"
+        >
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+          </div>
+        </motion.div>
+      );
+    }
+
+    return (
+      <DynamicForm
+        schema={formSchema}
+        onSubmit={handleFormSubmit}
+        onBack={() => setCurrentStep('select-template')}
+        isSubmitting={isSubmitting}
+      />
+    );
+  };
+
+  const renderSubmitted = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-7xl mx-auto px-1 sm:px-0"
+      className="max-w-4xl mx-auto text-center"
     >
-      <div className="mb-2 sm:mb-3 text-center">
-        <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mx-auto mb-1" />
-        <h2 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
-          Wniosek został wygenerowany!
+      <div className="mb-6">
+        <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Wniosek został wysłany!
         </h2>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
-          Twój wniosek jest gotowy do wysłania. Postępuj zgodnie z instrukcjami poniżej.
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          Twój wniosek został pomyślnie wysłany. Możesz teraz pobrać PDF i wysłać go do gminy przez ePUAP.
         </p>
       </div>
 
-      {/* Detailed Instructions */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 sm:p-3 mb-2 sm:mb-3">
-        <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
-          📋 Instrukcja wysyłania wniosku przez ePUAP
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Następne kroki:
         </h3>
         
-        <div className="space-y-1 sm:space-y-2 text-left">
-          <div className="flex items-start space-x-2">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+        <div className="space-y-3 text-left">
+          <div className="flex items-start space-x-3">
+            <div className="w-6 h-6 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-sm font-bold mt-0.5">
               1
             </div>
             <div>
-              <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                Pobierz wygenerowany PDF
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400" style={{ fontSize: '10px' }}>
-                Zapisz plik na swoim komputerze - będziesz go potrzebować do załączenia
-              </p>
+              <p className="font-medium text-gray-900 dark:text-white">Pobierz wygenerowany PDF</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Zapisz plik na swoim komputerze</p>
             </div>
           </div>
 
-          <div className="flex items-start space-x-2">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+          <div className="flex items-start space-x-3">
+            <div className="w-6 h-6 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-sm font-bold mt-0.5">
               2
             </div>
             <div>
-              <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                Zaloguj się na platformie ePUAP
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400" style={{ fontSize: '10px' }}>
-                Przejdź na stronę epuap.gov.pl i zaloguj się swoim profilem zaufanym
-              </p>
+              <p className="font-medium text-gray-900 dark:text-white">Zaloguj się na ePUAP</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Przejdź na epuap.gov.pl i zaloguj się</p>
             </div>
           </div>
 
-          <div className="flex items-start space-x-2">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+          <div className="flex items-start space-x-3">
+            <div className="w-6 h-6 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-sm font-bold mt-0.5">
               3
             </div>
             <div>
-              <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                Znajdź swoją gminę
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400" style={{ fontSize: '10px' }}>
-                Wyszukaj "{selectedMunicipality?.name}" w katalogu urzędów
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-2">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-              4
-            </div>
-            <div>
-              <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                Wybierz odpowiednią usługę
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400" style={{ fontSize: '10px' }}>
-                Szukaj usługi "Pomniki przyrody", "Zgłoszenia dotyczące drzew" lub podobnej
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-2">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-              5
-            </div>
-            <div>
-              <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                Wypełnij formularz i załącz PDF
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400" style={{ fontSize: '10px' }}>
-                Uzupełnij wymagane pola i załącz pobrany wcześniej plik PDF
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-2">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-              6
-            </div>
-            <div>
-              <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                Wyślij wniosek i zachowaj numer sprawy
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400" style={{ fontSize: '10px' }}>
-                Po wysłaniu otrzymasz numer sprawy - zapisz go do śledzenia statusu
-              </p>
+              <p className="font-medium text-gray-900 dark:text-white">Wyślij wniosek</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Znajdź odpowiednią usługę i załącz PDF</p>
             </div>
           </div>
         </div>
-
-        {selectedMunicipality && (
-          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <h4 className="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-1">
-              📞 Kontakt do gminy w razie problemów:
-            </h4>
-            <div className="space-y-0.5 text-xs text-blue-800 dark:text-blue-200" style={{ fontSize: '10px' }}>
-              <p>📧 Email: {selectedMunicipality.contact.email}</p>
-              <p>📞 Telefon: {selectedMunicipality.contact.phone}</p>
-              <p>📍 Adres: {selectedMunicipality.contact.address}</p>
-            </div>
-          </div>
-        )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <GlassButton
-          onClick={() => window.open(generatedPdfUrl || '#', '_blank')}
+          onClick={handleGeneratePdf}
+          disabled={isLoading}
           variant="primary"
-          size="xs"
-          icon={Download}
+          size="sm"
+          icon={isLoading ? Loader2 : Download}
         >
-          <span style={{ fontSize: '10px' }}>Pobierz PDF</span>
+          {isLoading ? 'Generowanie PDF...' : 'Pobierz PDF'}
         </GlassButton>
+        
         <GlassButton
-          onClick={() => {
-            window.open('https://epuap.gov.pl', '_blank');
-            setCurrentStep('completed');
-          }}
-          variant="primary"
-          size="xs"
+          onClick={() => window.open('https://epuap.gov.pl', '_blank')}
+          variant="secondary"
+          size="sm"
           icon={ExternalLink}
         >
-          <span style={{ fontSize: '10px' }}>Otwórz ePUAP</span>
+          Otwórz ePUAP
+        </GlassButton>
+      </div>
+
+      <div className="mt-6">
+        <GlassButton
+          onClick={clearProgress}
+          variant="secondary"
+          size="sm"
+        >
+          Utwórz nowy wniosek
         </GlassButton>
       </div>
     </motion.div>
   );
+
 
   const renderCompleted = () => (
     <motion.div
@@ -671,7 +691,7 @@ export const ApplicationsPage: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
         <GlassButton
-          onClick={() => setCurrentStep('instructions')}
+          onClick={() => setCurrentStep('submitted')}
           variant="secondary"
           size="xs"
           icon={ArrowLeft}
@@ -726,12 +746,12 @@ export const ApplicationsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Kontakt do gminy:</h4>
-                <p className="text-gray-600 dark:text-gray-400">Email: {selectedMunicipality.contact.email}</p>
-                <p className="text-gray-600 dark:text-gray-400">Telefon: {selectedMunicipality.contact.phone}</p>
+                <p className="text-gray-600 dark:text-gray-400">Email: {selectedMunicipality.email}</p>
+                <p className="text-gray-600 dark:text-gray-400">Telefon: {selectedMunicipality.phone}</p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Adres urzędu:</h4>
-                <p className="text-gray-600 dark:text-gray-400">{selectedMunicipality.contact.address}</p>
+                <p className="text-gray-600 dark:text-gray-400">{selectedMunicipality.address}, {selectedMunicipality.city}</p>
               </div>
             </div>
 
@@ -774,8 +794,9 @@ export const ApplicationsPage: React.FC = () => {
           {currentStep === 'overview' && renderOverview()}
           {currentStep === 'select-tree' && renderTreeSelection()}
           {currentStep === 'select-municipality' && renderMunicipalitySelection()}
+          {currentStep === 'select-template' && renderTemplateSelection()}
           {currentStep === 'fill-form' && renderFormFilling()}
-          {currentStep === 'instructions' && renderInstructions()}
+          {currentStep === 'submitted' && renderSubmitted()}
           {currentStep === 'completed' && renderCompleted()}
         </AnimatePresence>
 

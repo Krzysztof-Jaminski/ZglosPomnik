@@ -9,13 +9,74 @@ export interface SystemThemePlugin {
 }
 
 class SystemThemePluginWeb implements SystemThemePlugin {
-  async setStatusBarColor(_options: { color: string }): Promise<void> {
+  async setStatusBarColor(options: { color: string }): Promise<void> {
+    // Update theme-color meta tag for PWA
+    this.updateThemeColorMeta(options.color);
   }
 
-  async setNavigationBarColor(_options: { color: string }): Promise<void> {
+  async setNavigationBarColor(options: { color: string }): Promise<void> {
+    // Update theme-color meta tag for PWA navigation bar
+    this.updateThemeColorMeta(options.color);
   }
 
-  async setSystemUITheme(_options: { isDark: boolean }): Promise<void> {
+  async setSystemUITheme(options: { isDark: boolean }): Promise<void> {
+    // Update status bar style for iOS PWA
+    this.updateStatusBarStyle(options.isDark);
+  }
+
+  private updateThemeColorMeta(color: string): void {
+    // Update theme-color meta tag
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement;
+    if (!themeColorMeta) {
+      themeColorMeta = document.createElement('meta');
+      themeColorMeta.name = 'theme-color';
+      document.head.appendChild(themeColorMeta);
+    }
+    themeColorMeta.content = color;
+
+    // Update msapplication-navbutton-color for Windows Phone
+    let msNavButtonColor = document.querySelector('meta[name="msapplication-navbutton-color"]') as HTMLMetaElement;
+    if (!msNavButtonColor) {
+      msNavButtonColor = document.createElement('meta');
+      msNavButtonColor.name = 'msapplication-navbutton-color';
+      document.head.appendChild(msNavButtonColor);
+    }
+    msNavButtonColor.content = color;
+
+    // Update msapplication-TileColor for Windows Phone
+    let msTileColor = document.querySelector('meta[name="msapplication-TileColor"]') as HTMLMetaElement;
+    if (!msTileColor) {
+      msTileColor = document.createElement('meta');
+      msTileColor.name = 'msapplication-TileColor';
+      document.head.appendChild(msTileColor);
+    }
+    msTileColor.content = color;
+
+    // Update CSS custom property for PWA navbar
+    document.documentElement.style.setProperty('--pwa-navbar-color', color);
+    
+    // Force update body background for PWA
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      document.body.style.backgroundColor = color;
+    }
+
+    // Update manifest theme_color if possible
+    const manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement;
+    if (manifestLink) {
+      // Note: We can't directly modify manifest.json, but we can update the meta tag
+      // The manifest.json would need to be regenerated for a complete solution
+    }
+  }
+
+  private updateStatusBarStyle(isDark: boolean): void {
+    // Update Apple status bar style for iOS PWA
+    let statusBarStyleMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement;
+    if (!statusBarStyleMeta) {
+      statusBarStyleMeta = document.createElement('meta');
+      statusBarStyleMeta.name = 'apple-mobile-web-app-status-bar-style';
+      document.head.appendChild(statusBarStyleMeta);
+    }
+    statusBarStyleMeta.content = isDark ? 'black-translucent' : 'default';
   }
 }
 

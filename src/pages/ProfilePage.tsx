@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key } from 'lucide-react';
+import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
@@ -404,6 +404,18 @@ export const ProfilePage: React.FC = () => {
               >
                 <span className="text-gray-700 dark:text-gray-300 text-sm">
                   Zmień hasło
+                </span>
+              </GlassButton>
+              
+              <GlassButton
+                onClick={() => navigate('/admin')}
+                variant="secondary"
+                size="xs"
+                className="w-full text-left"
+                icon={Shield}
+              >
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                  Panel administratora
                 </span>
               </GlassButton>
               
