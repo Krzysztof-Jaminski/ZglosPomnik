@@ -1,241 +1,249 @@
 import React, { useState, useEffect } from 'react';
 import { TreePost } from '../components/Feed/TreePost';
 import { TreePost as TreePostType } from '../types';
+import { treesService } from '../services/treesService';
+import { commentsService } from '../services/commentsService';
 import { api } from '../services/api';
 import { GlassButton } from '../components/UI/GlassButton';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<TreePostType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [filterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
+  // Load trees only once on page load
   useEffect(() => {
-    loadPosts();
+    const loadTrees = async () => {
+      setIsLoading(true);
+      try {
+        // Load trees from API
+        const treesData = await treesService.getTrees();
+        
+        // Sort trees by submission date (newest first)
+        const sortedTrees = treesData.sort((a, b) => {
+          const dateA = new Date(a.submissionDate || 0);
+          const dateB = new Date(b.submissionDate || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        // Convert trees to posts format
+        const postsData: TreePostType[] = sortedTrees.map(tree => ({
+          ...tree,
+          likes: tree.votes?.like || 0,
+          dislikes: tree.votes?.dislike || 0,
+          userVote: null, // Will be set by API if user has voted
+          comments: [], // Comments will be loaded on demand
+          commentCount: tree.commentCount || 0
+        }));
+
+        setPosts(postsData);
+      } catch (error) {
+        console.error('Error loading trees:', error);
+        // Fallback to mock data if API fails
+        const mockTrees = await api.getTrees();
+        const postsData: TreePostType[] = mockTrees.map(tree => ({
+          ...tree,
+          likes: tree.votes?.like || 0,
+          dislikes: tree.votes?.dislike || 0,
+          userVote: null,
+          comments: [],
+          commentCount: tree.commentCount || 0
+        }));
+        setPosts(postsData);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTrees();
   }, []);
 
+  // Handle scroll to specific tree from map
   useEffect(() => {
-    const handleScroll = () => {
-      // Sprawdzamy scroll na głównym kontenerze aplikacji
-      const mainContainer = document.querySelector('main.overflow-y-auto');
-      if (mainContainer) {
-        const { scrollTop, scrollHeight, clientHeight } = mainContainer;
-        console.log('Scroll event:', { scrollTop, scrollHeight, clientHeight, threshold: scrollHeight - 200 });
-        if (scrollTop + clientHeight >= scrollHeight - 200) {
-          console.log('Triggering loadMorePosts');
-          loadMorePosts();
+    const scrollToTreeId = location.state?.scrollToTreeId;
+    if (scrollToTreeId && posts.length > 0) {
+      // Wait a bit for posts to render, then scroll to the specific tree
+      setTimeout(() => {
+        const treeElement = document.getElementById(`tree-post-${scrollToTreeId}`);
+        if (treeElement) {
+          treeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight effect
+          treeElement.classList.add('ring-4', 'ring-green-500', 'ring-opacity-50');
+          setTimeout(() => {
+            treeElement.classList.remove('ring-4', 'ring-green-500', 'ring-opacity-50');
+          }, 3000);
         }
-      }
-    };
-
-    // Nasłuchuj scroll na głównym kontenerze
-    const mainContainer = document.querySelector('main.overflow-y-auto');
-    if (mainContainer) {
-      console.log('Added scroll listener to main container');
-      mainContainer.addEventListener('scroll', handleScroll);
-      return () => {
-        console.log('Removed scroll listener');
-        mainContainer.removeEventListener('scroll', handleScroll);
-      };
-    } else {
-      console.log('Main container not found');
+      }, 500);
     }
-  }, [isLoadingMore, hasMore]);
+  }, [posts, location.state]);
 
-  const loadPosts = async (isLoadMore = false) => {
-    try {
-      if (isLoadMore) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(true);
-      }
-      
-      const treesData = await api.getTrees();
-      
-      // Convert trees to posts with social features
-      const postsData: TreePostType[] = treesData.map(tree => ({
-        ...tree,
-        likes: Math.floor(Math.random() * 50),
-        dislikes: Math.floor(Math.random() * 10),
-        userVote: Math.random() > 0.7 ? (Math.random() > 0.5 ? 'like' as const : 'dislike' as const) : null,
-        comments: generateMockComments(tree.id),
-        legendComment: Math.random() > 0.6 ? generateLegendComment(tree.id) : undefined
-      }));
-
-      if (isLoadMore) {
-        setPosts(prevPosts => [...prevPosts, ...postsData]);
-      } else {
-        setPosts(postsData);
-      }
-      
-      // Symulujemy ograniczoną liczbę postów (dla demo)
-      setHasMore(postsData.length > 0);
-    } catch (error) {
-      console.error('Error loading posts:', error);
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  };
-
-  const loadMorePosts = () => {
-    console.log('loadMorePosts called', { isLoadingMore, hasMore });
-    if (!isLoadingMore && hasMore) {
-      console.log('Loading more posts...');
-      loadPosts(true);
-    }
-  };
-
-  const generateMockComments = (treeId: string) => {
-    const commentTexts = [
-      'Pamiętam jak w dzieciństwie bawiłem się pod tym dębem. Miałem wtedy 8 lat i wydawał mi się ogromny. Teraz, 30 lat później, nadal stoi w tym samym miejscu, ale ja już nie jestem taki mały. To drzewo widziało całe pokolenia dzieci bawiących się w jego cieniu.',
-      'Moja babcia opowiadała, że ten dąb był już stary, gdy ona była małą dziewczynką. Mówiła, że w czasie wojny ludzie chowali się w jego dziupli podczas nalotów. To drzewo uratowało życie wielu mieszkańcom tej dzielnicy.',
-      'W zeszłym roku podczas burzy jedna z gałęzi spadła na mój samochód. Zamiast się złościć, pomyślałem - to drzewo było tu długo przede mną i będzie długo po mnie. Naprawiłem samochód i teraz parkuję dalej, żeby nie przeszkadzać temu staruszkowi.',
-      'Każdej wiosny obserwuję jak ten dąb budzi się do życia. Najpierw pojawiają się małe listki, potem kwiaty, a na końcu żołędzie. To jak naturalny kalendarz pór roku. Moje dzieci uczą się od niego cierpliwości i cyklu życia.',
-      'W czasie upałów to drzewo daje najlepszy cień w całej okolicy. Ludzie przychodzą tu z kocami, książkami i kanapkami. To miejsce spotkań całej społeczności. Bez tego dębu nasza dzielnica straciłaby swoją duszę.',
-      'Moja córka ma alergię na pyłki, ale akurat pyłki tego dębu jej nie szkodzą. Lekarz powiedział, że to rzadkość. Córka nazywa go "przyjaznym dębem" i zawsze macha do niego ręką, gdy przechodzimy obok.',
-      'W zeszłym miesiącu zauważyłem, że w dziupli tego dębu zamieszkała rodzina sów. Każdego wieczora słychać ich pohukiwanie. To niesamowite, jak jedno drzewo może być domem dla tylu stworzeń - ptaków, owadów, a nawet małych ssaków.'
-    ];
-
-    const numComments = Math.floor(Math.random() * 8);
-    return Array.from({ length: numComments }, (_, index) => ({
-      id: `${treeId}-comment-${index}`,
-      treeId,
-      userId: `user-${index}`,
-      userName: `Użytkownik ${index + 1}`,
-      content: commentTexts[Math.floor(Math.random() * commentTexts.length)],
-      createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      likes: Math.floor(Math.random() * 20),
-      dislikes: Math.floor(Math.random() * 5),
-      userVote: Math.random() > 0.8 ? (Math.random() > 0.5 ? 'like' as const : 'dislike' as const) : null
-    }));
-  };
-
-  const generateLegendComment = (treeId: string) => {
-    const legendTexts = [
-      'Ten dąb pamięta czasy, gdy wokół niego były tylko pola i łąki. Dziś stoi w centrum miasta, ale jego korzenie sięgają głęboko w historię. Miejscowi mówią, że w jego cieniu odpoczywał sam Napoleon podczas przemarszu przez te ziemie.',
-      'Według starych map z XVIII wieku, ten dąb był już wtedy znaczącym punktem orientacyjnym. Podróżnicy zatrzymywali się przy nim, żeby odpocząć i napić się wody ze źródła, które biło u jego stóp. Dziś źródło już nie istnieje, ale dąb nadal stoi.',
-      'Moja prababcia opowiadała, że w czasie powstania styczniowego pod tym dębem ukrywali się powstańcy. Drzewo było tak gęste, że żołnierze rosyjscy nie mogli ich znaleźć. Dąb uratował życie wielu patriotom.',
-      'Ten dąb to prawdziwy skarb dendrologiczny. Jego pierśnica wynosi ponad 4 metry, co oznacza, że ma prawdopodobnie ponad 300 lat. To jeden z najstarszych dębów w całym województwie i powinien być chroniony jako pomnik przyrody.'
-    ];
-
-    return {
-      id: `${treeId}-legend`,
-      treeId,
-      userId: 'expert-user',
-      userName: 'Ekspert Dendrologiczny',
-      content: legendTexts[Math.floor(Math.random() * legendTexts.length)],
-      createdAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-      likes: Math.floor(Math.random() * 100) + 100, // Higher likes to ensure it's the legend
-      dislikes: Math.floor(Math.random() * 10),
-      userVote: null
-    };
-  };
-
+  // Handle tree voting
   const handleLike = async (postId: string) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          const wasLiked = post.userVote === 'like';
-          const wasDisliked = post.userVote === 'dislike';
-          
-          return {
-            ...post,
-            likes: wasLiked ? post.likes - 1 : post.likes + 1,
-            dislikes: wasDisliked ? post.dislikes - 1 : post.dislikes,
-            userVote: wasLiked ? null : 'like'
-          };
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      const wasLiked = post.userVote === 'like';
+      const wasDisliked = post.userVote === 'dislike';
+
+      if (isAuthenticated) {
+        let updatedVotes;
+        if (wasLiked) {
+          // Remove existing like
+          updatedVotes = await treesService.removeVoteFromTree(postId);
+        } else {
+          // Add like (or change from dislike to like)
+          updatedVotes = await treesService.voteOnTree(postId, 'like');
         }
-        return post;
-      })
-    );
+
+        // Update local state with API response
+        setPosts(prevPosts =>
+          prevPosts.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                likes: updatedVotes.like,
+                dislikes: updatedVotes.dislike,
+                userVote: wasLiked ? null : 'like'
+              };
+            }
+            return p;
+          })
+        );
+      } else {
+        // Fallback to local state update for non-authenticated users
+        setPosts(prevPosts =>
+          prevPosts.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                likes: wasLiked ? p.likes - 1 : p.likes + 1,
+                dislikes: wasDisliked ? p.dislikes - 1 : p.dislikes,
+                userVote: wasLiked ? null : 'like'
+              };
+            }
+            return p;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
   };
 
   const handleDislike = async (postId: string) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          const wasLiked = post.userVote === 'like';
-          const wasDisliked = post.userVote === 'dislike';
-          
-          return {
-            ...post,
-            likes: wasLiked ? post.likes - 1 : post.likes,
-            dislikes: wasDisliked ? post.dislikes - 1 : post.dislikes + 1,
-            userVote: wasDisliked ? null : 'dislike'
-          };
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      const wasLiked = post.userVote === 'like';
+      const wasDisliked = post.userVote === 'dislike';
+
+      if (isAuthenticated) {
+        let updatedVotes;
+        if (wasDisliked) {
+          // Remove existing dislike
+          updatedVotes = await treesService.removeVoteFromTree(postId);
+        } else {
+          // Add dislike (or change from like to dislike)
+          updatedVotes = await treesService.voteOnTree(postId, 'dislike');
         }
-        return post;
-      })
-    );
-  };
 
-  const handleComment = async (postId: string, commentText: string) => {
-    const newComment = {
-      id: `${postId}-comment-${Date.now()}`,
-      treeId: postId,
-      userId: 'current-user',
-      userName: 'Ty',
-      content: commentText,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      dislikes: 0,
-      userVote: null
-    };
-
-    setPosts(prevPosts =>
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            comments: [...post.comments, newComment]
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleCommentVote = async (commentId: string, vote: 'like' | 'dislike') => {
-    setPosts(prevPosts =>
-      prevPosts.map(post => ({
-        ...post,
-        comments: post.comments.map(comment => {
-          if (comment.id === commentId) {
-            const wasLiked = comment.userVote === 'like';
-            const wasDisliked = comment.userVote === 'dislike';
-            
-            if (vote === 'like') {
+        // Update local state with API response
+        setPosts(prevPosts =>
+          prevPosts.map(p => {
+            if (p.id === postId) {
               return {
-                ...comment,
-                likes: wasLiked ? comment.likes - 1 : comment.likes + 1,
-                dislikes: wasDisliked ? comment.dislikes - 1 : comment.dislikes,
-                userVote: wasLiked ? null : 'like'
-              };
-            } else {
-              return {
-                ...comment,
-                likes: wasLiked ? comment.likes - 1 : comment.likes,
-                dislikes: wasDisliked ? comment.dislikes - 1 : comment.dislikes + 1,
+                ...p,
+                likes: updatedVotes.like,
+                dislikes: updatedVotes.dislike,
                 userVote: wasDisliked ? null : 'dislike'
               };
             }
-          }
-          return comment;
-        })
-      }))
-    );
+            return p;
+          })
+        );
+      } else {
+        // Fallback to local state update for non-authenticated users
+        setPosts(prevPosts =>
+          prevPosts.map(p => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                likes: wasLiked ? p.likes - 1 : p.likes,
+                dislikes: wasDisliked ? p.dislikes - 1 : p.dislikes + 1,
+                userVote: wasDisliked ? null : 'dislike'
+              };
+            }
+            return p;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error disliking post:', error);
+    }
   };
 
+  // Handle comment creation
+  const handleComment = async (postId: string, commentText: string, userId?: string) => {
+    try {
+      if (isAuthenticated) {
+        const newComment = await commentsService.addTreeComment(postId, commentText, userId);
+        
+        // Update local state
+        setPosts(prevPosts =>
+          prevPosts.map(post => {
+            if (post.id === postId) {
+              return {
+                ...post,
+                comments: [newComment, ...post.comments],
+                commentCount: post.commentCount + 1
+              };
+            }
+            return post;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  };
+
+  // Handle post deletion
+  const handleDeletePost = (postId: string) => {
+    setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+  };
+
+
+  // Search function
+  const searchPosts = (posts: TreePostType[], query: string) => {
+    if (!query.trim()) return posts;
+    
+    const lowercaseQuery = query.toLowerCase();
+    
+    return posts.filter(post => {
+      return post.species?.toLowerCase().includes(lowercaseQuery) ||
+             post.speciesLatin?.toLowerCase().includes(lowercaseQuery) ||
+             post.userData?.userName?.toLowerCase().includes(lowercaseQuery) ||
+             post.description?.toLowerCase().includes(lowercaseQuery);
+    });
+  };
+
+  // Filter and sort posts
   const filteredAndSortedPosts = posts
     .filter(post => filterStatus === 'all' || post.status === filterStatus)
+    .filter(post => searchPosts([post], searchQuery).length > 0)
     .sort((a, b) => {
       if (sortBy === 'popular') {
         return (b.likes - b.dislikes) - (a.likes - a.dislikes);
       }
-      return new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime();
+      return new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime();
     });
 
   if (isLoading) {
@@ -250,67 +258,90 @@ export const FeedPage: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-6 overflow-y-auto">
-      <div className="max-w-lg mx-auto px-6">
-        {/* Filters */}
-        <div className="flex justify-center gap-4 mb-6">
-          <GlassButton
-            onClick={() => setSortBy('recent')}
-            variant={sortBy === 'recent' ? 'primary' : 'secondary'}
-            size="xs"
-          >
-            Najnowsze
-          </GlassButton>
-          <GlassButton
-            onClick={() => setSortBy('popular')}
-            variant={sortBy === 'popular' ? 'primary' : 'secondary'}
-            size="xs"
-          >
-            Popularne
-          </GlassButton>
+    <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-center">
+            <div className="flex items-center space-x-2">
+            <GlassButton
+              onClick={() => setSortBy('recent')}
+              variant={sortBy === 'recent' ? 'primary' : 'secondary'}
+              size="sm"
+            >
+              Najnowsze
+            </GlassButton>
+            <GlassButton
+              onClick={() => setSortBy('popular')}
+              variant={sortBy === 'popular' ? 'primary' : 'secondary'}
+              size="sm"
+            >
+              Popularne
+            </GlassButton>
+          </div>
         </div>
 
-        {/* Posts */}
-        <div className="space-y-6">
+        {/* Search */}
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex gap-3">
+            {/* Search Input */}
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Szukaj postów..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+            
+            {/* Clear Search Button */}
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors"
+              >
+                Wyczyść
+              </button>
+            )}
+          </div>
+        </div>
+
+      {/* Posts */}
+      <div className="flex-1 overflow-y-auto py-4">
+        <div className="space-y-8 sm:space-y-12 w-full sm:px-4 lg:px-6">
           {filteredAndSortedPosts.map((post) => (
             <div
               key={post.id}
+              id={`tree-post-${post.id}`}
             >
               <TreePost
                 post={post}
                 onLike={handleLike}
                 onDislike={handleDislike}
                 onComment={handleComment}
-                onCommentVote={handleCommentVote}
+                onDelete={handleDeletePost}
               />
             </div>
           ))}
         </div>
 
+        {/* Search Results Info */}
+        {searchQuery && (
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Znaleziono {filteredAndSortedPosts.length} wyników dla "{searchQuery}"
+            </p>
+          </div>
+        )}
+
         {filteredAndSortedPosts.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400 text-lg">
-              Brak zgłoszeń spełniających kryteria
+              {searchQuery ? 'Brak wyników wyszukiwania' : 'Brak zgłoszeń spełniających kryteria'}
             </p>
           </div>
         )}
-
-        {/* Loading more indicator */}
-        {isLoadingMore && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Ładowanie więcej...</p>
-          </div>
-        )}
-
-        {/* End of feed indicator */}
-        {!hasMore && filteredAndSortedPosts.length > 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              To wszystkie dostępne zgłoszenia
-            </p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, X, Search, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Camera, Upload, X, Search, ChevronDown, ChevronUp, ZoomIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TreeSpecies, NewTreeReport } from '../../types';
+import { Species, NewTreeReport, ApiTreeSubmission } from '../../types';
+import { speciesService } from '../../services/speciesService';
 import { api } from '../../services/api';
+import { treesService } from '../../services/treesService';
 import { storage } from '../../utils/storage';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { GlassButton } from '../UI/GlassButton';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 interface TreeReportFormProps {
   latitude?: number;
@@ -21,32 +23,86 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   onSubmit,
   onCancel
 }) => {
-  const [selectedSpecies, setSelectedSpecies] = useState<TreeSpecies | null>(null);
+  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
   const [speciesQuery, setSpeciesQuery] = useState('');
-  const [allSpecies, setAllSpecies] = useState<TreeSpecies[]>([]);
-  const [filteredSpecies, setFilteredSpecies] = useState<TreeSpecies[]>([]);
+  const [allSpecies, setAllSpecies] = useState<Species[]>([]);
+  const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
   const [showSpeciesPanel, setShowSpeciesPanel] = useState(false);
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [pierśnica, setPierśnica] = useState<string>('');
   const [height, setHeight] = useState<string>('');
   const [plotNumber, setPlotNumber] = useState<string>('');
+  const [condition, setCondition] = useState<string>('dobry');
+  const [isAlive, setIsAlive] = useState<boolean>(true);
+  const [estimatedAge, setEstimatedAge] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isOnline = useOnlineStatus();
-  const navigate = useNavigate();
+  const { isAuthenticated, user, isLoading } = useAuth();
+
+  // Load form data from localStorage on mount
+  React.useEffect(() => {
+    const savedData = localStorage.getItem('treeReportFormData');
+    if (savedData) {
+      try {
+        const formData = JSON.parse(savedData);
+        setSpeciesQuery(formData.speciesQuery || '');
+        setPierśnica(formData.pierśnica || '');
+        setHeight(formData.height || '');
+        setPlotNumber(formData.plotNumber || '');
+        setCondition(formData.condition || 'dobry');
+        setIsAlive(formData.isAlive !== undefined ? formData.isAlive : true);
+        setEstimatedAge(formData.estimatedAge || '');
+        setNotes(formData.notes || '');
+        
+        // Restore photos from base64
+        if (formData.photos && Array.isArray(formData.photos)) {
+          const restoredPhotos = formData.photos.map((base64: string, index: number) => 
+            base64ToFile(base64, `photo_${index}.jpg`)
+          );
+          setPhotos(restoredPhotos);
+        }
+      } catch (error) {
+        console.error('Error loading saved form data:', error);
+      }
+    }
+  }, []);
 
   // Load all species when component mounts
   React.useEffect(() => {
     const loadAllSpecies = async () => {
       setIsLoadingSpecies(true);
       try {
-        const species = await api.getSpecies();
+        const species = await speciesService.getSpecies();
         setAllSpecies(species);
         setFilteredSpecies(species);
+        
+        // Check if we need to restore selected species from localStorage
+        const savedData = localStorage.getItem('treeReportFormData');
+        if (savedData) {
+          try {
+            const formData = JSON.parse(savedData);
+            if (formData.speciesQuery) {
+              // Find matching species by Polish or Latin name (case-insensitive)
+              const matchingSpecies = species.find(s => 
+                s.polishName.toLowerCase().trim() === formData.speciesQuery.toLowerCase().trim() ||
+                s.latinName.toLowerCase().trim() === formData.speciesQuery.toLowerCase().trim()
+              );
+              if (matchingSpecies) {
+                setSelectedSpecies(matchingSpecies);
+              }
+            }
+          } catch (error) {
+            console.error('Error restoring selected species:', error);
+          }
+        }
       } catch (error) {
         console.error('Error loading species:', error);
       } finally {
@@ -61,36 +117,119 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   React.useEffect(() => {
     if (!speciesQuery.trim()) {
       setFilteredSpecies(allSpecies);
+      setSelectedSpecies(null); // Clear selection when query is empty
       return;
     }
 
     const query = speciesQuery.toLowerCase();
     const filtered = allSpecies.filter(species => 
-      species.commonName.toLowerCase().includes(query) ||
-      species.scientificName.toLowerCase().includes(query) ||
+      species.polishName.toLowerCase().includes(query) ||
+      species.latinName.toLowerCase().includes(query) ||
       species.family.toLowerCase().includes(query)
     );
     setFilteredSpecies(filtered);
+
+    // Auto-select species if exact match found (case-insensitive)
+    const exactMatch = allSpecies.find(species => 
+      species.polishName.toLowerCase().trim() === query.trim() ||
+      species.latinName.toLowerCase().trim() === query.trim()
+    );
+    
+    if (exactMatch) {
+      console.log('Found exact match for species:', exactMatch.polishName, 'ID:', exactMatch.id);
+      setSelectedSpecies(exactMatch);
+    } else {
+      console.log('No exact match found for query:', query);
+      console.log('Available species:', allSpecies.map(s => s.polishName));
+      setSelectedSpecies(null);
+    }
   }, [speciesQuery, allSpecies]);
+
+  // Auto-save form data to localStorage
+  React.useEffect(() => {
+    const saveFormData = async () => {
+      try {
+        // Convert photos to base64
+        const photoBase64s = await Promise.all(
+          photos.map(file => fileToBase64(file))
+        );
+        
+        const formData = {
+          speciesQuery,
+          pierśnica,
+          height,
+          plotNumber,
+          condition,
+          isAlive,
+          estimatedAge,
+          notes,
+          photos: photoBase64s,
+          latitude,
+          longitude
+        };
+        localStorage.setItem('treeReportFormData', JSON.stringify(formData));
+      } catch (error) {
+        console.error('Error saving form data:', error);
+      }
+    };
+    
+    saveFormData();
+  }, [speciesQuery, pierśnica, height, plotNumber, condition, isAlive, estimatedAge, notes, photos, latitude, longitude]);
+
+  // Convert File to base64 for localStorage
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Convert base64 back to File
+  const base64ToFile = (base64: string, filename: string): File => {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
 
   const handleSpeciesInputFocus = () => {
     setShowSpeciesPanel(true);
   };
 
-  const handleSpeciesSelect = (species: TreeSpecies) => {
+  const handleSpeciesSelect = (species: Species) => {
     setSelectedSpecies(species);
-    setSpeciesQuery(`${species.commonName} (${species.scientificName})`);
+    setSpeciesQuery(species.polishName); // Only Polish name
     setShowSpeciesPanel(false);
   };
 
-  const handleSpeciesCardClick = (species: TreeSpecies) => {
-    // Navigate to encyclopedia with the specific species
-    navigate('/encyclopedia', { state: { selectedSpecies: species.id } });
-  };
 
-  const handlePhotoAdd = (files: FileList | null) => {
+  const handlePhotoAdd = async (files: FileList | null) => {
     if (files) {
       const newPhotos = Array.from(files).slice(0, 5 - photos.length);
+      
+      // Walidacja plików
+      for (const file of newPhotos) {
+        // Import tymczasowego serwisu
+        const { tempImageService } = await import('../../services/tempImageService');
+        
+        if (!tempImageService.isValidImageFile(file)) {
+          alert(`Plik ${file.name} nie jest prawidłowym obrazem. Dozwolone formaty: JPEG, PNG, GIF, WebP`);
+          return;
+        }
+        
+        if (!tempImageService.isValidFileSize(file, 5)) {
+          alert(`Plik ${file.name} jest za duży. Maksymalny rozmiar: 5MB`);
+          return;
+        }
+      }
+      
       setPhotos(prev => [...prev, ...newPhotos]);
     }
   };
@@ -103,41 +242,180 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     e.preventDefault();
     if (!selectedSpecies || !latitude || !longitude) return;
 
-    setIsSubmitting(true);
+    // Check authentication status
+    console.log('Auth status:', { isAuthenticated, user: user?.email });
+    if (!isAuthenticated) {
+      console.error('User is not authenticated');
+      return;
+    }
 
-    const report: NewTreeReport = {
-      species: selectedSpecies.scientificName,
-      commonName: selectedSpecies.commonName,
-      latitude,
-      longitude,
-      notes,
-      photos,
-      pierśnica: pierśnica ? parseFloat(pierśnica) : undefined,
-      height: height ? parseFloat(height) : undefined,
-      plotNumber: plotNumber || undefined
-    };
+    setIsSubmitting(true);
+    setSubmitError(null); // Clear any previous errors
 
     try {
       if (isOnline) {
-        await api.addTree(report);
+        // Upload photos first if any
+        let imageUrls: string[] = [];
+        if (photos.length > 0) {
+          console.log(`Uploading ${photos.length} photos...`);
+          for (let i = 0; i < photos.length; i++) {
+            const photo = photos[i];
+            try {
+              console.log(`Uploading photo ${i + 1}/${photos.length}: ${photo.name}`);
+              const uploadedUrl = await api.uploadPhoto(photo);
+              imageUrls.push(uploadedUrl);
+              console.log(`Photo ${i + 1} uploaded successfully: ${uploadedUrl}`);
+            } catch (error) {
+              console.error(`Error uploading photo ${i + 1}:`, error);
+              setSubmitError(`Błąd podczas uploadu zdjęcia ${i + 1}: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+              setIsSubmitting(false);
+              return;
+            }
+          }
+          console.log(`All photos uploaded successfully. URLs:`, imageUrls);
+        }
+
+        // Generate random UUID for the tree
+        const generateUUID = () => {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        };
+
+        // Transform data to match API specification
+        const apiTreeData: ApiTreeSubmission = {
+          id: generateUUID(), // Generate random UUID
+          speciesId: selectedSpecies.id.toUpperCase(), // Convert to uppercase for backend
+          location: {
+            lat: latitude,
+            lng: longitude,
+            address: plotNumber.trim() || 'Unknown address' // Use plot number as address, fallback to "Unknown address"
+          },
+          circumference: pierśnica ? parseFloat(pierśnica) : 0,
+          height: height ? parseFloat(height) : 0,
+          condition: condition,
+          isAlive: isAlive,
+          estimatedAge: estimatedAge ? parseInt(estimatedAge) : 0,
+          description: notes,
+          images: imageUrls
+        };
+
+        // Submit to API
+        console.log('=== TREE SUBMISSION DEBUG ===');
+        console.log('Generated tree ID:', apiTreeData.id);
+        console.log('Species ID (original):', selectedSpecies.id);
+        console.log('Species ID (uppercase):', apiTreeData.speciesId);
+        console.log('Species name:', selectedSpecies.polishName);
+        console.log('Plot number:', plotNumber);
+        console.log('Address:', apiTreeData.location.address);
+        console.log('Location:', apiTreeData.location);
+        console.log('Full API data:', apiTreeData);
+        
+        const result = await treesService.submitTreeReport(apiTreeData);
+        console.log('Tree report submitted successfully:', result);
+        
+        setSubmitSuccess(true);
+        
+        // Clear localStorage after successful submission
+        localStorage.removeItem('treeReportFormData');
+        
+        // Reset form
+        setSelectedSpecies(null);
+        setSpeciesQuery('');
+        setNotes('');
+        setPhotos([]);
+        setPierśnica('');
+        setHeight('');
+        setPlotNumber('');
+        setCondition('dobry');
+        setIsAlive(true);
+        setEstimatedAge('');
+        
+        // Navigate to map after 4 seconds
+        setTimeout(() => {
+          setSubmitSuccess(false);
+          onSubmit?.();
+        }, 4000);
       } else {
+        // Offline mode - store for later sync
+        const report: NewTreeReport = {
+          species: selectedSpecies.latinName,
+          commonName: selectedSpecies.polishName,
+          latitude,
+          longitude,
+          notes,
+          photos,
+          pierśnica: pierśnica ? parseFloat(pierśnica) : undefined,
+          height: height ? parseFloat(height) : undefined,
+          plotNumber: plotNumber || undefined
+        };
         storage.addPendingReport(report);
+        setSubmitSuccess(true);
+        
+        // Reset form
+        setSelectedSpecies(null);
+        setSpeciesQuery('');
+        setNotes('');
+        setPhotos([]);
+        setPierśnica('');
+        setHeight('');
+        setPlotNumber('');
+        setCondition('dobry');
+        setIsAlive(true);
+        setEstimatedAge('');
+        
+        // Navigate to map after 4 seconds
+        setTimeout(() => {
+          setSubmitSuccess(false);
+          onSubmit?.();
+        }, 4000);
       }
-      
-      setSelectedSpecies(null);
-      setSpeciesQuery('');
-      setNotes('');
-      setPhotos([]);
-      setPierśnica('');
-      setHeight('');
-      setPlotNumber('');
-      onSubmit?.();
     } catch (error) {
       console.error('Error submitting report:', error);
+      
+      // Set user-friendly error message
+      let errorMessage = 'Wystąpił błąd podczas wysyłania zgłoszenia.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Authentication token expired')) {
+          errorMessage = 'Sesja wygasła. Zaloguj się ponownie.';
+        } else if (error.message.includes('401')) {
+          errorMessage = 'Brak autoryzacji. Zaloguj się ponownie.';
+        } else if (error.message.includes('403')) {
+          errorMessage = 'Brak uprawnień do wykonania tej operacji.';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'Nie znaleziono gatunku drzewa.';
+        } else if (error.message.includes('400')) {
+          errorMessage = 'Nieprawidłowe dane. Sprawdź wypełnione pola.';
+        } else if (error.message.includes('500')) {
+          errorMessage = 'Błąd serwera. Spróbuj ponownie za chwilę.';
+        } else if (error.message.includes('Network')) {
+          errorMessage = 'Brak połączenia z internetem. Sprawdź połączenie.';
+        } else {
+          errorMessage = `Błąd: ${error.message}`;
+        }
+      }
+      
+      setSubmitError(errorMessage);
+      setTimeout(() => setSubmitError(null), 8000); // Hide error message after 8 seconds
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Show loading state while AuthProvider is initializing
+  if (isLoading) {
+    return (
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 sm:p-8 w-full mx-auto">
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          <span className="ml-3 text-gray-600 dark:text-gray-300">Ładowanie...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -169,6 +447,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         </motion.div>
       )}
 
+
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         {/* Species selection */}
         <div className="space-y-2 sm:space-y-3">
@@ -178,19 +457,19 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           
           {/* Search input */}
           <div className="relative">
-            <Search className="absolute left-3 sm:left-4 top-3 sm:top-4 w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+            <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 text-gray-400" />
             <input
               type="text"
               value={speciesQuery}
               onChange={(e) => setSpeciesQuery(e.target.value)}
               onFocus={handleSpeciesInputFocus}
-              placeholder="Wpisz nazwę gatunku po polsku lub łacinie..."
-              className="w-full pl-10 sm:pl-12 pr-10 sm:pr-14 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              placeholder="Polska lub łacińska nazwa"
+              className="w-full pl-8 sm:pl-10 pr-10 sm:pr-14 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
             />
             <button
               type="button"
               onClick={() => setShowSpeciesPanel(!showSpeciesPanel)}
-              className="absolute right-3 sm:right-4 top-3 sm:top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               {showSpeciesPanel ? <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" /> : <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
@@ -203,12 +482,12 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 overflow-hidden"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 overflow-hidden"
               >
                 <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-medium text-gray-900 dark:text-white">
-                      Wybierz gatunek z encyklopedii
+                      Gatunki
                     </h3>
                     <span className="text-base text-gray-500">
                       {filteredSpecies.length} gatunków
@@ -216,7 +495,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                   </div>
                 </div>
 
-                <div className="max-h-48 sm:max-h-96 overflow-y-auto p-3 sm:p-6">
+                <div className="max-h-[32rem] sm:max-h-[40rem] overflow-y-auto p-3 sm:p-6">
                   {isLoadingSpecies ? (
                     <div className="flex items-center justify-center py-4 sm:py-8">
                       <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-600"></div>
@@ -227,44 +506,102 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                       {filteredSpecies.map((species) => (
                         <div
                           key={species.id}
-                          className="group relative bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer p-3 sm:p-4"
+                          className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer overflow-hidden border border-gray-200 dark:border-gray-700"
                         >
                           {/* Species card for selection */}
                           <div
                             onClick={() => handleSpeciesSelect(species)}
-                            className="flex items-center space-x-3 sm:space-x-4"
+                            className="p-4 sm:p-6"
                           >
-                            <div className="flex-shrink-0">
-                              <img
-                                src={species.images[0]}
-                                alt={species.commonName}
-                                className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded-md"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 dark:text-white text-base mb-1 truncate">
-                                {species.commonName}
+                            {/* Header with name and family */}
+                            <div className="mb-4">
+                              <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">
+                                {species.polishName}
                               </h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-1 truncate">
-                                {species.scientificName}
+                              <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-1">
+                                {species.latinName}
                               </p>
-                              <p className="text-sm text-gray-500 truncate">
-                                {species.family}
+                              <p className="text-sm text-gray-500">
+                                Rodzina: {species.family}
                               </p>
+                            </div>
+
+                            {/* Images Grid - up to 4 images */}
+                            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8 mb-4">
+                              {species.images.slice(0, 4).map((image, index) => {
+                                const typeLabels = {
+                                  'Tree': 'Całościowe',
+                                  'Leaf': 'Liście', 
+                                  'Bark': 'Kora',
+                                  'Fruit': 'Owoce',
+                                  'Flower': 'Kwiaty'
+                                };
+                                return (
+                                  <div key={index} className="relative group aspect-square sm:aspect-[4/3] lg:aspect-square">
+                                    <img
+                                      src={image.imageUrl}
+                                      alt={image.altText || `${species.polishName} - ${typeLabels[image.type] || 'Zdjęcie'}`}
+                                      className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEnlargedImage(image.imageUrl);
+                                      }}
+                                    />
+                                    <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                      {typeLabels[image.type] || 'Zdjęcie'}
+                                    </div>
+                                    <div className="absolute top-1 right-1 bg-black/70 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <ZoomIn className="w-4 h-4" />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              
+                              {/* Fill empty slots if less than 4 images */}
+                              {Array.from({ length: Math.max(0, 4 - species.images.length) }).map((_, index) => (
+                                <div key={`empty-${index}`} className="aspect-square sm:aspect-[4/3] lg:aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs text-gray-500">Brak zdjęcia</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* More Information Button */}
+                            <div className="mt-3">
+                              <GlassButton
+                                onClick={async () => {
+                                  try {
+                                    // Convert photos to base64 and save
+                                    const photoBase64s = await Promise.all(
+                                      photos.map(file => fileToBase64(file))
+                                    );
+                                    
+                                    const formData = {
+                                      speciesQuery,
+                                      pierśnica,
+                                      height,
+                                      plotNumber,
+                                      condition,
+                                      isAlive,
+                                      estimatedAge,
+                                      notes,
+                                      photos: photoBase64s
+                                    };
+                                    localStorage.setItem('treeReportFormData', JSON.stringify(formData));
+                                    // Navigate to encyclopedia
+                                    window.location.href = `/encyclopedia?species=${species.id}&returnTo=report`;
+                                  } catch (error) {
+                                    console.error('Error saving form data:', error);
+                                  }
+                                }}
+                                variant="primary"
+                                size="sm"
+                                className="w-full"
+                              >
+                                Więcej informacji
+                              </GlassButton>
                             </div>
                           </div>
 
-                          {/* Encyclopedia link overlay */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSpeciesCardClick(species);
-                            }}
-                            className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1 bg-white dark:bg-gray-800 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-700"
-                            title="Zobacz w encyklopedii"
-                          >
-                            <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300" />
-                          </button>
                         </div>
                       ))}
                     </div>
@@ -291,16 +628,16 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             >
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <img
-                  src={selectedSpecies.images[0]}
-                  alt={selectedSpecies.commonName}
+                  src={selectedSpecies.images[0]?.imageUrl || '/logo.png'}
+                  alt={selectedSpecies.images[0]?.altText || selectedSpecies.polishName}
                   className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
                 />
                 <div className="flex-1">
                   <h4 className="text-base sm:text-lg font-medium text-green-900 dark:text-green-300">
-                    {selectedSpecies.commonName}
+                    {selectedSpecies.polishName}
                   </h4>
                   <p className="text-sm sm:text-base text-green-700 dark:text-green-400 italic">
-                    {selectedSpecies.scientificName}
+                    {selectedSpecies.latinName}
                   </p>
                   <p className="text-sm text-green-600 dark:text-green-500">
                     Rodzina: {selectedSpecies.family}
@@ -410,7 +747,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Pierśnica (130 cm) <span className="text-gray-500">(cm)</span>
+              Pierśnica (cm)
             </label>
             <input
               type="number"
@@ -424,7 +761,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </div>
           <div>
             <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Wysokość drzewa <span className="text-gray-500">(m)</span>
+              Wysokość drzewa (m)
             </label>
             <input
               type="number"
@@ -450,6 +787,48 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </div>
         </div>
 
+        {/* Tree condition and status */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div>
+            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Stan drzewa
+            </label>
+            <input
+              type="text"
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+              placeholder="np. dobry, średni, słaby"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Czy drzewo żyje?
+            </label>
+            <input
+              type="text"
+              value={isAlive ? 'tak' : 'nie'}
+              onChange={(e) => setIsAlive(e.target.value.toLowerCase() === 'tak')}
+              placeholder="tak / nie"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Szacowany wiek (lata)
+            </label>
+            <input
+              type="number"
+              value={estimatedAge}
+              onChange={(e) => setEstimatedAge(e.target.value)}
+              placeholder="np. 50"
+              min="0"
+              step="1"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+            />
+          </div>
+        </div>
+
         {/* Notes */}
         <div>
           <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -457,10 +836,15 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </label>
           <textarea
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={(e) => {
+              setNotes(e.target.value);
+              // Auto-resize
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
             placeholder="Opisz stan drzewa, potrzebne działania, szczególne cechy..."
-            rows={3}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-none transition-all"
+            rows={5}
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[120px]"
           />
         </div>
 
@@ -479,7 +863,17 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           )}
           <GlassButton
             type="submit"
-            disabled={!selectedSpecies || !latitude || !longitude || isSubmitting}
+            disabled={
+              !selectedSpecies || 
+              !latitude || 
+              !longitude || 
+              !pierśnica.trim() || 
+              !height.trim() || 
+              !condition.trim() || 
+              !estimatedAge.trim() || 
+              !notes.trim() || 
+              isSubmitting
+            }
             className="flex-1"
             size="sm"
             variant="primary"
@@ -495,6 +889,67 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </GlassButton>
         </div>
       </form>
+
+      {/* Success/Error Messages */}
+      {submitSuccess && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-5 mt-4 sm:mt-6 text-base sm:text-lg"
+        >
+          <p className="text-green-800 dark:text-green-200">
+            ✅ Zgłoszenie zostało pomyślnie wysłane do bazy danych!<br/>
+            <span className="text-sm">Za chwilę zostaniesz przekierowany na mapę...</span>
+          </p>
+        </motion.div>
+      )}
+
+      {submitError && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-5 mt-4 sm:mt-6 text-base sm:text-lg"
+        >
+          <p className="text-red-800 dark:text-red-200">
+            ❌ {submitError}
+          </p>
+        </motion.div>
+      )}
+
+      {/* Enlarged Image Modal */}
+      <AnimatePresence>
+        {enlargedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              className="relative max-w-4xl max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={enlargedImage}
+                alt="Powiększone zdjęcie"
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+              <button
+                onClick={() => setEnlargedImage(null)}
+                className="absolute top-4 right-4 bg-black/70 text-white p-2 rounded-full hover:bg-black/90 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

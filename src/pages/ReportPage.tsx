@@ -7,12 +7,28 @@ export const ReportPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Get location from navigation state or use current location
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(
-    location.state?.latitude && location.state?.longitude 
-      ? { lat: location.state.latitude, lng: location.state.longitude }
-      : null
-  );
+  // Get location from navigation state, localStorage, or use current location
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(() => {
+    // First try navigation state
+    if (location.state?.latitude && location.state?.longitude) {
+      return { lat: location.state.latitude, lng: location.state.longitude };
+    }
+    
+    // Then try localStorage
+    const savedData = localStorage.getItem('treeReportFormData');
+    if (savedData) {
+      try {
+        const formData = JSON.parse(savedData);
+        if (formData.latitude && formData.longitude) {
+          return { lat: formData.latitude, lng: formData.longitude };
+        }
+      } catch (error) {
+        console.error('Error loading saved location:', error);
+      }
+    }
+    
+    return null;
+  });
   
 
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -24,6 +40,30 @@ export const ReportPage: React.FC = () => {
       getCurrentLocation();
     }
   }, []);
+
+  // Save location to localStorage when it changes
+  React.useEffect(() => {
+    if (selectedLocation) {
+      const savedData = localStorage.getItem('treeReportFormData');
+      let formData = {};
+      
+      if (savedData) {
+        try {
+          formData = JSON.parse(savedData);
+        } catch (error) {
+          console.error('Error parsing saved form data:', error);
+        }
+      }
+      
+      formData = {
+        ...formData,
+        latitude: selectedLocation.lat,
+        longitude: selectedLocation.lng
+      };
+      
+      localStorage.setItem('treeReportFormData', JSON.stringify(formData));
+    }
+  }, [selectedLocation]);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {

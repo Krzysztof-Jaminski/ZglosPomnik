@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { Tree } from '../../types';
+import { treesService } from '../../services/treesService';
 import { api } from '../../services/api';
 import { Satellite, Map as MapIcon } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { TreeInfoPopup } from './TreeInfoPopup';
+import { useAuth } from '../../context/AuthContext';
 
 interface MapComponentProps {
+  onGoToFeed?: (treeId: string) => void;
   onTreeSelect?: (lat: number, lng: number) => void;
 }
 
@@ -15,7 +18,7 @@ export interface MapComponentRef {
   clearClickMarker: () => void;
 }
 
-export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onTreeSelect }, ref) => {
+export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onGoToFeed, onTreeSelect }, ref) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
   const [trees, setTrees] = useState<Tree[]>([]);
@@ -28,6 +31,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
   const [showTreePopup, setShowTreePopup] = useState(false);
   const [currentClickMarker, setCurrentClickMarker] = useState<any>(null);
   const onTreeSelectRef = useRef(onTreeSelect);
+  const { isAuthenticated } = useAuth();
 
   // Update ref when onTreeSelect changes
   useEffect(() => {
@@ -48,10 +52,6 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       if (!mapRef.current) return;
 
       const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      
-      if (!apiKey) {
-        throw new Error('Google Maps API key is not configured. Please set VITE_GOOGLE_MAPS_API_KEY in your .env file.');
-      }
 
       const loader = new Loader({
         apiKey: apiKey,
@@ -92,7 +92,6 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
               const lat = event.latLng.lat();
               const lng = event.latLng.lng();
               
-
               // Remove previous click marker if exists
               if (currentClickMarker) {
                 currentClickMarker.setMap(null);
@@ -149,7 +148,16 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
   useEffect(() => {
     const loadTrees = async () => {
       try {
-        const treesData = await api.getTrees();
+        let treesData;
+        
+        if (isAuthenticated) {
+          // Użyj prawdziwego API dla zalogowanych użytkowników
+          treesData = await treesService.getTrees();
+        } else {
+          // Użyj mock data dla niezalogowanych użytkowników
+          treesData = await api.getTrees();
+        }
+        
         setTrees(treesData);
         
         if (map) {
@@ -159,16 +167,14 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
 
           // Add markers for trees
           treesData.forEach(tree => {
-            const isOwnReport = tree.reportedBy === 'current-user';
-            
             const marker = new (window as any).google.maps.Marker({
-              position: { lat: tree.latitude, lng: tree.longitude },
+              position: { lat: tree.location.lat, lng: tree.location.lng },
               map: map,
-              title: `${tree.commonName} (${tree.species})`,
+              title: `${tree.species} (${tree.speciesLatin})`,
               icon: {
                 path: (window as any).google.maps.SymbolPath.CIRCLE,
                 scale: 8,
-                fillColor: getMarkerColor(tree.status, isOwnReport),
+                fillColor: getMarkerColor(),
                 fillOpacity: 0.8,
                 strokeColor: '#ffffff',
                 strokeWeight: 2
@@ -197,12 +203,11 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
     if (map) {
       loadTrees();
     }
-  }, [map]);
+  }, [map, isAuthenticated]);
 
-  const getMarkerColor = (status: string, isOwnReport: boolean) => {
-    if (status === 'approved') return '#10b981'; // Green for approved
-    if (isOwnReport) return '#3b82f6'; // Blue for own reports
-    return '#f59e0b'; // Amber for others' reports
+  const getMarkerColor = () => {
+    // All trees are now considered approved/green
+    return '#10b981'; // Green for all trees
   };
 
 
@@ -214,13 +219,6 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
     if (currentClickMarker) {
       currentClickMarker.setMap(null);
       setCurrentClickMarker(null);
-    }
-  };
-
-  const handleReportHere = () => {
-    if (selectedTree && onTreeSelectRef.current) {
-      onTreeSelectRef.current(selectedTree.latitude, selectedTree.longitude);
-      handleTreePopupClose();
     }
   };
 
@@ -298,7 +296,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           <TreeInfoPopup
             tree={selectedTree}
             onClose={handleTreePopupClose}
-            onReportHere={onTreeSelectRef.current ? handleReportHere : undefined}
+            onGoToFeed={onGoToFeed}
           />
         )}
       </AnimatePresence>

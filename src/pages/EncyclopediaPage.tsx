@@ -1,33 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, ArrowLeft } from 'lucide-react';
-import { TreeSpecies } from '../types';
-import { api } from '../services/api';
+import { ArrowLeft, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Species } from '../types';
+import { speciesService } from '../services/speciesService';
 import { SpeciesCard } from '../components/Encyclopedia/SpeciesCard';
 import { motion } from 'framer-motion';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { GlassButton } from '../components/UI/GlassButton';
 
 
 export const EncyclopediaPage: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [species, setSpecies] = useState<TreeSpecies[]>([]);
-  const [filteredSpecies, setFilteredSpecies] = useState<TreeSpecies[]>([]);
-  const [selectedSpecies, setSelectedSpecies] = useState<TreeSpecies | null>(null);
+  const [species, setSpecies] = useState<Species[]>([]);
+  const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
+  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
   useEffect(() => {
     const loadSpecies = async () => {
       try {
-        const data = await api.getSpecies();
+        const data = await speciesService.getSpecies();
         setSpecies(data);
         setFilteredSpecies(data);
         
-        // Check if we should show a specific species
-        const selectedSpeciesId = location.state?.selectedSpecies;
-        if (selectedSpeciesId) {
-          const speciesItem = data.find(s => s.id === selectedSpeciesId);
+        // Check if we should show a specific species from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const speciesId = urlParams.get('species');
+        
+        if (speciesId) {
+          const speciesItem = data.find(s => s.id === speciesId);
+          if (speciesItem) {
+            setSelectedSpecies(speciesItem);
+          }
+        } else if (location.state?.selectedSpecies) {
+          // Fallback to location state
+          const speciesItem = data.find(s => s.id === location.state.selectedSpecies);
           if (speciesItem) {
             setSelectedSpecies(speciesItem);
           }
@@ -48,8 +57,8 @@ export const EncyclopediaPage: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(s => 
-        s.commonName.toLowerCase().includes(query) ||
-        s.scientificName.toLowerCase().includes(query) ||
+        s.polishName.toLowerCase().includes(query) ||
+        s.latinName.toLowerCase().includes(query) ||
         s.family.toLowerCase().includes(query) ||
         s.description.toLowerCase().includes(query)
       );
@@ -57,6 +66,66 @@ export const EncyclopediaPage: React.FC = () => {
 
     setFilteredSpecies(filtered);
   }, [species, searchQuery]);
+
+  const openImageViewer = (index: number) => {
+    setSelectedImageIndex(index);
+    setIsImageViewerOpen(true);
+  };
+
+  const closeImageViewer = () => {
+    setIsImageViewerOpen(false);
+  };
+
+  const nextImage = () => {
+    if (selectedSpecies) {
+      setSelectedImageIndex((prev) => 
+        prev === selectedSpecies.images.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const prevImage = () => {
+    if (selectedSpecies) {
+      setSelectedImageIndex((prev) => 
+        prev === 0 ? selectedSpecies.images.length - 1 : prev - 1
+      );
+    }
+  };
+
+  const getImageTypeLabel = (type: string) => {
+    const labels: { [key: string]: string } = {
+      'Bark': 'Kora',
+      'Tree': 'Drzewo',
+      'Leaf': 'Liście',
+      'Fruit': 'Owoce',
+      'Flower': 'Kwiaty'
+    };
+    return labels[type] || type;
+  };
+
+  // Keyboard navigation for image viewer
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isImageViewerOpen || !selectedSpecies) return;
+      
+      switch (event.key) {
+        case 'Escape':
+          closeImageViewer();
+          break;
+        case 'ArrowLeft':
+          prevImage();
+          break;
+        case 'ArrowRight':
+          nextImage();
+          break;
+      }
+    };
+
+    if (isImageViewerOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isImageViewerOpen, selectedSpecies]);
 
   if (isLoading) {
     return (
@@ -73,19 +142,33 @@ export const EncyclopediaPage: React.FC = () => {
   if (selectedSpecies) {
     return (
       <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <div className="w-full px-2 sm:px-4 lg:px-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="mb-4"
           >
             <GlassButton
-              onClick={() => setSelectedSpecies(null)}
+              onClick={() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const returnTo = urlParams.get('returnTo');
+                
+                if (returnTo === 'report') {
+                  // Return to report page
+                  window.location.href = '/report';
+                } else {
+                  // Return to encyclopedia list
+                  setSelectedSpecies(null);
+                }
+              }}
               variant="secondary"
-              size="sm"
+              size="xs"
               icon={ArrowLeft}
             >
-              Powrót do listy
+              {new URLSearchParams(window.location.search).get('returnTo') === 'report' 
+                ? 'Powrót do zgłoszenia' 
+                : 'Powrót do encyklopedii'
+              }
             </GlassButton>
           </motion.div>
 
@@ -94,82 +177,159 @@ export const EncyclopediaPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
           >
-            <div className="aspect-w-16 aspect-h-9">
-              <img
-                src={selectedSpecies.images[0]}
-                alt={selectedSpecies.commonName}
-                className="w-full h-64 object-cover"
-              />
+            <div className="relative">
+              <div className="aspect-w-16 aspect-h-9">
+                <img
+                  src={selectedSpecies.images[selectedImageIndex]?.imageUrl}
+                  alt={selectedSpecies.images[selectedImageIndex]?.altText || selectedSpecies.polishName}
+                  className="w-full h-96 sm:h-[40rem] md:h-[48rem] lg:h-[56rem] xl:h-[64rem] 2xl:h-[72rem] object-cover cursor-pointer"
+                  onClick={() => openImageViewer(selectedImageIndex)}
+                />
+              </div>
+              
+              {/* Image type indicator */}
+              <div className="absolute top-4 right-4">
+                <span className="bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  {getImageTypeLabel(selectedSpecies.images[selectedImageIndex]?.type || '')}
+                </span>
+              </div>
+
+              {/* Navigation arrows */}
+              {selectedSpecies.images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+
+              {/* Image counter */}
+              {selectedSpecies.images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                  {selectedImageIndex + 1} / {selectedSpecies.images.length}
+                </div>
+              )}
             </div>
+
+            {/* Thumbnail gallery */}
+            {selectedSpecies.images.length > 1 && (
+              <div className="p-4 bg-gray-50 dark:bg-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Galeria zdjęć
+                </h3>
+                <div className="flex space-x-3 overflow-x-auto pb-2">
+                  {selectedSpecies.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 transition-colors ${
+                        index === selectedImageIndex 
+                          ? 'border-green-500' 
+                          : 'border-gray-300 dark:border-gray-600 hover:border-green-400'
+                      }`}
+                    >
+                      <img
+                        src={image?.imageUrl}
+                        alt={image?.altText || selectedSpecies.polishName}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div className="p-4 sm:p-6">
               <div className="mb-4 sm:mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  {selectedSpecies.commonName}
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+                  {selectedSpecies.polishName}
                 </h1>
-                <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 italic mb-2">
-                  {selectedSpecies.scientificName}
+                <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 dark:text-gray-400 italic mb-3">
+                  {selectedSpecies.latinName}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-500">
+                <p className="text-base sm:text-lg text-gray-500 dark:text-gray-500">
                   Rodzina: {selectedSpecies.family}
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">
                     Opis
                   </h3>
-                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+                  <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                     {selectedSpecies.description}
                   </p>
 
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Środowisko
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                    Przewodnik identyfikacji
                   </h3>
-                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {selectedSpecies.habitat}
-                  </p>
+                  <ul className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+                    {selectedSpecies.identificationGuide.map((guide, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-green-600 mr-3 text-lg">•</span>
+                        {guide}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
                     Charakterystyka
                   </h3>
-                  <div className="space-y-2 sm:space-y-3">
+                  <div className="space-y-3 sm:space-y-4">
                     <div className="flex justify-between">
-                      <span className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Wysokość:</span>
-                      <span className="text-sm sm:text-base text-gray-900 dark:text-white font-medium">
-                        {selectedSpecies.characteristics.height}
+                      <span className="text-base sm:text-lg text-gray-600 dark:text-gray-400">Maksymalna wysokość:</span>
+                      <span className="text-base sm:text-lg text-gray-900 dark:text-white font-medium">
+                        {selectedSpecies.traits.maxHeight} m
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Żywotność:</span>
-                      <span className="text-sm sm:text-base text-gray-900 dark:text-white font-medium">
-                        {selectedSpecies.characteristics.lifespan}
+                      <span className="text-base sm:text-lg text-gray-600 dark:text-gray-400">Żywotność:</span>
+                      <span className="text-base sm:text-lg text-gray-900 dark:text-white font-medium">
+                        {selectedSpecies.traits.lifespan}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Liście:</span>
-                      <span className="text-sm sm:text-base text-gray-900 dark:text-white font-medium">
-                        {selectedSpecies.characteristics.leaves}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Kora:</span>
-                      <span className="text-sm sm:text-base text-gray-900 dark:text-white font-medium">
-                        {selectedSpecies.characteristics.bark}
+                      <span className="text-base sm:text-lg text-gray-600 dark:text-gray-400">Rodzimy dla Polski:</span>
+                      <span className="text-base sm:text-lg text-gray-900 dark:text-white font-medium">
+                        {selectedSpecies.traits.nativeToPoland ? 'Tak' : 'Nie'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-4 sm:mt-6">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      Status ochrony
+                  <div className="mt-6 sm:mt-8">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                      Zmiany sezonowe
                     </h3>
-                    <span className="inline-block bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-3 py-1 rounded-full font-medium text-sm sm:text-base">
-                      {selectedSpecies.conservationStatus === 'Stabilny' ? 'Stabilny' : selectedSpecies.conservationStatus}
-                    </span>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-base font-medium text-green-600 dark:text-green-400">Wiosna:</span>
+                        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.spring}</p>
+                      </div>
+                      <div>
+                        <span className="text-base font-medium text-green-600 dark:text-green-400">Lato:</span>
+                        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.summer}</p>
+                      </div>
+                      <div>
+                        <span className="text-base font-medium text-orange-600 dark:text-orange-400">Jesień:</span>
+                        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.autumn}</p>
+                      </div>
+                      <div>
+                        <span className="text-base font-medium text-blue-600 dark:text-blue-400">Zima:</span>
+                        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.winter}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -180,27 +340,86 @@ export const EncyclopediaPage: React.FC = () => {
     );
   }
 
+  // Image viewer modal
+  if (isImageViewerOpen && selectedSpecies) {
+    const currentImage = (selectedSpecies as Species).images[selectedImageIndex];
+    return (
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
+        <div className="relative max-w-6xl max-h-full p-4">
+          <button
+            onClick={closeImageViewer}
+            className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          <img
+            src={currentImage?.imageUrl}
+            alt={currentImage?.altText || (selectedSpecies as Species).polishName}
+            className="max-w-full max-h-full object-contain"
+          />
+          
+          {(selectedSpecies as Species).images.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+              
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full">
+                {selectedImageIndex + 1} / {(selectedSpecies as Species).images.length}
+                <span className="ml-2 text-sm">
+                  - {getImageTypeLabel(currentImage?.type || '')}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-2 sm:px-4 lg:px-6">
 
 
         {/* Search */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 sm:left-4 top-3 sm:top-4 w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Szukaj gatunku..."
-              className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 text-base sm:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
-            />
+        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 mb-3 sm:mb-4">
+          <div className="flex gap-3">
+            {/* Search Input */}
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Szukaj gatunku..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+            
+            {/* Clear Search Button */}
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors"
+              >
+                Wyczyść
+              </button>
+            )}
           </div>
         </div>
 
         {/* Species grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
           {filteredSpecies.map((speciesItem) => (
             <div key={speciesItem.id}>
               <SpeciesCard 

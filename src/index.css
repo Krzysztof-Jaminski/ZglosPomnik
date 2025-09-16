@@ -17,6 +17,51 @@
     max-width: 100vw;
   }
 
+  /* PWA Navigation Bar Colors */
+  :root {
+    --pwa-navbar-color: #111827;
+  }
+  
+  @media (display-mode: standalone) {
+    /* For Android PWA */
+    body {
+      background-color: var(--pwa-navbar-color) !important;
+      /* Hide browser UI elements */
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* For iOS PWA */
+    @supports (-webkit-touch-callout: none) {
+      body {
+        background-color: var(--pwa-navbar-color) !important;
+      }
+    }
+    
+    /* Ensure the main container doesn't override the body background */
+    .h-screen {
+      background-color: transparent !important;
+    }
+    
+    /* Hide scrollbars in PWA mode */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* Prevent zoom on double tap */
+    * {
+      touch-action: manipulation;
+    }
+  }
+  
+  /* Additional PWA optimizations */
+  @media (display-mode: minimal-ui) {
+    body {
+      background-color: var(--pwa-navbar-color) !important;
+    }
+  }
+
   /* Remove focus ring from header links */
   header a:focus,
   header a:focus-visible,
@@ -203,6 +248,25 @@
 
 .dark .animate-shimmer {
   background: linear-gradient(to right, #1f2937 4%, #374151 25%, #1f2937 36%);
+}
+
+/* Autofill styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px rgba(31, 41, 55, 0.5) inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px rgba(31, 41, 55, 0.5) inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Print styles */

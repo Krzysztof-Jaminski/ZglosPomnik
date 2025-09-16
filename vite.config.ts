@@ -9,7 +9,14 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true
+    host: true,
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_BASE_URL || 'https://drzewaapi-app-2024.azurewebsites.net',
+        changeOrigin: true,
+        secure: true
+      }
+    }
   },
   build: {
     outDir: 'dist',

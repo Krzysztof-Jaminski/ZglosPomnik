@@ -1,11 +1,11 @@
 import React from 'react';
-import { Trees as Tree, Moon, Sun, Monitor, User } from 'lucide-react';
+import { Moon, Sun, Monitor, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassButton } from '../UI/GlassButton';
 
 export const Header: React.FC = () => {
-  const { theme, actualTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const themeIcons = {
     light: Sun,
@@ -29,12 +29,12 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-4 focus:outline-none focus:ring-0 focus:ring-offset-0">
             <Link to="/map" className="flex items-center space-x-1 sm:space-x-2 focus:outline-none focus:ring-0 focus:ring-offset-0">
               <img 
-                src="/green_tree_icon.svg" 
+                src="/logo.png" 
                 alt="ZgłośPomnik" 
                 className="w-12 h-12 sm:w-10 sm:h-10"
               />
-              <h1 className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400 focus:outline-none focus:ring-0 focus:ring-offset-0">
-                ZgłośPomnik
+              <h1 className="text-lg sm:text-2xl font-bold focus:outline-none focus:ring-0 focus:ring-offset-0 -mt-1" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                <span className="text-blue-600 dark:text-blue-500">Zgłoś</span><span className="text-green-600 dark:text-green-400">Pomnik</span>
               </h1>
             </Link>
           </div>
@@ -46,6 +46,7 @@ export const Header: React.FC = () => {
               variant="secondary"
               title={`Current theme: ${theme}`}
               icon={ThemeIcon}
+              className="flex items-center justify-center"
             >
               <span className="sr-only">Toggle theme</span>
             </GlassButton>
@@ -55,6 +56,7 @@ export const Header: React.FC = () => {
                 variant="secondary"
                 title="Profil użytkownika"
                 icon={User}
+                className="flex items-center justify-center"
               >
                 <span className="sr-only">Profil</span>
               </GlassButton>

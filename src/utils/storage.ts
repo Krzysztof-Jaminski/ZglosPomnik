@@ -7,7 +7,7 @@ interface StoredData {
 }
 
 class OfflineStorage {
-  private readonly STORAGE_KEY = 'treemapper-data';
+  private readonly STORAGE_KEY = 'zglospomnik-data';
 
   private getData(): StoredData {
     const stored = localStorage.getItem(this.STORAGE_KEY);

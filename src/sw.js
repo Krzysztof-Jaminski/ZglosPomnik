@@ -1,4 +1,4 @@
-const CACHE_NAME = 'treemapper-v1';
+const CACHE_NAME = 'zglospomnik-v1';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',

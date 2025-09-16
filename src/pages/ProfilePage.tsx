@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut } from 'lucide-react';
+import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-interface UserData {
-  name: string;
-  email: string;
+interface AdditionalUserData {
   phone: string;
   address: string;
   city: string;
@@ -15,24 +14,36 @@ interface UserData {
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState({
     push: true,
     email: false
   });
   
-  const [userData, setUserData] = useState<UserData>({
-    name: 'Anna Kowalska',
-    email: 'anna.kowalska@example.com',
-    phone: '+48 123 456 789',
-    address: 'ul. Przykładowa 15/3',
-    city: 'Warszawa',
-    postalCode: '00-001'
+  // Dane użytkownika z API (dostępne)
+  const userData = user ? {
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    registrationDate: user.registrationDate,
+    submissionsCount: user.submissionsCount,
+    verificationsCount: user.verificationsCount
+  } : null;
+  
+  // Dane użytkownika (nie dostępne w API - placeholder)
+  const [additionalData, setAdditionalData] = useState({
+    phone: 'Nie podano',
+    address: 'Nie podano',
+    city: 'Nie podano',
+    postalCode: 'Nie podano'
   });
   
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<UserData>(userData);
+  const [editData, setEditData] = useState(additionalData);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleNotificationToggle = (type: 'push' | 'email') => {
     setNotifications(prev => ({
@@ -48,18 +59,18 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleConfirmSave = () => {
-    setUserData(editData);
+    setAdditionalData(editData);
     setIsEditing(false);
     setShowPasswordModal(false);
     setConfirmPassword('');
   };
 
   const handleCancelEdit = () => {
-    setEditData(userData);
+    setEditData(additionalData);
     setIsEditing(false);
   };
 
-  const handleInputChange = (field: keyof UserData, value: string) => {
+  const handleInputChange = (field: keyof AdditionalUserData, value: string) => {
     setEditData(prev => ({
       ...prev,
       [field]: value
@@ -67,14 +78,41 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // Tutaj można dodać logikę czyszczenia sesji/tokenów
-    // Na razie po prostu przekierowujemy na landing page
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
     navigate('/');
   };
 
+  // Jeśli użytkownik nie jest zalogowany, przekieruj na stronę logowania
+  if (!userData) {
+    return (
+      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Nie jesteś zalogowany
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Zaloguj się aby zobaczyć swój profil
+          </p>
+          <GlassButton
+            onClick={() => navigate('/?action=login')}
+            variant="primary"
+            size="md"
+          >
+            Zaloguj się
+          </GlassButton>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-      <div className="max-w-2xl sm:max-w-none mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -96,15 +134,23 @@ export const ProfilePage: React.FC = () => {
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center overflow-hidden">
+                  {userData.avatar ? (
+                    <img 
+                      src={userData.avatar} 
+                      alt={userData.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+                  )}
                 </div>
                 <div>
                   <h2 className="font-semibold text-gray-900 dark:text-white text-lg">
                     {userData.name}
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400 text-base">
-                    Aktywny użytkownik
+                    Członek od {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
                   </p>
                 </div>
               </div>
@@ -123,15 +169,22 @@ export const ProfilePage: React.FC = () => {
 
             {isEditing ? (
               <div className="space-y-4">
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>Uwaga:</strong> Imię, nazwisko i email można zmienić tylko przez administratora. 
+                    Poniżej możesz edytować tylko dodatkowe informacje.
+                  </p>
+                </div>
+                
                 <div>
                   <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
                     Imię i nazwisko
                   </label>
                   <input
                     type="text"
-                    value={editData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    value={userData.name}
+                    disabled
+                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                   />
                 </div>
                 
@@ -141,9 +194,9 @@ export const ProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="email"
-                    value={editData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    value={userData.email}
+                    disabled
+                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                   />
                 </div>
                 
@@ -227,18 +280,55 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">
-                    {userData.phone}
+                  <span className="text-gray-500 dark:text-gray-500 text-base">
+                    {additionalData.phone}
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                  <span className="text-gray-500 dark:text-gray-500 text-base">
+                    {additionalData.address}, {additionalData.city} {additionalData.postalCode}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                   <span className="text-gray-700 dark:text-gray-300 text-base">
-                    {userData.address}, {userData.city} {userData.postalCode}
+                    Dołączył: {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
                   </span>
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* User Statistics */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <BarChart3 className="w-5 h-5 text-green-600" />
+              <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                Statystyki
+              </h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {userData.submissionsCount}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Zgłoszeń
+                </div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {userData.verificationsCount}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Weryfikacji
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -306,12 +396,26 @@ export const ProfilePage: React.FC = () => {
             
             <div className="space-y-3">
               <GlassButton
+                onClick={() => setShowChangePasswordModal(true)}
                 variant="secondary"
                 size="xs"
                 className="w-full text-left"
+                icon={Key}
               >
                 <span className="text-gray-700 dark:text-gray-300 text-sm">
                   Zmień hasło
+                </span>
+              </GlassButton>
+              
+              <GlassButton
+                onClick={() => navigate('/admin')}
+                variant="secondary"
+                size="xs"
+                className="w-full text-left"
+                icon={Shield}
+              >
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                  Panel administratora
                 </span>
               </GlassButton>
               
@@ -337,12 +441,12 @@ export const ProfilePage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-green-800/20 backdrop-blur-md border border-green-400/20 rounded-xl shadow-xl p-6 max-w-sm w-full"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
             >
-              <h3 className="text-green-900 dark:text-green-200 mb-3 font-semibold text-lg">
+              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
                 Potwierdź zmiany
               </h3>
-              <p className="text-green-800 dark:text-green-300 mb-4 text-base">
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
                 Wprowadź hasło aby potwierdzić zmiany.
               </p>
               <input
@@ -350,7 +454,7 @@ export const ProfilePage: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Hasło"
-                className="w-full px-4 py-3 border border-green-300 dark:border-green-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50 dark:bg-green-900/30 text-green-900 dark:text-green-100 mb-4 text-base" 
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4 text-base" 
               />
               <div className="flex space-x-3">
                 <GlassButton
@@ -369,6 +473,100 @@ export const ProfilePage: React.FC = () => {
                   icon={Save}
                 >
                   <span className="text-base">Potwierdź</span>
+                </GlassButton>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Change Password Modal */}
+        {showChangePasswordModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
+            >
+              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
+                Zmień hasło
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
+                Wprowadź nowe hasło dla swojego konta.
+              </p>
+              <div className="space-y-4">
+                <input
+                  type="password"
+                  placeholder="Aktualne hasło"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                />
+                <input
+                  type="password"
+                  placeholder="Nowe hasło"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                />
+                <input
+                  type="password"
+                  placeholder="Potwierdź nowe hasło"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                />
+              </div>
+              <div className="flex space-x-3 mt-6">
+                <GlassButton
+                  onClick={() => setShowChangePasswordModal(false)}
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <span className="text-base">Anuluj</span>
+                </GlassButton>
+                <GlassButton
+                  onClick={() => {
+                    // TODO: Implement password change logic
+                    setShowChangePasswordModal(false);
+                  }}
+                  variant="primary"
+                  size="sm"
+                  className="flex-1"
+                  icon={Save}
+                >
+                  <span className="text-base">Zapisz</span>
+                </GlassButton>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
+            >
+              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
+                Potwierdź wylogowanie
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
+                Czy na pewno chcesz się wylogować?
+              </p>
+              <div className="flex space-x-3">
+                <GlassButton
+                  onClick={() => setShowLogoutModal(false)}
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <span className="text-base">Anuluj</span>
+                </GlassButton>
+                <GlassButton
+                  onClick={confirmLogout}
+                  variant="danger"
+                  size="sm"
+                  className="flex-1"
+                  icon={LogOut}
+                >
+                  <span className="text-base">Wyloguj się</span>
                 </GlassButton>
               </div>
             </motion.div>

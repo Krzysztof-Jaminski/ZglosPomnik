@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { MapComponent, MapComponentRef } from '../components/Map/MapComponent';
 import { MapConfirmationPopup } from '../components/Map/MapConfirmationPopup';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { GlassButton } from '../components/UI/GlassButton';
 
 export const MapPage: React.FC = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -38,18 +36,25 @@ export const MapPage: React.FC = () => {
     }
   };
 
-  const handleFloatingButtonClick = () => {
-    navigate('/report');
+  const handleGoToFeed = (treeId: string) => {
+    // Navigate to feed with tree ID in state
+    navigate('/feed', { 
+      state: { 
+        scrollToTreeId: treeId 
+      } 
+    });
   };
 
   return (
     <div className="flex flex-col h-full">
       {/* Map takes all available space */}
       <div className="flex-1 relative overflow-hidden">
-        <MapComponent ref={mapComponentRef} onTreeSelect={handleMapClick} />
+        <MapComponent 
+          ref={mapComponentRef} 
+          onGoToFeed={handleGoToFeed} 
+          onTreeSelect={handleMapClick} 
+        />
       </div>
-      
-
 
       {/* Confirmation popup */}
       <AnimatePresence>
