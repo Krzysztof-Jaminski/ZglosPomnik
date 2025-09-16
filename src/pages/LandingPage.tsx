@@ -286,7 +286,10 @@ export const LandingPage = () => {
 
               <div className="flex items-center justify-center mb-8">
                 <DarkGlassButton
-                  onClick={() => navigate('/map')}
+                  onClick={() => {
+                    setAuthMode('login');
+                    setShowAuthModal(true);
+                  }}
                   variant="primary"
                   size="md"
                   className="text-base px-8 py-3"
@@ -304,7 +307,10 @@ export const LandingPage = () => {
 
               <div className="flex items-center justify-center">
                 <DarkGlassButton
-                  onClick={() => navigate('/map')}
+                  onClick={() => {
+                    setAuthMode('login');
+                    setShowAuthModal(true);
+                  }}
                   variant="primary"
                   size="sm"
                   className="text-xs sm:text-sm w-fit px-4 py-2"
