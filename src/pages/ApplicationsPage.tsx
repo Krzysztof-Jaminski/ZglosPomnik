@@ -16,13 +16,54 @@ type ApplicationStep = 'overview' | 'select-tree' | 'select-municipality' | 'sel
 
 export const ApplicationsPage: React.FC = () => {
   const { isAuthenticated, handleAuthError } = useAuth();
-  const [currentStep, setCurrentStep] = useState<ApplicationStep>('overview');
+  const [currentStep, setCurrentStep] = useState<ApplicationStep>(() => {
+    // Initialize from localStorage if available
+    const savedStep = localStorage.getItem('applicationStep');
+    if (savedStep) {
+      const validSteps: ApplicationStep[] = ['overview', 'select-tree', 'select-municipality', 'select-template', 'fill-form', 'submitted', 'completed'];
+      if (validSteps.includes(savedStep as ApplicationStep)) {
+        console.log('Initializing step from localStorage:', savedStep);
+        return savedStep as ApplicationStep;
+      }
+    }
+    return 'overview';
+  });
   const [trees, setTrees] = useState<Tree[]>([]);
   const [templates, setTemplates] = useState<ApplicationTemplate[]>([]);
   const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
-  const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
-  const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<ApplicationTemplate | null>(null);
+  const [selectedTree, setSelectedTree] = useState<Tree | null>(() => {
+    const savedTree = localStorage.getItem('selectedTree');
+    if (savedTree) {
+      try {
+        return JSON.parse(savedTree);
+      } catch (error) {
+        console.error('Error parsing saved tree:', error);
+      }
+    }
+    return null;
+  });
+  const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(() => {
+    const savedMunicipality = localStorage.getItem('selectedMunicipality');
+    if (savedMunicipality) {
+      try {
+        return JSON.parse(savedMunicipality);
+      } catch (error) {
+        console.error('Error parsing saved municipality:', error);
+      }
+    }
+    return null;
+  });
+  const [selectedTemplate, setSelectedTemplate] = useState<ApplicationTemplate | null>(() => {
+    const savedTemplate = localStorage.getItem('selectedTemplate');
+    if (savedTemplate) {
+      try {
+        return JSON.parse(savedTemplate);
+      } catch (error) {
+        console.error('Error parsing saved template:', error);
+      }
+    }
+    return null;
+  });
   const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
   const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,28 +72,70 @@ export const ApplicationsPage: React.FC = () => {
   const [showAllTrees, setShowAllTrees] = useState(false);
   const [autoSelectAttempted, setAutoSelectAttempted] = useState(false);
 
-  // Save progress to localStorage (commented for testing)
-  // useEffect(() => {
-  //   localStorage.setItem('applicationStep', currentStep);
-  // }, [currentStep]);
+  // Save progress to localStorage
+  useEffect(() => {
+    localStorage.setItem('applicationStep', currentStep);
+  }, [currentStep]);
 
-  // useEffect(() => {
-  //   if (selectedTree) {
-  //     localStorage.setItem('selectedTree', JSON.stringify(selectedTree));
-  //   }
-  // }, [selectedTree]);
+  useEffect(() => {
+    if (selectedTree) {
+      localStorage.setItem('selectedTree', JSON.stringify(selectedTree));
+    }
+  }, [selectedTree]);
 
-  // useEffect(() => {
-  //   if (selectedMunicipality) {
-  //     localStorage.setItem('selectedMunicipality', JSON.stringify(selectedMunicipality));
-  //   }
-  // }, [selectedMunicipality]);
+  useEffect(() => {
+    if (selectedMunicipality) {
+      localStorage.setItem('selectedMunicipality', JSON.stringify(selectedMunicipality));
+    }
+  }, [selectedMunicipality]);
 
-  // useEffect(() => {
-  //   if (selectedTemplate) {
-  //     localStorage.setItem('selectedTemplate', JSON.stringify(selectedTemplate));
-  //   }
-  // }, [selectedTemplate]);
+  useEffect(() => {
+    if (selectedTemplate) {
+      localStorage.setItem('selectedTemplate', JSON.stringify(selectedTemplate));
+    }
+  }, [selectedTemplate]);
+
+  // Load data based on restored step after initial data load
+  useEffect(() => {
+    const loadDataForRestoredStep = async () => {
+      if (!isAuthenticated || isLoading) return;
+
+      try {
+        // If we're on municipality step and no municipalities loaded, load them
+        if (currentStep === 'select-municipality' && municipalities.length === 0) {
+          console.log('Loading municipalities for restored step');
+          const municipalitiesData = await applicationsService.getMunicipalities();
+          setMunicipalities(municipalitiesData);
+        }
+
+        // If we're on template step and no templates loaded, load them
+        if (currentStep === 'select-template' && templates.length === 0 && selectedMunicipality) {
+          console.log('Loading templates for restored step');
+          const templatesData = await applicationsService.getMunicipalityTemplates(selectedMunicipality.id);
+          setTemplates(templatesData);
+        }
+
+        // If we're on form step and no form schema, try to create application
+        if (currentStep === 'fill-form' && !formSchema && selectedTemplate && selectedTree) {
+          console.log('Creating application for restored step');
+          const application = await applicationsService.createApplication(
+            selectedTemplate.id,
+            selectedTree.id,
+            `Wniosek dla drzewa ${selectedTree.species}`
+          );
+          setCurrentApplication(application);
+          
+          const schema = await applicationsService.getFormSchema(application.id);
+          setFormSchema(schema);
+        }
+      } catch (error) {
+        console.error('Error loading data for restored step:', error);
+        // Don't reset step on error, just log it
+      }
+    };
+
+    loadDataForRestoredStep();
+  }, [isAuthenticated, isLoading, currentStep, municipalities.length, templates.length, selectedMunicipality, selectedTemplate, selectedTree, formSchema]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -69,13 +152,16 @@ export const ApplicationsPage: React.FC = () => {
         setTrees(treesData);
           } catch (error) {
             console.error('Error loading user trees:', error);
-            // Obsłuż błąd autoryzacji
+        // Obsłuż błąd autoryzacji - wyczyść cache i zresetuj
             if (error instanceof Error && error.message.includes('autoryzacji')) {
               handleAuthError(error);
+          await clearCacheAndReset();
               return;
             }
-            // Nie pokazuj alertu dla innych błędów
-            console.warn('Error loading user trees:', error);
+        
+        // W przypadku błędu ładowania, załaduj podstawowe dane ale zachowaj krok
+        console.warn('Error loading user trees, loading fallback data while preserving step');
+        await loadFallbackData(true);
           } finally {
         setIsLoading(false);
       }
@@ -123,9 +209,12 @@ export const ApplicationsPage: React.FC = () => {
           console.error('Error loading municipalities:', error);
           if (error instanceof Error && error.message.includes('autoryzacji')) {
             handleAuthError(error);
+            await clearCacheAndReset();
             return;
           } else {
-            alert(`Błąd podczas ładowania gmin: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+            console.warn('Error loading municipalities, using fallback data');
+            // W przypadku błędu, załaduj podstawowe dane ale zachowaj krok
+            await loadFallbackData(true);
           }
         } finally {
           setIsLoading(false);
@@ -149,19 +238,22 @@ export const ApplicationsPage: React.FC = () => {
           if (error instanceof Error) {
             if (error.message.includes('autoryzacji')) {
               handleAuthError(error);
+              await clearCacheAndReset();
               return;
             } else if (error.message.includes('404')) {
               console.warn('No templates found for municipality:', selectedMunicipality.id);
               setTemplates([]);
             } else if (error.message.includes('400')) {
               console.error('Bad request for municipality:', selectedMunicipality.id);
-              alert(`Nieprawidłowe żądanie dla gminy ${selectedMunicipality.name}. Sprawdź czy gmina ma dostępne szablony.`);
-              setTemplates([]);
+              console.warn('Error loading templates, using fallback data');
+              await loadFallbackData(true);
             } else {
-              alert(`Błąd podczas ładowania szablonów: ${error.message}`);
+              console.warn('Error loading templates, using fallback data');
+              await loadFallbackData(true);
             }
           } else {
-            alert(`Błąd podczas ładowania szablonów: Nieznany błąd`);
+            console.warn('Error loading templates, using fallback data');
+            await loadFallbackData(true);
           }
         } finally {
           setIsLoading(false);
@@ -194,6 +286,7 @@ export const ApplicationsPage: React.FC = () => {
       console.error('Error loading municipalities:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
+        await clearCacheAndReset();
         return;
       } else {
         alert(`Błąd podczas ładowania gmin: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
@@ -223,6 +316,7 @@ export const ApplicationsPage: React.FC = () => {
       console.error('Error loading all trees:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
+        await clearCacheAndReset();
         return;
       }
       alert(`Błąd podczas ładowania drzew: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
@@ -258,9 +352,11 @@ export const ApplicationsPage: React.FC = () => {
       console.error('Error creating application:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
+        await clearCacheAndReset();
         return;
       }
-      alert(`Błąd podczas tworzenia wniosku: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+      console.warn('Error creating application, loading fallback data');
+      await loadFallbackData(true);
     } finally {
       setIsLoading(false);
     }
@@ -273,10 +369,18 @@ export const ApplicationsPage: React.FC = () => {
       setIsSubmitting(true);
       await applicationsService.submitApplication(currentApplication.id, { formData });
       setCurrentStep('submitted');
+      
+      // Clear saved data after successful submission
+      localStorage.removeItem('applicationStep');
+      localStorage.removeItem('selectedTree');
+      localStorage.removeItem('selectedMunicipality');
+      localStorage.removeItem('selectedTemplate');
+      localStorage.removeItem('applicationFormData');
     } catch (error) {
       console.error('Error submitting application:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
+        await clearCacheAndReset();
         return;
       }
       alert(`Błąd podczas składania wniosku: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
@@ -303,6 +407,7 @@ export const ApplicationsPage: React.FC = () => {
       console.error('Error generating PDF:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
+        await clearCacheAndReset();
         return;
       }
       alert(`Błąd podczas generowania PDF: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
@@ -312,17 +417,86 @@ export const ApplicationsPage: React.FC = () => {
   };
 
 
+  const loadFallbackData = async (preserveStep: boolean = true) => {
+    try {
+      console.log('Loading fallback data...');
+      
+      // Zapisz aktualny krok jeśli mamy go zachować
+      const currentStepToPreserve = preserveStep ? currentStep : 'overview';
+      
+      // Wyczyść tylko dane formularza, ale zachowaj krok i wybrane opcje
+      if (!preserveStep) {
+        localStorage.removeItem('applicationStep');
+        localStorage.removeItem('selectedTree');
+        localStorage.removeItem('selectedMunicipality');
+        localStorage.removeItem('selectedTemplate');
+        localStorage.removeItem('applicationFormData');
+        
+        // Resetuj stan tylko jeśli nie zachowujemy kroku
+        setCurrentStep('overview');
+        setSelectedTree(null);
+        setSelectedMunicipality(null);
+        setSelectedTemplate(null);
+        setCurrentApplication(null);
+        setFormSchema(null);
+      } else {
+        // Zachowaj aktualny krok i wybrane opcje
+        console.log('Preserving current step:', currentStepToPreserve);
+      }
+      
+      // Załaduj podstawowe dane (gminy i szablony)
+      try {
+        const municipalitiesData = await applicationsService.getMunicipalities();
+        setMunicipalities(municipalitiesData);
+        console.log('Fallback municipalities loaded:', municipalitiesData.length);
+      } catch (error) {
+        console.error('Error loading fallback municipalities:', error);
+      }
+      
+      try {
+        // Dla fallback, spróbuj załadować szablony z pierwszej dostępnej gminy
+        if (municipalities.length > 0) {
+          const templatesData = await applicationsService.getMunicipalityTemplates(municipalities[0].id);
+          setTemplates(templatesData);
+          console.log('Fallback templates loaded:', templatesData.length);
+        } else {
+          setTemplates([]);
+          console.log('No municipalities available for fallback templates');
+        }
+      } catch (error) {
+        console.error('Error loading fallback templates:', error);
+        setTemplates([]);
+      }
+      
+      // Ustaw puste drzewa jako fallback tylko jeśli nie zachowujemy kroku
+      if (!preserveStep) {
+        setTrees([]);
+      }
+      
+      console.log('Fallback data loaded successfully');
+    } catch (error) {
+      console.error('Error loading fallback data:', error);
+    }
+  };
+
   const clearProgress = () => {
-    // localStorage.removeItem('applicationStep');
-    // localStorage.removeItem('selectedTree');
-    // localStorage.removeItem('selectedMunicipality');
-    // localStorage.removeItem('selectedTemplate');
+    localStorage.removeItem('applicationStep');
+    localStorage.removeItem('selectedTree');
+    localStorage.removeItem('selectedMunicipality');
+    localStorage.removeItem('selectedTemplate');
+    localStorage.removeItem('applicationFormData');
     setCurrentStep('overview');
     setSelectedTree(null);
     setSelectedMunicipality(null);
     setSelectedTemplate(null);
     setCurrentApplication(null);
     setFormSchema(null);
+  };
+
+  const clearCacheAndReset = async () => {
+    console.log('Clearing cache and resetting to overview');
+    clearProgress();
+    await loadFallbackData(false);
   };
 
   const renderProgressBar = () => {
@@ -587,12 +761,39 @@ export const ApplicationsPage: React.FC = () => {
     }
 
     return (
-      <DynamicForm
-        schema={formSchema}
-        onSubmit={handleFormSubmit}
-        onBack={() => setCurrentStep('select-template')}
-        isSubmitting={isSubmitting}
-      />
+      <>
+        <DynamicForm
+          schema={formSchema}
+          onSubmit={handleFormSubmit}
+          onBack={() => setCurrentStep('select-template')}
+          isSubmitting={isSubmitting}
+        />
+        
+        <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex justify-between">
+              <GlassButton
+                onClick={() => setCurrentStep('select-template')}
+                variant="secondary"
+                size="sm"
+                icon={ArrowLeft}
+              >
+                Wstecz
+              </GlassButton>
+              
+              <GlassButton
+                onClick={() => handleFormSubmit({})}
+                disabled={isSubmitting}
+                variant="primary"
+                size="sm"
+                icon={isSubmitting ? undefined : CheckCircle}
+              >
+                {isSubmitting ? 'Wysyłanie...' : 'Wyślij wniosek'}
+              </GlassButton>
+            </div>
+          </div>
+        </div>
+      </>
     );
   };
 
@@ -793,7 +994,9 @@ export const ApplicationsPage: React.FC = () => {
 
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 pb-32 overflow-y-auto">
+    <div className={`h-full bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 overflow-y-auto ${
+      currentStep === 'overview' || currentStep === 'completed' ? 'pb-4' : 'pb-32'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {(currentStep !== 'overview' && currentStep !== 'completed') && (
           <div className="mb-2 sm:mb-4">

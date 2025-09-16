@@ -117,6 +117,19 @@ class AdminService {
     }
   }
 
+  // Weryfikuj hasło administratora
+  async verifyAdminPassword(password: string): Promise<boolean> {
+    try {
+      console.log('API Call: verifyAdminPassword (admin)');
+      // TODO: Implement real API call for password verification
+      // For now, return false to disable admin functions
+      return false;
+    } catch (error) {
+      console.error('Error verifying admin password:', error);
+      return false;
+    }
+  }
+
   // Pobierz statystyki administratora (obliczane z prawdziwych danych)
   async getAdminStats(): Promise<AdminStats> {
     try {

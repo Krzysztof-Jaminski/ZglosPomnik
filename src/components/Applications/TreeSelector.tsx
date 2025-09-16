@@ -91,7 +91,7 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
       </div>
 
       {/* Trees List - Limited Height with Scroll */}
-      <div className="max-h-[70vh] overflow-y-auto space-y-2 pr-2">
+      <div className="max-h-[75vh] overflow-y-auto space-y-2 pr-2 py-2">
         {filteredTrees.map(tree => (
           <motion.div
             key={tree.id}
@@ -99,7 +99,7 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
             whileTap={{ scale: 0.995 }}
             onClick={() => onTreeClick?.(tree)}
             className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 ${
-              selectedTree?.id === tree.id ? 'ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
+              selectedTree?.id === tree.id ? 'ring-2 ring-green-500 ring-inset bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
             }`}
           >
             <div className="flex items-start space-x-3">

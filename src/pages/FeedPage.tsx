@@ -9,7 +9,8 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export const FeedPage: React.FC = () => {
-  const [posts, setPosts] = useState<TreePostType[]>([]);
+  const [allPosts, setAllPosts] = useState<TreePostType[]>([]);
+  const [displayedPosts, setDisplayedPosts] = useState<TreePostType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
@@ -20,15 +21,11 @@ export const FeedPage: React.FC = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
   
-  const POSTS_PER_PAGE = 5; // Load 5 posts at a time
+  const POSTS_PER_PAGE = 5; // Display 5 posts at a time
 
-  // Load posts function with pagination
-  const loadPosts = useCallback(async (page: number, isInitialLoad: boolean = false) => {
-    if (isInitialLoad) {
-      setIsLoading(true);
-    } else {
-      setIsLoadingMore(true);
-    }
+  // Load all posts function
+  const loadAllPosts = useCallback(async () => {
+    setIsLoading(true);
 
     try {
       // Load trees from API
@@ -51,20 +48,13 @@ export const FeedPage: React.FC = () => {
         commentCount: tree.commentCount || 0
       }));
 
-      // Apply pagination
-      const startIndex = page * POSTS_PER_PAGE;
-      const endIndex = startIndex + POSTS_PER_PAGE;
-      const paginatedPosts = allPostsData.slice(startIndex, endIndex);
-
-      if (isInitialLoad) {
-        setPosts(paginatedPosts);
-      } else {
-        setPosts(prevPosts => [...prevPosts, ...paginatedPosts]);
-      }
-
-      // Check if there are more posts
-      setHasMorePosts(endIndex < allPostsData.length);
-      setCurrentPage(page);
+      setAllPosts(allPostsData);
+      
+      // Display first 5 posts
+      const firstPagePosts = allPostsData.slice(0, POSTS_PER_PAGE);
+      setDisplayedPosts(firstPagePosts);
+      setHasMorePosts(allPostsData.length > POSTS_PER_PAGE);
+      setCurrentPage(0);
 
     } catch (error) {
       console.error('Error loading trees:', error);
@@ -79,32 +69,40 @@ export const FeedPage: React.FC = () => {
         commentCount: tree.commentCount || 0
       }));
 
-      // Apply pagination to mock data too
-      const startIndex = page * POSTS_PER_PAGE;
-      const endIndex = startIndex + POSTS_PER_PAGE;
-      const paginatedPosts = allPostsData.slice(startIndex, endIndex);
-
-      if (isInitialLoad) {
-        setPosts(paginatedPosts);
-      } else {
-        setPosts(prevPosts => [...prevPosts, ...paginatedPosts]);
-      }
-
-      setHasMorePosts(endIndex < allPostsData.length);
-      setCurrentPage(page);
+      setAllPosts(allPostsData);
+      
+      // Display first 5 posts
+      const firstPagePosts = allPostsData.slice(0, POSTS_PER_PAGE);
+      setDisplayedPosts(firstPagePosts);
+      setHasMorePosts(allPostsData.length > POSTS_PER_PAGE);
+      setCurrentPage(0);
     } finally {
-      if (isInitialLoad) {
-        setIsLoading(false);
-      } else {
-        setIsLoadingMore(false);
-      }
+      setIsLoading(false);
     }
   }, []);
 
+  // Load more posts function
+  const loadMorePosts = useCallback(() => {
+    if (isLoadingMore || !hasMorePosts) return;
+
+    setIsLoadingMore(true);
+    
+    const nextPage = currentPage + 1;
+    const startIndex = nextPage * POSTS_PER_PAGE;
+    const endIndex = startIndex + POSTS_PER_PAGE;
+    
+    const nextPagePosts = allPosts.slice(startIndex, endIndex);
+    setDisplayedPosts(prevPosts => [...prevPosts, ...nextPagePosts]);
+    setHasMorePosts(endIndex < allPosts.length);
+    setCurrentPage(nextPage);
+    
+    setIsLoadingMore(false);
+  }, [allPosts, currentPage, hasMorePosts, isLoadingMore]);
+
   // Load initial posts
   useEffect(() => {
-    loadPosts(0, true);
-  }, [loadPosts]);
+    loadAllPosts();
+  }, [loadAllPosts]);
 
 
   // Infinite scroll detection using Intersection Observer
@@ -116,7 +114,7 @@ export const FeedPage: React.FC = () => {
       (entries) => {
         if (entries[0].isIntersecting && !isLoadingMore && hasMorePosts) {
           console.log('Loading more posts...');
-          loadPosts(currentPage + 1, false);
+          loadMorePosts();
         }
       },
       { threshold: 0.1 }
@@ -124,12 +122,12 @@ export const FeedPage: React.FC = () => {
 
     observer.observe(loadMoreTrigger);
     return () => observer.disconnect();
-  }, [isLoadingMore, hasMorePosts, currentPage, loadPosts]);
+  }, [isLoadingMore, hasMorePosts, loadMorePosts]);
 
   // Handle scroll to specific tree from map
   useEffect(() => {
     const scrollToTreeId = location.state?.scrollToTreeId;
-    if (scrollToTreeId && posts.length > 0) {
+    if (scrollToTreeId && displayedPosts.length > 0) {
       // Wait a bit for posts to render, then scroll to the specific tree
       setTimeout(() => {
         const treeElement = document.getElementById(`tree-post-${scrollToTreeId}`);
@@ -143,12 +141,12 @@ export const FeedPage: React.FC = () => {
         }
       }, 500);
     }
-  }, [posts, location.state]);
+  }, [displayedPosts, location.state]);
 
   // Handle tree voting
   const handleLike = async (postId: string) => {
     try {
-      const post = posts.find(p => p.id === postId);
+      const post = displayedPosts.find(p => p.id === postId);
       if (!post) return;
 
       const wasLiked = post.userVote === 'like';
@@ -165,7 +163,7 @@ export const FeedPage: React.FC = () => {
         }
 
         // Update local state with API response
-        setPosts(prevPosts =>
+        setDisplayedPosts(prevPosts =>
           prevPosts.map(p => {
             if (p.id === postId) {
               return {
@@ -180,7 +178,7 @@ export const FeedPage: React.FC = () => {
         );
       } else {
         // Fallback to local state update for non-authenticated users
-        setPosts(prevPosts =>
+        setDisplayedPosts(prevPosts =>
           prevPosts.map(p => {
             if (p.id === postId) {
               return {
@@ -201,7 +199,7 @@ export const FeedPage: React.FC = () => {
 
   const handleDislike = async (postId: string) => {
     try {
-      const post = posts.find(p => p.id === postId);
+      const post = displayedPosts.find(p => p.id === postId);
       if (!post) return;
 
       const wasLiked = post.userVote === 'like';
@@ -218,7 +216,7 @@ export const FeedPage: React.FC = () => {
         }
 
         // Update local state with API response
-        setPosts(prevPosts =>
+        setDisplayedPosts(prevPosts =>
           prevPosts.map(p => {
             if (p.id === postId) {
               return {
@@ -233,7 +231,7 @@ export const FeedPage: React.FC = () => {
         );
       } else {
         // Fallback to local state update for non-authenticated users
-        setPosts(prevPosts =>
+        setDisplayedPosts(prevPosts =>
           prevPosts.map(p => {
             if (p.id === postId) {
               return {
@@ -259,7 +257,7 @@ export const FeedPage: React.FC = () => {
         const newComment = await commentsService.addTreeComment(postId, commentText, userId);
         
         // Update local state
-        setPosts(prevPosts =>
+        setDisplayedPosts(prevPosts =>
           prevPosts.map(post => {
             if (post.id === postId) {
               return {
@@ -279,7 +277,8 @@ export const FeedPage: React.FC = () => {
 
   // Handle post deletion
   const handleDeletePost = (postId: string) => {
-    setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+    setDisplayedPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+    setAllPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
   };
 
 
@@ -298,7 +297,7 @@ export const FeedPage: React.FC = () => {
   };
 
   // Filter and sort posts
-  const filteredAndSortedPosts = posts
+  const filteredAndSortedPosts = displayedPosts
     .filter(post => filterStatus === 'all' || post.status === filterStatus)
     .filter(post => searchPosts([post], searchQuery).length > 0)
     .sort((a, b) => {
@@ -421,7 +420,7 @@ export const FeedPage: React.FC = () => {
         )}
 
         {/* End of posts indicator */}
-        {!searchQuery && !hasMorePosts && posts.length > 0 && (
+        {!searchQuery && !hasMorePosts && displayedPosts.length > 0 && (
           <div className="px-4 py-6">
             <div className="text-center">
               <p className="text-gray-500 dark:text-gray-400">

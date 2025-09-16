@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Trash2, Users, TreePine, UserCheck, Crown, Mail, Calendar, BarChart3, AlertCircle, CheckCircle } from 'lucide-react';
+import { Shield, Trash2, Users, TreePine, Calendar, BarChart3, AlertCircle } from 'lucide-react';
 import { Tree } from '../types';
 import { adminService, AdminUser, AdminStats } from '../services/adminService';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
-
 
 export const AdminPage: React.FC = () => {
   const [trees, setTrees] = useState<Tree[]>([]);
@@ -16,7 +15,6 @@ export const AdminPage: React.FC = () => {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteAction, setDeleteAction] = useState<{ type: 'post' | 'comment' | 'user', id: string, postId?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-
 
   useEffect(() => {
     const loadData = async () => {
@@ -44,10 +42,13 @@ export const AdminPage: React.FC = () => {
         };
         setStats(statsData);
         
-        
       } catch (error) {
         console.error('Error loading admin data:', error);
         setError(error instanceof Error ? error.message : 'Błąd podczas ładowania danych');
+        // Clear any existing data on error
+        setTrees([]);
+        setUsers([]);
+        setStats(null);
       } finally {
         setIsLoading(false);
       }
@@ -56,27 +57,23 @@ export const AdminPage: React.FC = () => {
     loadData();
   }, []);
 
-
-
   const handleDeletePost = (postId: string) => {
     setDeleteAction({ type: 'post', id: postId });
     setShowPasswordModal(true);
   };
-
 
   const handleDeleteUser = (userId: string) => {
     setDeleteAction({ type: 'user', id: userId });
     setShowPasswordModal(true);
   };
 
-
-
   const confirmDelete = async () => {
     if (!deletePassword || !deleteAction) return;
 
     try {
-      // Mock password verification (w prawdziwej aplikacji sprawdź hasło przez API)
-    if (deletePassword === 'admin123') {
+      // Password verification through API
+      const isValidPassword = await adminService.verifyAdminPassword(deletePassword);
+      if (isValidPassword) {
       if (deleteAction?.type === 'post') {
           await adminService.deleteTree(deleteAction.id);
         setTrees(prev => prev.filter(tree => tree.id !== deleteAction.id));
@@ -86,16 +83,15 @@ export const AdminPage: React.FC = () => {
         setUsers(prev => prev.filter(user => user.id !== deleteAction.id));
           alert('Użytkownik został usunięty!');
       }
-
       setShowPasswordModal(false);
       setDeletePassword('');
       setDeleteAction(null);
     } else {
-        alert('Nieprawidłowe hasło administratora');
+        alert('Nieprawidłowe hasło!');
       }
     } catch (error) {
       console.error('Error deleting:', error);
-      alert(`Błąd podczas usuwania: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+      alert('Błąd podczas usuwania!');
     }
   };
 
@@ -144,18 +140,26 @@ export const AdminPage: React.FC = () => {
           className="mb-2 sm:mb-4"
         >
           <div className="flex items-center space-x-3 mb-2">
-            <Shield className="w-5 h-5 sm:w-8 sm:h-8 text-green-600" />
-            <h1 className="text-lg sm:text-3xl font-bold text-green-900 dark:text-white">
+            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+            <h1 className="text-lg sm:text-2xl font-bold text-green-900 dark:text-white">
               Panel administratora
             </h1>
           </div>
-          <p className="text-green-800 dark:text-gray-400 text-base sm:text-xl">
+          <p className="text-base sm:text-lg text-green-800 dark:text-gray-400">
             Zarządzaj zgłoszeniami i moderuj zawartość
           </p>
         </motion.div>
 
         {/* Navigation Buttons */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <BarChart3 className="w-5 h-5 text-green-600" />
+              <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                Nawigacja
+              </h3>
+            </div>
+            <div className="space-y-3">
           <GlassButton
             onClick={() => setActiveTab('stats')}
             variant={activeTab === 'stats' ? 'primary' : 'secondary'}
@@ -173,7 +177,7 @@ export const AdminPage: React.FC = () => {
             icon={TreePine}
             className="w-full"
           >
-            <span className="text-sm sm:text-base">Drzewa ({trees.length})</span>
+                <span className="text-sm sm:text-base">Drzewa {trees.length > 0 && `(${trees.length})`}</span>
           </GlassButton>
           
           <GlassButton
@@ -183,89 +187,78 @@ export const AdminPage: React.FC = () => {
             icon={Users}
             className="w-full"
           >
-            <span className="text-sm sm:text-base">Użytkownicy ({users.length})</span>
+                <span className="text-sm sm:text-base">Użytkownicy {users.length > 0 && `(${users.length})`}</span>
           </GlassButton>
+            </div>
+          </div>
           </div>
 
         {/* Content */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
             {activeTab === 'stats' && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <BarChart3 className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
                   Statystyki systemu
                 </h3>
+              </div>
                 
                 {stats ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Użytkownicy</p>
-                          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalUsers}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {stats.totalUsers}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Użytkownicy
                         </div>
-                        <Users className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500" />
                       </div>
-                    </motion.div>
 
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Drzewa</p>
-                          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalTrees}</p>
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {stats.totalTrees}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Drzewa
+                    </div>
                         </div>
-                        <TreePine className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
+                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      {stats.totalComments}
                       </div>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Komentarze</p>
-                          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalComments}</p>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Komentarze
                         </div>
-                                <Users className="w-8 h-8 sm:w-10 sm:h-10 text-purple-500" />
                       </div>
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Oczekujące</p>
-                          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.pendingTrees}</p>
+                  <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                      {stats.pendingTrees}
                         </div>
-                        <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Oczekujące
                       </div>
-                    </motion.div>
+                  </div>
                   </div>
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-gray-500 dark:text-gray-400">Brak danych statystycznych</p>
                   </div>
                 )}
+            </div>
               </div>
             )}
 
             {activeTab === 'trees' && (
-              <div className="space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <TreePine className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                  Zgłoszenia drzew
+                </h3>
+              </div>
+              
                 {trees.length === 0 ? (
                   <div className="text-center py-8">
                     <TreePine className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -330,12 +323,20 @@ export const AdminPage: React.FC = () => {
                 ))}
               </div>
             )}
+            </div>
               </div>
             )}
 
-
-            {activeTab === 'users' && (
-              <div className="space-y-4">
+        {activeTab === 'users' && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <Users className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                  Użytkownicy
+                </h3>
+              </div>
+              
                 {users.length === 0 ? (
                   <div className="text-center py-8">
                     <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -351,80 +352,45 @@ export const AdminPage: React.FC = () => {
                     transition={{ delay: index * 0.1 }}
                         className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 hover:shadow-xl transition-all"
                   >
-                        <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-2">
-                            <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                          <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
                           {user.name}
                         </h3>
-                        {user.role === 'admin' && (
-                          <Crown className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
-                        )}
-                        {user.role === 'ecologist' && (
-                          <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
-                        )}
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                        user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                        user.status === 'suspended' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
-                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                      }`}>
-                        {user.status === 'active' ? 'Aktywny' : user.status === 'suspended' ? 'Zawieszony' : 'Zablokowany'}
-                      </span>
-                    </div>
-                    
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center space-x-2">
-                            <Mail className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm truncate">
+                          <p className="text-gray-600 dark:text-gray-400 text-sm">
                             {user.email}
-                          </span>
-                        </div>
-                          <div className="flex items-center space-x-2">
-                            <TreePine className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
-                            {user.reportsCount} zgłoszeń
-                          </span>
-                        </div>
-                          <div className="flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
-                              Dołączył: {new Date(user.registeredAt).toLocaleDateString('pl-PL')}
-                          </span>
+                          </p>
                         </div>
                       </div>
                       
-                        <div className="flex space-x-2">
-                          <GlassButton 
-                            size="sm" 
-                            variant="secondary" 
-                            icon={user.status === 'active' ? AlertCircle : CheckCircle}
-                            onClick={async () => {
-                              try {
-                                const newStatus = user.status === 'active' ? 'suspended' : 'active';
-                                await adminService.toggleUserStatus(user.id, newStatus);
-                                setUsers(prev => prev.map(u => 
-                                  u.id === user.id ? { ...u, status: newStatus } : u
-                                ));
-                                alert(`Użytkownik ${newStatus === 'suspended' ? 'zawieszony' : 'aktywowany'}!`);
-                              } catch (error) {
-                                console.error('Error toggling user status:', error);
-                                alert('Błąd podczas zmiany statusu użytkownika');
-                              }
-                            }}
-                            title={user.status === 'active' ? 'Zawieś użytkownika' : 'Aktywuj użytkownika'}
-                            className="flex-1"
-                          >
-                            <span className="text-xs">
-                              {user.status === 'active' ? 'Zawieś' : 'Aktywuj'}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <Calendar className="w-4 h-4" />
+                          <span>Dołączył: {new Date(user.registeredAt).toLocaleDateString('pl-PL')}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <BarChart3 className="w-4 h-4" />
+                          <span>Zgłoszeń: {user.reportsCount || 0}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                          user.status === 'banned' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                        }`}>
+                          {user.status === 'active' ? 'Aktywny' : user.status === 'banned' ? 'Zablokowany' : 'Nieaktywny'}
                             </span>
-                          </GlassButton>
                       <GlassButton 
                             size="sm" 
                         variant="danger" 
                         icon={Trash2}
                         onClick={() => handleDeleteUser(user.id)}
                         title="Usuń użytkownika"
-                            className="flex-1"
                       >
                             <span className="text-xs">Usuń</span>
                       </GlassButton>
@@ -433,10 +399,9 @@ export const AdminPage: React.FC = () => {
                 ))}
               </div>
             )}
+            </div>
           </div>
             )}
-
-        </div>
 
         {/* Password Confirmation Modal */}
         {showPasswordModal && (

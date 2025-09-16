@@ -30,12 +30,12 @@ export const ProfilePage: React.FC = () => {
     verificationsCount: user.verificationsCount
   } : null;
   
-  // Dane użytkownika (nie dostępne w API - placeholder)
+  // Dane użytkownika z API
   const [additionalData, setAdditionalData] = useState({
-    phone: 'Nie podano',
-    address: 'Nie podano',
-    city: 'Nie podano',
-    postalCode: 'Nie podano'
+    phone: user?.phone || 'Nie podano',
+    address: user?.address || 'Nie podano',
+    city: user?.city || 'Nie podano',
+    postalCode: user?.postalCode || 'Nie podano'
   });
   
   const [isEditing, setIsEditing] = useState(false);
@@ -257,7 +257,7 @@ export const ProfilePage: React.FC = () => {
                     size="sm"
                     className="flex-1"
                   >
-                    <span className="text-base">Anuluj</span>
+                    <span className="text-sm">Anuluj</span>
                   </GlassButton>
                   <GlassButton
                     onClick={handleSaveData}
@@ -463,7 +463,7 @@ export const ProfilePage: React.FC = () => {
                   size="sm"
                   className="flex-1"
                 >
-                  <span className="text-base">Anuluj</span>
+                  <span className="text-sm">Anuluj</span>
                 </GlassButton>
                 <GlassButton
                   onClick={handleConfirmSave}
@@ -517,7 +517,7 @@ export const ProfilePage: React.FC = () => {
                   size="sm"
                   className="flex-1"
                 >
-                  <span className="text-base">Anuluj</span>
+                  <span className="text-sm">Anuluj</span>
                 </GlassButton>
                 <GlassButton
                   onClick={() => {
@@ -557,7 +557,7 @@ export const ProfilePage: React.FC = () => {
                   size="sm"
                   className="flex-1"
                 >
-                  <span className="text-base">Anuluj</span>
+                  <span className="text-sm">Anuluj</span>
                 </GlassButton>
                 <GlassButton
                   onClick={confirmLogout}
@@ -566,7 +566,7 @@ export const ProfilePage: React.FC = () => {
                   className="flex-1"
                   icon={LogOut}
                 >
-                  <span className="text-base">Wyloguj się</span>
+                  <span className="text-sm">Wyloguj się</span>
                 </GlassButton>
               </div>
             </motion.div>

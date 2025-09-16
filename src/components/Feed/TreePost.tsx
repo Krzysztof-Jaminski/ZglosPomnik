@@ -28,6 +28,7 @@ export const TreePost: React.FC<TreePostProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
@@ -35,12 +36,12 @@ export const TreePost: React.FC<TreePostProps> = ({
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Load comments on component mount
+  // Load comments only when showComments is true
   useEffect(() => {
-    if (!commentsLoaded) {
+    if (showComments && !commentsLoaded) {
       loadComments();
     }
-  }, [commentsLoaded]);
+  }, [showComments, commentsLoaded]);
 
   const loadComments = async () => {
     setIsLoadingComments(true);
@@ -75,9 +76,15 @@ export const TreePost: React.FC<TreePostProps> = ({
   };
 
   // Find the most popular comment and check if it should be marked as legend
-  const sortedComments = comments.sort((a, b) => b.votes.like - a.votes.like);
-  const mostPopularComment = sortedComments.length > 0 ? sortedComments[0] : null;
-  const secondMostPopularComment = sortedComments.length > 1 ? sortedComments[1] : null;
+  // Don't sort comments automatically - they will be sorted only on page refresh
+  const mostPopularComment = comments.length > 0 ? comments.reduce((prev, current) => 
+    (prev.votes.like > current.votes.like) ? prev : current
+  ) : null;
+  const secondMostPopularComment = comments.length > 1 ? comments
+    .filter(comment => comment.id !== mostPopularComment?.id)
+    .reduce((prev, current) => 
+      (prev.votes.like > current.votes.like) ? prev : current
+    ) : null;
   
   // Check if the most popular comment should be marked as legend
   const shouldShowLegend = mostPopularComment && 
@@ -418,18 +425,22 @@ export const TreePost: React.FC<TreePostProps> = ({
              <span className="text-sm font-medium">{post.dislikes}</span>
            </button>
           
-           <div className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 min-w-[120px]">
+           <button
+             onClick={() => setShowComments(!showComments)}
+             className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 min-w-[120px] transition-colors"
+           >
              <MessageCircle className="w-5 h-5" />
              <span className="text-sm font-medium">
-               Komentarze
+               {showComments ? 'Ukryj' : 'Komentarze'}
                {post.commentCount > 0 && ` (${post.commentCount})`}
              </span>
-           </div>
+           </button>
         </div>
       </div>
 
       {/* Comments Section */}
-      <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+      {showComments && (
+        <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
             {/* Comment Form */}
             <form onSubmit={handleSubmitComment} className="mb-4">
               <div className="flex space-x-4">
@@ -469,9 +480,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                   <div className="text-gray-500 dark:text-gray-400">Brak komentarzy</div>
                 </div>
               ) : (
-                comments
-                  .sort((a, b) => b.votes.like - a.votes.like)
-                .map((comment) => {
+                comments.map((comment) => {
                   const isMostPopular = comment.id === mostPopularComment?.id && shouldShowLegend;
                   return (
                 <div key={comment.id} className={`flex space-x-4 ${isMostPopular ? 'bg-green-50 dark:bg-green-900/20 rounded-lg' : ''}`}>
@@ -574,7 +583,8 @@ export const TreePost: React.FC<TreePostProps> = ({
                 })
               )}
             </div>
-      </div>
+        </div>
+      )}
 
       {/* Delete Post Confirmation Modal */}
       <DeleteConfirmationModal

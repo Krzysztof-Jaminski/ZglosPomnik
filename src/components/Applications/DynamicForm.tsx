@@ -25,13 +25,26 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   // Initialize form data with default values and user data
   useEffect(() => {
     const initialData: Record<string, any> = {};
+    
+    // First, try to restore from localStorage
+    const savedFormData = localStorage.getItem('applicationFormData');
+    if (savedFormData) {
+      try {
+        const parsedData = JSON.parse(savedFormData);
+        Object.assign(initialData, parsedData);
+      } catch (error) {
+        console.error('Error loading saved form data:', error);
+      }
+    }
+    
+    // Then apply default values for fields not in saved data
     schema.requiredFields.forEach(field => {
-      if (field.defaultValue !== null && field.defaultValue !== undefined) {
+      if (initialData[field.name] === undefined && field.defaultValue !== null && field.defaultValue !== undefined) {
         initialData[field.name] = field.defaultValue;
       }
     });
 
-    // Auto-fill with user data if available
+    // Auto-fill with user data if available and not already saved
     if (user) {
       const userDataMap: Record<string, string> = {
         'imie': user.name.split(' ')[0] || '',
@@ -48,7 +61,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         'postalCode': user.postalCode || ''
       };
 
-      // Apply user data to matching fields
+      // Apply user data to matching fields (only if not already saved)
       Object.keys(userDataMap).forEach(key => {
         if (userDataMap[key] && schema.requiredFields.some(field => 
           field.name.toLowerCase().includes(key.toLowerCase()) || 
@@ -58,7 +71,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             field.name.toLowerCase().includes(key.toLowerCase()) || 
             field.label.toLowerCase().includes(key.toLowerCase())
           );
-          if (matchingField) {
+          if (matchingField && initialData[matchingField.name] === undefined) {
             initialData[matchingField.name] = userDataMap[key];
           }
         }
@@ -67,6 +80,13 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
     setFormData(initialData);
   }, [schema, user]);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (Object.keys(formData).length > 0) {
+      localStorage.setItem('applicationFormData', JSON.stringify(formData));
+    }
+  }, [formData]);
 
   const validateField = (field: FormField, value: any): string | null => {
     if (field.isRequired && (!value || value.toString().trim() === '')) {
@@ -135,6 +155,8 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     e.preventDefault();
     if (validateForm()) {
       onSubmit(formData);
+      // Clear saved form data after successful submission
+      localStorage.removeItem('applicationFormData');
     }
   };
 
@@ -265,27 +287,6 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-between">
-          <GlassButton
-            type="button"
-            onClick={onBack}
-            variant="secondary"
-            size="sm"
-            icon={ArrowLeft}
-          >
-            Wstecz
-          </GlassButton>
-          
-          <GlassButton
-            type="submit"
-            disabled={isSubmitting}
-            variant="primary"
-            size="sm"
-            icon={isSubmitting ? undefined : CheckCircle}
-          >
-            {isSubmitting ? 'Wysyłanie...' : 'Wyślij wniosek'}
-          </GlassButton>
-        </div>
       </form>
     </motion.div>
   );

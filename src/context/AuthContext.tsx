@@ -8,7 +8,6 @@ interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => void;
-  refreshUser: () => Promise<void>;
   handleAuthError: (error: any) => void;
 }
 
@@ -49,6 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const userData = authService.getCurrentUserData();
           if (userData) {
             setUser(userData);
+            console.log('User data loaded from localStorage:', userData);
           } else {
             // Fallback do podstawowych danych jeśli nie ma zapisanych danych
             setUser({
@@ -119,6 +119,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Verify token was saved
       const savedToken = authService.getToken();
       console.log('Token after login:', savedToken ? 'saved' : 'not saved');
+      console.log('User data from login response:', response.user);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -134,6 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(response.user);
       
       // Token is automatically saved by authService
+      console.log('User data from register response:', response.user);
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -147,12 +149,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
-  const refreshUser = async () => {
-    // Nie wywołuj getCurrentUser - po prostu sprawdź czy użytkownik jest zalogowany
-    if (authService.isAuthenticated()) {
-      // User is authenticated, no need to refresh data
-    }
-  };
 
   const handleAuthError = (error: any) => {
     console.log('Handling auth error:', error);
@@ -170,7 +166,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
-    refreshUser,
     handleAuthError
   };
 

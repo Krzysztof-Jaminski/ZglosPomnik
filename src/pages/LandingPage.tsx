@@ -202,7 +202,7 @@ export const LandingPage = () => {
               <img 
                 src="/logo.png" 
                 alt="ZgłośPomnik" 
-                className="w-10 h-10 sm:w-12 sm:h-12"
+                className="w-8 h-8 sm:w-10 sm:h-10"
               />
               <span className="text-lg sm:text-2xl font-bold" style={{ fontFamily: 'Exo 2, sans-serif' }}>
                 <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
