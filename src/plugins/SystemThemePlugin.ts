@@ -17,6 +17,8 @@ class SystemThemePluginWeb implements SystemThemePlugin {
   async setNavigationBarColor(options: { color: string }): Promise<void> {
     // Update theme-color meta tag for PWA navigation bar
     this.updateThemeColorMeta(options.color);
+    // Update Android Chrome navigation bar color
+    this.updateAndroidNavigationBarColor(options.color);
   }
 
   async setSystemUITheme(options: { isDark: boolean }): Promise<void> {
@@ -26,13 +28,16 @@ class SystemThemePluginWeb implements SystemThemePlugin {
 
   private updateThemeColorMeta(color: string): void {
     // Update theme-color meta tag
-    let themeColorMeta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement;
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]:not([media])') as HTMLMetaElement;
     if (!themeColorMeta) {
       themeColorMeta = document.createElement('meta');
       themeColorMeta.name = 'theme-color';
       document.head.appendChild(themeColorMeta);
     }
     themeColorMeta.content = color;
+    
+    // Update media-specific theme-color meta tags
+    this.updateMediaThemeColorMeta();
 
     // Update msapplication-navbutton-color for Windows Phone
     let msNavButtonColor = document.querySelector('meta[name="msapplication-navbutton-color"]') as HTMLMetaElement;
@@ -60,11 +65,232 @@ class SystemThemePluginWeb implements SystemThemePlugin {
       document.body.style.backgroundColor = color;
     }
 
-    // Update manifest theme_color if possible
+    // Update manifest theme_color dynamically
+    this.updateManifestThemeColor(color);
+    
+    // Force update body background for Android Chrome
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      document.body.style.backgroundColor = color;
+      document.documentElement.style.backgroundColor = color;
+    }
+  }
+
+  private updateAndroidNavigationBarColor(color: string): void {
+    // Update Android Chrome navigation bar color using viewport-fit and CSS
+    // This works for PWA and web apps in Chrome on Android
+    
+    // Set CSS custom property for navigation bar color
+    document.documentElement.style.setProperty('--android-navbar-color', color);
+    
+    // Update viewport meta tag to include viewport-fit=cover for better control
+    let viewportMeta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
+    if (viewportMeta) {
+      let content = viewportMeta.content;
+      if (!content.includes('viewport-fit=cover')) {
+        content += ', viewport-fit=cover';
+        viewportMeta.content = content;
+      }
+    }
+    
+    // Add CSS for Android navigation bar
+    this.updateAndroidNavigationBarCSS(color);
+    
+    // Force update body background for Android Chrome
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      document.body.style.backgroundColor = color;
+      document.documentElement.style.backgroundColor = color;
+    }
+    
+    // Additional Android Chrome specific updates
+    this.updateAndroidChromeSpecific(color);
+  }
+
+  private updateAndroidNavigationBarCSS(color: string): void {
+    // Remove existing Android navbar CSS if it exists
+    const existingStyle = document.getElementById('android-navbar-style');
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+    
+    // Create new style element for Android navigation bar
+    const style = document.createElement('style');
+    style.id = 'android-navbar-style';
+    style.textContent = `
+      /* Android Chrome navigation bar styling */
+      @media screen and (display-mode: standalone) {
+        body {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Force Android navigation bar color */
+        html {
+          background-color: ${color} !important;
+        }
+        
+        body {
+          background-color: ${color} !important;
+        }
+        
+        /* PWA specific styling for Android */
+        @supports (padding: max(0px)) {
+          body {
+            padding-bottom: max(env(safe-area-inset-bottom), 0px);
+          }
+        }
+      }
+      
+      /* Additional Android Chrome specific styling */
+      @media screen and (max-width: 768px) {
+        html {
+          background-color: ${color};
+        }
+        
+        body {
+          background-color: ${color};
+        }
+        
+        /* Force Android navigation bar color in web view */
+        @supports (padding: env(safe-area-inset-bottom)) {
+          body {
+            padding-bottom: env(safe-area-inset-bottom);
+            background-color: ${color} !important;
+          }
+        }
+      }
+      
+      /* Additional Android Chrome styling for better navigation bar control */
+      @media screen and (max-width: 768px) and (orientation: portrait) {
+        /* Force full viewport coverage for Android Chrome */
+        html, body {
+          height: 100vh;
+          height: 100dvh; /* Dynamic viewport height for mobile browsers */
+          background-color: ${color} !important;
+        }
+        
+        /* Ensure the root element also has the correct background */
+        #root {
+          background-color: ${color};
+          min-height: 100vh;
+          min-height: 100dvh;
+        }
+      }
+    `;
+    
+    document.head.appendChild(style);
+  }
+
+  private updateMediaThemeColorMeta(): void {
+    // Update dark theme meta tag - always use dark color for dark theme
+    let darkThemeMeta = document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: dark)"]') as HTMLMetaElement;
+    if (!darkThemeMeta) {
+      darkThemeMeta = document.createElement('meta');
+      darkThemeMeta.name = 'theme-color';
+      darkThemeMeta.media = '(prefers-color-scheme: dark)';
+      document.head.appendChild(darkThemeMeta);
+    }
+    darkThemeMeta.content = '#111827'; // Always dark for dark theme
+    
+    // Update light theme meta tag - always use light color for light theme
+    let lightThemeMeta = document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: light)"]') as HTMLMetaElement;
+    if (!lightThemeMeta) {
+      lightThemeMeta = document.createElement('meta');
+      lightThemeMeta.name = 'theme-color';
+      lightThemeMeta.media = '(prefers-color-scheme: light)';
+      document.head.appendChild(lightThemeMeta);
+    }
+    lightThemeMeta.content = '#f9fafb'; // Always light for light theme
+  }
+
+  private updateManifestThemeColor(color: string): void {
+    // Update manifest theme_color by creating a new manifest link with updated content
     const manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement;
     if (manifestLink) {
-      // Note: We can't directly modify manifest.json, but we can update the meta tag
-      // The manifest.json would need to be regenerated for a complete solution
+      // Create a new manifest with updated theme_color
+      const manifest = {
+        name: "Zgłoś Pomnik",
+        short_name: "ZgłośPomnik",
+        description: "ZgłośPomnik",
+        theme_color: color,
+        background_color: color === '#111827' ? '#111827' : '#f9fafb',
+        display: "standalone",
+        scope: "/",
+        start_url: "/",
+        orientation: "portrait-primary",
+        display_override: ["standalone", "minimal-ui"],
+        icons: [
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any"
+          },
+          {
+            src: "/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any"
+          }
+        ],
+        categories: ["productivity", "utilities"],
+        lang: "pl",
+        dir: "ltr"
+      };
+      
+      // Create a blob URL for the updated manifest
+      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const manifestURL = URL.createObjectURL(manifestBlob);
+      
+      // Update the manifest link
+      manifestLink.href = manifestURL;
+    }
+  }
+
+  private updateAndroidChromeSpecific(color: string): void {
+    // Additional Android Chrome specific updates for better navigation bar control
+    
+    // Update mobile-web-app-status-bar-style for Android Chrome
+    let mobileStatusBarStyle = document.querySelector('meta[name="mobile-web-app-status-bar-style"]') as HTMLMetaElement;
+    if (!mobileStatusBarStyle) {
+      mobileStatusBarStyle = document.createElement('meta');
+      mobileStatusBarStyle.name = 'mobile-web-app-status-bar-style';
+      document.head.appendChild(mobileStatusBarStyle);
+    }
+    mobileStatusBarStyle.content = color === '#111827' ? 'black-translucent' : 'default';
+    
+    // Force update for Android Chrome
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      // Update root element background
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.style.backgroundColor = color;
+      }
+      
+      // Force repaint
+      document.body.style.display = 'none';
+      document.body.offsetHeight; // Trigger reflow
+      document.body.style.display = '';
+      
+      // Additional Android Chrome specific styling
+      this.forceAndroidChromeUpdate(color);
+    }
+  }
+
+  private forceAndroidChromeUpdate(color: string): void {
+    // Force Android Chrome to update navigation bar color
+    // This is a workaround for Android Chrome's limited support
+    
+    // Update all possible elements that might affect the navigation bar
+    document.documentElement.style.setProperty('--theme-color', color);
+    document.documentElement.style.setProperty('--background-color', color);
+    
+    // Force update viewport
+    const viewport = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
+    if (viewport) {
+      const currentContent = viewport.content;
+      viewport.content = currentContent + ';';
+      setTimeout(() => {
+        viewport.content = currentContent;
+      }, 10);
     }
   }
 

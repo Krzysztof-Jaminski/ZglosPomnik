@@ -24,8 +24,8 @@ export const useSystemTheme = (actualTheme: 'light' | 'dark') => {
           navigationBarColor = '#111827'; // gray-900
         } else {
           // Light theme colors
-          statusBarColor = '#ffffff'; // white
-          navigationBarColor = '#ffffff'; // white
+          statusBarColor = '#f9fafb'; // gray-50
+          navigationBarColor = '#f9fafb'; // gray-50
         }
         
         await SystemTheme.setStatusBarColor({ color: statusBarColor });

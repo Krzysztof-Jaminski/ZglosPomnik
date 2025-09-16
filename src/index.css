@@ -20,6 +20,7 @@
   /* PWA Navigation Bar Colors */
   :root {
     --pwa-navbar-color: #111827;
+    --android-navbar-color: #111827;
   }
   
   @media (display-mode: standalone) {
@@ -52,6 +53,42 @@
     /* Prevent zoom on double tap */
     * {
       touch-action: manipulation;
+    }
+  }
+  
+  /* Android Chrome specific styling for navigation bar */
+  @media screen and (max-width: 768px) {
+    html {
+      background-color: var(--android-navbar-color);
+    }
+    
+    body {
+      background-color: var(--android-navbar-color);
+    }
+    
+    /* Force Android navigation bar color in web view */
+    @supports (padding: env(safe-area-inset-bottom)) {
+      body {
+        padding-bottom: env(safe-area-inset-bottom);
+        background-color: var(--android-navbar-color) !important;
+      }
+    }
+  }
+  
+  /* Additional Android Chrome styling for better navigation bar control */
+  @media screen and (max-width: 768px) and (orientation: portrait) {
+    /* Force full viewport coverage for Android Chrome */
+    html, body {
+      height: 100vh;
+      height: 100dvh; /* Dynamic viewport height for mobile browsers */
+      background-color: var(--android-navbar-color) !important;
+    }
+    
+    /* Ensure the root element also has the correct background */
+    #root {
+      background-color: var(--android-navbar-color);
+      min-height: 100vh;
+      min-height: 100dvh;
     }
   }
   
