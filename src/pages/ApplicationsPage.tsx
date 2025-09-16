@@ -77,6 +77,7 @@ export const ApplicationsPage: React.FC = () => {
     localStorage.setItem('applicationStep', currentStep);
   }, [currentStep]);
 
+
   useEffect(() => {
     if (selectedTree) {
       localStorage.setItem('selectedTree', JSON.stringify(selectedTree));
@@ -272,7 +273,7 @@ export const ApplicationsPage: React.FC = () => {
   const handleTreeSelect = async (tree: Tree) => {
     // Pozwól na tworzenie wniosków dla dowolnego drzewa
     setSelectedTree(tree);
-    setCurrentStep('select-municipality');
+    handleStepChange('select-municipality');
     setAutoSelectAttempted(false); // Reset auto-select flag for new tree
     
     // Load municipalities after tree selection (auth required)
@@ -298,6 +299,10 @@ export const ApplicationsPage: React.FC = () => {
 
   const handleTemplateSelect = (template: ApplicationTemplate) => {
     setSelectedTemplate(template);
+  };
+
+  const handleStepChange = (newStep: ApplicationStep) => {
+    setCurrentStep(newStep);
   };
 
   const handleLoadAllTrees = async () => {
@@ -347,7 +352,7 @@ export const ApplicationsPage: React.FC = () => {
       const schema = await applicationsService.getFormSchema(application.id);
       setFormSchema(schema);
       
-      setCurrentStep('fill-form');
+      handleStepChange('fill-form');
     } catch (error) {
       console.error('Error creating application:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
@@ -368,7 +373,7 @@ export const ApplicationsPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       await applicationsService.submitApplication(currentApplication.id, { formData });
-      setCurrentStep('submitted');
+      handleStepChange('submitted');
       
       // Clear saved data after successful submission
       localStorage.removeItem('applicationStep');
@@ -433,7 +438,7 @@ export const ApplicationsPage: React.FC = () => {
         localStorage.removeItem('applicationFormData');
         
         // Resetuj stan tylko jeśli nie zachowujemy kroku
-        setCurrentStep('overview');
+        handleStepChange('overview');
         setSelectedTree(null);
         setSelectedMunicipality(null);
         setSelectedTemplate(null);
@@ -485,7 +490,7 @@ export const ApplicationsPage: React.FC = () => {
     localStorage.removeItem('selectedMunicipality');
     localStorage.removeItem('selectedTemplate');
     localStorage.removeItem('applicationFormData');
-    setCurrentStep('overview');
+    handleStepChange('overview');
     setSelectedTree(null);
     setSelectedMunicipality(null);
     setSelectedTemplate(null);
@@ -579,7 +584,7 @@ export const ApplicationsPage: React.FC = () => {
 
       <div className="flex justify-center">
         <GlassButton
-          onClick={() => setCurrentStep('select-tree')}
+          onClick={() => handleStepChange('select-tree')}
           variant="primary"
           size="sm"
           icon={Plus}
@@ -595,7 +600,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto px-4 sm:px-6"
+      className="max-w-4xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-200px)] flex flex-col"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -606,38 +611,36 @@ export const ApplicationsPage: React.FC = () => {
         </p>
       </div>
 
-      <TreeSelector
-        trees={trees}
-        selectedTree={selectedTree}
-        onTreeSelect={handleTreeSelect}
-        onLoadMore={handleLoadAllTrees}
-        isLoading={isLoading}
-        showAllTrees={showAllTrees}
-        onTreeClick={(tree) => setSelectedTree(tree)}
-      />
+      <div className="flex-1">
+        <TreeSelector
+          trees={trees}
+          selectedTree={selectedTree}
+          onTreeSelect={handleTreeSelect}
+          onLoadMore={handleLoadAllTrees}
+          isLoading={isLoading}
+          showAllTrees={showAllTrees}
+          onTreeClick={(tree) => setSelectedTree(tree)}
+        />
+      </div>
 
-      <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex justify-between">
-            <GlassButton
-              onClick={() => setCurrentStep('overview')}
-              variant="secondary"
-              size="sm"
-              icon={ArrowLeft}
-            >
-              Wstecz
-            </GlassButton>
-            <GlassButton
-              onClick={() => setCurrentStep('select-municipality')}
-              disabled={!selectedTree}
-              variant="primary"
-              size="sm"
-              icon={ArrowRight}
-            >
-              Dalej
-            </GlassButton>
-          </div>
-        </div>
+      <div className="mt-6 mb-8 flex justify-between">
+        <GlassButton
+          onClick={() => handleStepChange('overview')}
+          variant="secondary"
+          size="sm"
+          icon={ArrowLeft}
+        >
+          Wstecz
+        </GlassButton>
+        <GlassButton
+          onClick={() => handleStepChange('select-municipality')}
+          disabled={!selectedTree}
+          variant="primary"
+          size="sm"
+          icon={ArrowRight}
+        >
+          Dalej
+        </GlassButton>
       </div>
     </motion.div>
   );
@@ -646,7 +649,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto px-4 sm:px-6"
+      className="max-w-4xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-200px)] flex flex-col"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -660,34 +663,32 @@ export const ApplicationsPage: React.FC = () => {
         </p>
       </div>
 
-      <MunicipalitySelector
-        municipalities={municipalities}
-        selectedMunicipality={selectedMunicipality}
-        onMunicipalitySelect={setSelectedMunicipality}
-      />
+      <div className="flex-1">
+        <MunicipalitySelector
+          municipalities={municipalities}
+          selectedMunicipality={selectedMunicipality}
+          onMunicipalitySelect={setSelectedMunicipality}
+        />
+      </div>
 
-      <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex justify-between">
-            <GlassButton
-              onClick={() => setCurrentStep('select-tree')}
-              variant="secondary"
-              size="sm"
-              icon={ArrowLeft}
-            >
-              Wstecz
-            </GlassButton>
-            <GlassButton
-              onClick={() => setCurrentStep('select-template')}
-              disabled={!selectedMunicipality}
-              variant="primary"
-              size="sm"
-              icon={ArrowRight}
-            >
-              Dalej
-            </GlassButton>
-          </div>
-        </div>
+      <div className="mt-6 mb-8 flex justify-between">
+        <GlassButton
+          onClick={() => handleStepChange('select-tree')}
+          variant="secondary"
+          size="sm"
+          icon={ArrowLeft}
+        >
+          Wstecz
+        </GlassButton>
+        <GlassButton
+          onClick={() => handleStepChange('select-template')}
+          disabled={!selectedMunicipality}
+          variant="primary"
+          size="sm"
+          icon={ArrowRight}
+        >
+          Dalej
+        </GlassButton>
       </div>
     </motion.div>
   );
@@ -696,7 +697,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto px-4 sm:px-6"
+      className="max-w-4xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-200px)] flex flex-col"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -707,40 +708,38 @@ export const ApplicationsPage: React.FC = () => {
         </p>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-        </div>
-      ) : (
-        <TemplateSelector
-          templates={templates}
-          selectedTemplate={selectedTemplate}
-          onTemplateSelect={handleTemplateSelect}
-        />
-      )}
-
-      <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex justify-between">
-            <GlassButton
-              onClick={() => setCurrentStep('select-municipality')}
-              variant="secondary"
-              size="sm"
-              icon={ArrowLeft}
-            >
-              Wstecz
-            </GlassButton>
-            <GlassButton
-              onClick={handleCreateApplication}
-              disabled={!selectedTemplate}
-              variant="primary"
-              size="sm"
-              icon={ArrowRight}
-            >
-              Dalej
-            </GlassButton>
+      <div className="flex-1">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
           </div>
-        </div>
+        ) : (
+          <TemplateSelector
+            templates={templates}
+            selectedTemplate={selectedTemplate}
+            onTemplateSelect={handleTemplateSelect}
+          />
+        )}
+      </div>
+
+      <div className="mt-6 mb-8 flex justify-between">
+        <GlassButton
+          onClick={() => handleStepChange('select-municipality')}
+          variant="secondary"
+          size="sm"
+          icon={ArrowLeft}
+        >
+          Wstecz
+        </GlassButton>
+        <GlassButton
+          onClick={handleCreateApplication}
+          disabled={!selectedTemplate}
+          variant="primary"
+          size="sm"
+          icon={ArrowRight}
+        >
+          Dalej
+        </GlassButton>
       </div>
     </motion.div>
   );
@@ -761,39 +760,37 @@ export const ApplicationsPage: React.FC = () => {
     }
 
     return (
-      <>
-        <DynamicForm
-          schema={formSchema}
-          onSubmit={handleFormSubmit}
-          onBack={() => setCurrentStep('select-template')}
-          isSubmitting={isSubmitting}
-        />
-        
-        <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
-          <div className="max-w-2xl mx-auto">
-            <div className="flex justify-between">
-              <GlassButton
-                onClick={() => setCurrentStep('select-template')}
-                variant="secondary"
-                size="sm"
-                icon={ArrowLeft}
-              >
-                Wstecz
-              </GlassButton>
-              
-              <GlassButton
-                onClick={() => handleFormSubmit({})}
-                disabled={isSubmitting}
-                variant="primary"
-                size="sm"
-                icon={isSubmitting ? undefined : CheckCircle}
-              >
-                {isSubmitting ? 'Wysyłanie...' : 'Wyślij wniosek'}
-              </GlassButton>
-            </div>
-          </div>
+      <div className="min-h-[calc(100vh-200px)] flex flex-col">
+        <div className="flex-1">
+          <DynamicForm
+            schema={formSchema}
+            onSubmit={handleFormSubmit}
+            onBack={() => handleStepChange('select-template')}
+            isSubmitting={isSubmitting}
+          />
         </div>
-      </>
+        
+        <div className="mt-6 mb-8 flex justify-between">
+          <GlassButton
+            onClick={() => handleStepChange('select-template')}
+            variant="secondary"
+            size="sm"
+            icon={ArrowLeft}
+          >
+            Wstecz
+          </GlassButton>
+          
+          <GlassButton
+            onClick={() => handleFormSubmit({})}
+            disabled={isSubmitting}
+            variant="primary"
+            size="sm"
+            icon={isSubmitting ? undefined : CheckCircle}
+          >
+            {isSubmitting ? 'Wysyłanie...' : 'Wyślij wniosek'}
+          </GlassButton>
+        </div>
+      </div>
     );
   };
 
@@ -903,7 +900,7 @@ export const ApplicationsPage: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-center">
         <GlassButton
-          onClick={() => setCurrentStep('submitted')}
+          onClick={() => handleStepChange('submitted')}
           variant="secondary"
           size="xs"
           icon={ArrowLeft}
@@ -994,9 +991,7 @@ export const ApplicationsPage: React.FC = () => {
 
 
   return (
-    <div className={`h-full bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 overflow-y-auto ${
-      currentStep === 'overview' || currentStep === 'completed' ? 'pb-4' : 'pb-32'
-    }`}>
+    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 overflow-y-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {(currentStep !== 'overview' && currentStep !== 'completed') && (
           <div className="mb-2 sm:mb-4">
