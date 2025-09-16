@@ -281,7 +281,7 @@ export const LandingPage = () => {
             {/* Mobile: Description below phone */}
             <div className="lg:hidden order-2 text-center">
               <p className="text-base text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
-                Platforma stworzona dla ekologów i miłośników drzew. Szybko zgłaszaj zagrożone drzewa, tworz wnioski o ochronę pomników przyrody i zapobiegaj wycince lasów. Dołącz do społeczności, która aktywnie chroni naszą przyrodę.
+                Platforma stworzona dla miłośników przyrody. Szybko zgłaszaj zagrożone drzewa, tworz wnioski o ochronę pomników przyrody i zapobiegaj wycince lasów. Dołącz do społeczności, która aktywnie chroni naszą przyrodę.
               </p>
 
               <div className="flex items-center justify-center mb-8">
@@ -298,16 +298,8 @@ export const LandingPage = () => {
 
             {/* Desktop: Content - Right side */}
             <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-2 lg:order-2 text-center">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <img 
-                  src="/logo.png" 
-                  alt="Logo aplikacji" 
-                  className="w-12 h-12"
-                />
-              </div>
-                
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-                Platforma stworzona dla ekologów i miłośników drzew. Szybko zgłaszaj zagrożone drzewa, tworz wnioski o ochronę pomników przyrody i zapobiegaj wycince lasów. Dołącz do społeczności, która aktywnie chroni naszą przyrodę.
+                Platforma stworzona dla miłośników przyrody. Szybko zgłaszaj zagrożone drzewa, tworz wnioski o ochronę pomników przyrody i zapobiegaj wycince lasów. Dołącz do społeczności, która aktywnie chroni naszą przyrodę.
               </p>
 
               <div className="flex items-center justify-center">

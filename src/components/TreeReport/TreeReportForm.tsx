@@ -10,6 +10,7 @@ import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { GlassButton } from '../UI/GlassButton';
 import { useAuth } from '../../context/AuthContext';
 
+
 interface TreeReportFormProps {
   latitude?: number;
   longitude?: number;
@@ -39,8 +40,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -250,7 +251,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     }
 
     setIsSubmitting(true);
-    setSubmitError(null); // Clear any previous errors
 
     try {
       if (isOnline) {
@@ -267,7 +267,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               console.log(`Photo ${i + 1} uploaded successfully: ${uploadedUrl}`);
             } catch (error) {
               console.error(`Error uploading photo ${i + 1}:`, error);
-              setSubmitError(`Błąd podczas uploadu zdjęcia ${i + 1}: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
               setIsSubmitting(false);
               return;
             }
@@ -374,32 +373,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       }
     } catch (error) {
       console.error('Error submitting report:', error);
-      
-      // Set user-friendly error message
-      let errorMessage = 'Wystąpił błąd podczas wysyłania zgłoszenia.';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('Authentication token expired')) {
-          errorMessage = 'Sesja wygasła. Zaloguj się ponownie.';
-        } else if (error.message.includes('401')) {
-          errorMessage = 'Brak autoryzacji. Zaloguj się ponownie.';
-        } else if (error.message.includes('403')) {
-          errorMessage = 'Brak uprawnień do wykonania tej operacji.';
-        } else if (error.message.includes('404')) {
-          errorMessage = 'Nie znaleziono gatunku drzewa.';
-        } else if (error.message.includes('400')) {
-          errorMessage = 'Nieprawidłowe dane. Sprawdź wypełnione pola.';
-        } else if (error.message.includes('500')) {
-          errorMessage = 'Błąd serwera. Spróbuj ponownie za chwilę.';
-        } else if (error.message.includes('Network')) {
-          errorMessage = 'Brak połączenia z internetem. Sprawdź połączenie.';
-        } else {
-          errorMessage = `Błąd: ${error.message}`;
-        }
-      }
-      
-      setSubmitError(errorMessage);
-      setTimeout(() => setSubmitError(null), 8000); // Hide error message after 8 seconds
     } finally {
       setIsSubmitting(false);
     }
@@ -808,7 +781,15 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             <input
               type="text"
               value={isAlive ? 'tak' : 'nie'}
-              onChange={(e) => setIsAlive(e.target.value.toLowerCase() === 'tak')}
+              onChange={(e) => {
+                const value = e.target.value.toLowerCase();
+                if (value === 'tak' || value === 'yes' || value === 'true' || value === '1') {
+                  setIsAlive(true);
+                } else if (value === 'nie' || value === 'no' || value === 'false' || value === '0') {
+                  setIsAlive(false);
+                }
+                // Allow user to type freely - don't force immediate conversion
+              }}
               placeholder="tak / nie"
               className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
             />
@@ -905,18 +886,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         </motion.div>
       )}
 
-      {submitError && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-5 mt-4 sm:mt-6 text-base sm:text-lg"
-        >
-          <p className="text-red-800 dark:text-red-200">
-            ❌ {submitError}
-          </p>
-        </motion.div>
-      )}
 
       {/* Enlarged Image Modal */}
       <AnimatePresence>

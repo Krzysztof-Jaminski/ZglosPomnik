@@ -54,18 +54,11 @@ export const AuthPage: React.FC = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-8"
         >
-          <Link to="/" className="inline-flex items-center space-x-3 group">
-            <div className="bg-green-500/20 backdrop-blur-sm p-6 rounded-full group-hover:bg-green-500/30 transition-all duration-300">
-              <img 
-                src="/logo.png" 
-                alt="ZgłośPomnik" 
-                className="w-16 h-16"
-              />
-            </div>
-            <span className="text-2xl font-bold text-white group-hover:text-green-400 transition-colors duration-300" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+          <div className="text-center">
+            <span className="text-2xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif' }}>
               <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
             </span>
-          </Link>
+          </div>
         </motion.div>
 
         {/* Error message */}

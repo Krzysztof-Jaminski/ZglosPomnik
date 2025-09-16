@@ -65,8 +65,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       {/* Form container */}
       <div className="w-full">
         <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img 
+              src="/logo.png" 
+              alt="ZgłośPomnik" 
+              className="w-12 h-12"
+            />
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                <span className="text-blue-600 dark:text-blue-400">Zgłoś</span><span className="text-green-600 dark:text-green-400">Pomnik</span>
+              </h2>
+            </div>
+          </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Dołącz do społeczności ekologów
+            Dołącz do społeczności
           </p>
         </div>
 
