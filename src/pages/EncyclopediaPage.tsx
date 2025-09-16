@@ -359,7 +359,7 @@ export const EncyclopediaPage: React.FC = () => {
             className="max-w-full max-h-full object-contain"
           />
           
-          {(selectedSpecies as Species).images.length > 1 && (
+          {((selectedSpecies as Species).images?.length || 0) > 1 && (
             <>
               <button
                 onClick={prevImage}
@@ -375,7 +375,7 @@ export const EncyclopediaPage: React.FC = () => {
               </button>
               
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full">
-                {selectedImageIndex + 1} / {(selectedSpecies as Species).images.length}
+                {selectedImageIndex + 1} / {(selectedSpecies as Species).images?.length || 1}
                 <span className="ml-2 text-sm">
                   - {getImageTypeLabel(currentImage?.type || '')}
                 </span>

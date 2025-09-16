@@ -343,7 +343,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-7xl mx-auto px-1 sm:px-0"
+      className="max-w-2xl mx-auto px-4 sm:px-6"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -361,17 +361,31 @@ export const ApplicationsPage: React.FC = () => {
         onLoadMore={handleLoadAllTrees}
         isLoading={isLoading}
         showAllTrees={showAllTrees}
+        onTreeClick={(tree) => setSelectedTree(tree)}
       />
 
-      <div className="flex justify-between mt-2 sm:mt-3">
-        <GlassButton
-          onClick={() => setCurrentStep('overview')}
-          variant="secondary"
-          size="xs"
-          icon={ArrowLeft}
-        >
-          <span style={{ fontSize: '10px' }}>Wstecz</span>
-        </GlassButton>
+      <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-between">
+            <GlassButton
+              onClick={() => setCurrentStep('overview')}
+              variant="secondary"
+              size="sm"
+              icon={ArrowLeft}
+            >
+              Wstecz
+            </GlassButton>
+            <GlassButton
+              onClick={() => setCurrentStep('select-municipality')}
+              disabled={!selectedTree}
+              variant="primary"
+              size="sm"
+              icon={ArrowRight}
+            >
+              Dalej
+            </GlassButton>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -380,7 +394,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-7xl mx-auto px-1 sm:px-0"
+      className="max-w-2xl mx-auto px-4 sm:px-6"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -397,24 +411,28 @@ export const ApplicationsPage: React.FC = () => {
         onMunicipalitySelect={setSelectedMunicipality}
       />
 
-      <div className="flex justify-between mt-2 sm:mt-3">
-        <GlassButton
-          onClick={() => setCurrentStep('select-tree')}
-          variant="secondary"
-          size="xs"
-          icon={ArrowLeft}
-        >
-          <span style={{ fontSize: '10px' }}>Wstecz</span>
-        </GlassButton>
-        <GlassButton
-          onClick={() => setCurrentStep('select-template')}
-          disabled={!selectedMunicipality}
-          variant="primary"
-          size="xs"
-          icon={ArrowRight}
-        >
-          <span style={{ fontSize: '10px' }}>Dalej</span>
-        </GlassButton>
+      <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-between">
+            <GlassButton
+              onClick={() => setCurrentStep('select-tree')}
+              variant="secondary"
+              size="sm"
+              icon={ArrowLeft}
+            >
+              Wstecz
+            </GlassButton>
+            <GlassButton
+              onClick={() => setCurrentStep('select-template')}
+              disabled={!selectedMunicipality}
+              variant="primary"
+              size="sm"
+              icon={ArrowRight}
+            >
+              Dalej
+            </GlassButton>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -423,7 +441,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-7xl mx-auto px-1 sm:px-0"
+      className="max-w-2xl mx-auto px-4 sm:px-6"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -446,24 +464,28 @@ export const ApplicationsPage: React.FC = () => {
         />
       )}
 
-      <div className="flex justify-between mt-2 sm:mt-3">
-        <GlassButton
-          onClick={() => setCurrentStep('select-municipality')}
-          variant="secondary"
-          size="xs"
-          icon={ArrowLeft}
-        >
-          <span style={{ fontSize: '10px' }}>Wstecz</span>
-        </GlassButton>
-        <GlassButton
-          onClick={handleCreateApplication}
-          disabled={!selectedTemplate}
-          variant="primary"
-          size="xs"
-          icon={ArrowRight}
-        >
-          <span style={{ fontSize: '10px' }}>Dalej</span>
-        </GlassButton>
+      <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-between">
+            <GlassButton
+              onClick={() => setCurrentStep('select-municipality')}
+              variant="secondary"
+              size="sm"
+              icon={ArrowLeft}
+            >
+              Wstecz
+            </GlassButton>
+            <GlassButton
+              onClick={handleCreateApplication}
+              disabled={!selectedTemplate}
+              variant="primary"
+              size="sm"
+              icon={ArrowRight}
+            >
+              Dalej
+            </GlassButton>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -690,7 +712,7 @@ export const ApplicationsPage: React.FC = () => {
 
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 overflow-y-auto">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 pb-32 overflow-y-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {(currentStep !== 'overview' && currentStep !== 'completed') && (
           <div className="mb-2 sm:mb-4">

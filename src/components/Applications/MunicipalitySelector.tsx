@@ -47,7 +47,7 @@ export const MunicipalitySelector: React.FC<MunicipalitySelectorProps> = ({
         {filteredMunicipalities.map(municipality => (
           <motion.div
             key={municipality.id}
-            whileHover={{ scale: 1.01 }}
+            whileHover={{ scale: 1.005 }}
             onClick={() => onMunicipalitySelect(municipality)}
             className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 ${
               selectedMunicipality?.id === municipality.id ? 'ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'

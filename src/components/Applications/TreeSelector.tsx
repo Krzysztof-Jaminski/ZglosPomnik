@@ -11,6 +11,7 @@ interface TreeSelectorProps {
   onLoadMore: () => void;
   isLoading: boolean;
   showAllTrees: boolean;
+  onTreeClick?: (tree: Tree) => void;
 }
 
 export const TreeSelector: React.FC<TreeSelectorProps> = ({
@@ -19,7 +20,8 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
   onTreeSelect,
   onLoadMore,
   isLoading,
-  showAllTrees
+  showAllTrees,
+  onTreeClick
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -93,9 +95,9 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
         {filteredTrees.map(tree => (
           <motion.div
             key={tree.id}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={() => onTreeSelect(tree)}
+            whileHover={{ scale: 1.005 }}
+            whileTap={{ scale: 0.995 }}
+            onClick={() => onTreeClick?.(tree)}
             className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 ${
               selectedTree?.id === tree.id ? 'ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
             }`}

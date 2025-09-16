@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';

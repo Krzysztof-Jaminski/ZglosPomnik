@@ -3,6 +3,7 @@ import { FormField, FormSchema } from '../../types';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface DynamicFormProps {
   schema: FormSchema;
@@ -17,10 +18,11 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   onBack,
   isSubmitting = false
 }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Initialize form data with default values
+  // Initialize form data with default values and user data
   useEffect(() => {
     const initialData: Record<string, any> = {};
     schema.requiredFields.forEach(field => {
@@ -28,8 +30,44 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         initialData[field.name] = field.defaultValue;
       }
     });
+
+    // Auto-fill with user data if available
+    if (user) {
+      const userDataMap: Record<string, string> = {
+        'imie': user.name.split(' ')[0] || '',
+        'nazwisko': user.name.split(' ').slice(1).join(' ') || '',
+        'email': user.email || '',
+        'telefon': user.phone || '',
+        'adres': user.address || '',
+        'miasto': user.city || '',
+        'kodPocztowy': user.postalCode || '',
+        'name': user.name || '',
+        'email': user.email || '',
+        'phone': user.phone || '',
+        'address': user.address || '',
+        'city': user.city || '',
+        'postalCode': user.postalCode || ''
+      };
+
+      // Apply user data to matching fields
+      Object.keys(userDataMap).forEach(key => {
+        if (userDataMap[key] && schema.requiredFields.some(field => 
+          field.name.toLowerCase().includes(key.toLowerCase()) || 
+          field.label.toLowerCase().includes(key.toLowerCase())
+        )) {
+          const matchingField = schema.requiredFields.find(field => 
+            field.name.toLowerCase().includes(key.toLowerCase()) || 
+            field.label.toLowerCase().includes(key.toLowerCase())
+          );
+          if (matchingField) {
+            initialData[matchingField.name] = userDataMap[key];
+          }
+        }
+      });
+    }
+
     setFormData(initialData);
-  }, [schema]);
+  }, [schema, user]);
 
   const validateField = (field: FormField, value: any): string | null => {
     if (field.isRequired && (!value || value.toString().trim() === '')) {
@@ -114,6 +152,10 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     const labelClasses = `block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ${
       field.isRequired ? 'after:content-["*"] after:text-red-500 after:ml-1' : ''
     }`;
+    
+    const validationInfo = field.validation ? 
+      `Min: ${field.validation.minLength || 0} znaków, Max: ${field.validation.maxLength || '∞'}` : 
+      field.isRequired ? 'Pole wymagane' : 'Pole opcjonalne';
 
     return (
       <motion.div
@@ -132,6 +174,17 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             {field.helpText}
           </p>
         )}
+        
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {validationInfo}
+          </span>
+          {field.isRequired && (
+            <span className="text-xs text-red-500 font-medium">
+              Wymagane
+            </span>
+          )}
+        </div>
 
         {field.type === 'TextArea' ? (
           <textarea
