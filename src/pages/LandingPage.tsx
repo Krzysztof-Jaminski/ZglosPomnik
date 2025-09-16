@@ -238,10 +238,10 @@ export const LandingPage = () => {
       </nav>
 
       {/* Animated Phone Section */}
-      <section className="relative z-10 min-h-screen flex items-center pt-16">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
+      <section className="relative z-10 min-h-screen flex items-center">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-20">
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
 
             {/* Phone Mockup - Left side */}
             <div className="relative flex items-center justify-center order-1 lg:order-1">
@@ -258,15 +258,18 @@ export const LandingPage = () => {
                       <div className="h-1 sm:h-2"></div>
                       <div className="flex-1 relative px-0.5">
                         <div className="w-full h-full rounded-lg overflow-hidden bg-gray-900">
-                          <motion.img 
-                            key={currentScreen}
-                            src={phoneScreens[currentScreen].image} 
-                            alt={phoneScreens[currentScreen].title}
-                            className="w-full h-full object-contain"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 1 }}
-                          />
+                          <AnimatePresence mode="wait">
+                            <motion.img 
+                              src={phoneScreens[currentScreen].image} 
+                              alt={phoneScreens[currentScreen].title}
+                              className="w-full h-full object-contain"
+                              key={`phone-screen-${currentScreen}`}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.5 }}
+                            />
+                          </AnimatePresence>
                         </div>
                       </div>
                       <div className="h-2 sm:h-3"></div>

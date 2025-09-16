@@ -426,7 +426,7 @@ export const ProfilePage: React.FC = () => {
                 className="w-full text-left"
                 icon={LogOut}
               >
-                <span className="text-gray-700 dark:text-gray-300 text-xs">
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
                   Wyloguj się
                 </span>
               </GlassButton>
