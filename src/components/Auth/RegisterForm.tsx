@@ -69,7 +69,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             <img 
               src="/logo.png" 
               alt="ZgłośPomnik" 
-              className="w-8 h-8 absolute left-14 top-0"
+              className="w-10 h-10 absolute"
+              style={{ left: 'calc(50% - 105px)', top: '-4px' }}
             />
             <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Exo 2, sans-serif' }}>
               <span className="text-blue-600 dark:text-blue-400">Zgłoś</span><span className="text-green-600 dark:text-green-400">Pomnik</span>
