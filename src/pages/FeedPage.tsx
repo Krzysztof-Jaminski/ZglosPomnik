@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TreePost } from '../components/Feed/TreePost';
 import { TreePost as TreePostType } from '../types';
 import { treesService } from '../services/treesService';
@@ -11,58 +11,120 @@ import { useAuth } from '../context/AuthContext';
 export const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<TreePostType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [filterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const { isAuthenticated } = useAuth();
+  
+  const POSTS_PER_PAGE = 5; // Load 5 posts at a time
 
-  // Load trees only once on page load
-  useEffect(() => {
-    const loadTrees = async () => {
+  // Load posts function with pagination
+  const loadPosts = useCallback(async (page: number, isInitialLoad: boolean = false) => {
+    if (isInitialLoad) {
       setIsLoading(true);
-      try {
-        // Load trees from API
-        const treesData = await treesService.getTrees();
-        
-        // Sort trees by submission date (newest first)
-        const sortedTrees = treesData.sort((a, b) => {
-          const dateA = new Date(a.submissionDate || 0);
-          const dateB = new Date(b.submissionDate || 0);
-          return dateB.getTime() - dateA.getTime();
-        });
+    } else {
+      setIsLoadingMore(true);
+    }
 
-        // Convert trees to posts format
-        const postsData: TreePostType[] = sortedTrees.map(tree => ({
-          ...tree,
-          likes: tree.votes?.like || 0,
-          dislikes: tree.votes?.dislike || 0,
-          userVote: null, // Will be set by API if user has voted
-          comments: [], // Comments will be loaded on demand
-          commentCount: tree.commentCount || 0
-        }));
+    try {
+      // Load trees from API
+      const treesData = await treesService.getTrees();
+      
+      // Sort trees by submission date (newest first)
+      const sortedTrees = treesData.sort((a, b) => {
+        const dateA = new Date(a.submissionDate || 0);
+        const dateB = new Date(b.submissionDate || 0);
+        return dateB.getTime() - dateA.getTime();
+      });
 
-        setPosts(postsData);
-      } catch (error) {
-        console.error('Error loading trees:', error);
-        // Fallback to mock data if API fails
-        const mockTrees = await api.getTrees();
-        const postsData: TreePostType[] = mockTrees.map(tree => ({
-          ...tree,
-          likes: tree.votes?.like || 0,
-          dislikes: tree.votes?.dislike || 0,
-          userVote: null,
-          comments: [],
-          commentCount: tree.commentCount || 0
-        }));
-        setPosts(postsData);
-      } finally {
-        setIsLoading(false);
+      // Convert trees to posts format
+      const allPostsData: TreePostType[] = sortedTrees.map(tree => ({
+        ...tree,
+        likes: tree.votes?.like || 0,
+        dislikes: tree.votes?.dislike || 0,
+        userVote: null, // Will be set by API if user has voted
+        comments: [], // Comments will be loaded on demand
+        commentCount: tree.commentCount || 0
+      }));
+
+      // Apply pagination
+      const startIndex = page * POSTS_PER_PAGE;
+      const endIndex = startIndex + POSTS_PER_PAGE;
+      const paginatedPosts = allPostsData.slice(startIndex, endIndex);
+
+      if (isInitialLoad) {
+        setPosts(paginatedPosts);
+      } else {
+        setPosts(prevPosts => [...prevPosts, ...paginatedPosts]);
       }
-    };
 
-    loadTrees();
+      // Check if there are more posts
+      setHasMorePosts(endIndex < allPostsData.length);
+      setCurrentPage(page);
+
+    } catch (error) {
+      console.error('Error loading trees:', error);
+      // Fallback to mock data if API fails
+      const mockTrees = await api.getTrees();
+      const allPostsData: TreePostType[] = mockTrees.map(tree => ({
+        ...tree,
+        likes: tree.votes?.like || 0,
+        dislikes: tree.votes?.dislike || 0,
+        userVote: null,
+        comments: [],
+        commentCount: tree.commentCount || 0
+      }));
+
+      // Apply pagination to mock data too
+      const startIndex = page * POSTS_PER_PAGE;
+      const endIndex = startIndex + POSTS_PER_PAGE;
+      const paginatedPosts = allPostsData.slice(startIndex, endIndex);
+
+      if (isInitialLoad) {
+        setPosts(paginatedPosts);
+      } else {
+        setPosts(prevPosts => [...prevPosts, ...paginatedPosts]);
+      }
+
+      setHasMorePosts(endIndex < allPostsData.length);
+      setCurrentPage(page);
+    } finally {
+      if (isInitialLoad) {
+        setIsLoading(false);
+      } else {
+        setIsLoadingMore(false);
+      }
+    }
   }, []);
+
+  // Load initial posts
+  useEffect(() => {
+    loadPosts(0, true);
+  }, [loadPosts]);
+
+
+  // Infinite scroll detection using Intersection Observer
+  useEffect(() => {
+    const loadMoreTrigger = document.getElementById('load-more-trigger');
+    if (!loadMoreTrigger) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore && hasMorePosts) {
+          console.log('Loading more posts...');
+          loadPosts(currentPage + 1, false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreTrigger);
+    return () => observer.disconnect();
+  }, [isLoadingMore, hasMorePosts, currentPage, loadPosts]);
 
   // Handle scroll to specific tree from map
   useEffect(() => {
@@ -339,6 +401,33 @@ export const FeedPage: React.FC = () => {
             <p className="text-gray-500 dark:text-gray-400 text-lg">
               {searchQuery ? 'Brak wyników wyszukiwania' : 'Brak zgłoszeń spełniających kryteria'}
             </p>
+          </div>
+        )}
+
+        {/* Load more trigger element */}
+        {!searchQuery && hasMorePosts && (
+          <div id="load-more-trigger" className="h-10 flex items-center justify-center">
+            {isLoadingMore ? (
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">Ładowanie...</p>
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Przewiń w dół, aby załadować więcej</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* End of posts indicator */}
+        {!searchQuery && !hasMorePosts && posts.length > 0 && (
+          <div className="px-4 py-6">
+            <div className="text-center">
+              <p className="text-gray-500 dark:text-gray-400">
+                To wszystkie dostępne posty
+              </p>
+            </div>
           </div>
         )}
         </div>

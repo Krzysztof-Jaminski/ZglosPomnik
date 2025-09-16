@@ -15,12 +15,39 @@ export const LandingPage = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
+  const [backgroundLoaded, setBackgroundLoaded] = useState(false);
   
   // Używanie kontekstu autoryzacji
   const { login, register, isAuthenticated, isLoading } = useAuth();
   
   // Landing page always uses dark theme for system UI
   useSystemTheme('dark');
+
+  // Preload background image
+  useEffect(() => {
+    // Add preload link to head for this specific page
+    const preloadLink = document.createElement('link');
+    preloadLink.rel = 'preload';
+    preloadLink.href = '/background.png';
+    preloadLink.as = 'image';
+    document.head.appendChild(preloadLink);
+
+    const img = new Image();
+    img.onload = () => {
+      setBackgroundLoaded(true);
+    };
+    img.onerror = () => {
+      setBackgroundLoaded(true); // Still show page even if image fails to load
+    };
+    img.src = '/background.png';
+
+    // Cleanup preload link when component unmounts
+    return () => {
+      if (document.head.contains(preloadLink)) {
+        document.head.removeChild(preloadLink);
+      }
+    };
+  }, []);
 
   // Sprawdź czy użytkownik jest już zalogowany i przekieruj
   useEffect(() => {
@@ -138,13 +165,15 @@ export const LandingPage = () => {
     navigate('/', { replace: true });
   };
 
-  // Pokaż loading podczas sprawdzania uwierzytelniania
-  if (isLoading) {
+  // Pokaż loading podczas sprawdzania uwierzytelniania lub ładowania background
+  if (isLoading || !backgroundLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
           <div className="text-white text-lg mb-2">Ładowanie...</div>
-          <div className="text-gray-400 text-sm">Sprawdzanie danych logowania</div>
+          <div className="text-gray-400 text-sm">
+            {isLoading ? 'Sprawdzanie danych logowania' : 'Ładowanie tła aplikacji'}
+          </div>
         </div>
       </div>
     );

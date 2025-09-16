@@ -79,7 +79,7 @@ export const EncyclopediaPage: React.FC = () => {
   const nextImage = () => {
     if (selectedSpecies) {
       setSelectedImageIndex((prev) => 
-        prev === selectedSpecies.images.length - 1 ? 0 : prev + 1
+        prev === (selectedSpecies.images || []).length - 1 ? 0 : prev + 1
       );
     }
   };
@@ -87,7 +87,7 @@ export const EncyclopediaPage: React.FC = () => {
   const prevImage = () => {
     if (selectedSpecies) {
       setSelectedImageIndex((prev) => 
-        prev === 0 ? selectedSpecies.images.length - 1 : prev - 1
+        prev === 0 ? (selectedSpecies.images || []).length - 1 : prev - 1
       );
     }
   };
@@ -180,8 +180,8 @@ export const EncyclopediaPage: React.FC = () => {
             <div className="relative">
               <div className="aspect-w-16 aspect-h-9">
                 <img
-                  src={selectedSpecies.images[selectedImageIndex]?.imageUrl}
-                  alt={selectedSpecies.images[selectedImageIndex]?.altText || selectedSpecies.polishName}
+                  src={(selectedSpecies.images || [])[selectedImageIndex]?.imageUrl}
+                  alt={(selectedSpecies.images || [])[selectedImageIndex]?.altText || selectedSpecies.polishName}
                   className="w-full h-96 sm:h-[40rem] md:h-[48rem] lg:h-[56rem] xl:h-[64rem] 2xl:h-[72rem] object-cover cursor-pointer"
                   onClick={() => openImageViewer(selectedImageIndex)}
                 />
@@ -190,12 +190,12 @@ export const EncyclopediaPage: React.FC = () => {
               {/* Image type indicator */}
               <div className="absolute top-4 right-4">
                 <span className="bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  {getImageTypeLabel(selectedSpecies.images[selectedImageIndex]?.type || '')}
+                  {getImageTypeLabel((selectedSpecies.images || [])[selectedImageIndex]?.type || '')}
                 </span>
               </div>
 
               {/* Navigation arrows */}
-              {selectedSpecies.images.length > 1 && (
+              {(selectedSpecies.images || []).length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
@@ -213,21 +213,21 @@ export const EncyclopediaPage: React.FC = () => {
               )}
 
               {/* Image counter */}
-              {selectedSpecies.images.length > 1 && (
+              {(selectedSpecies.images || []).length > 1 && (
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-                  {selectedImageIndex + 1} / {selectedSpecies.images.length}
+                  {selectedImageIndex + 1} / {(selectedSpecies.images || []).length}
                 </div>
               )}
             </div>
 
             {/* Thumbnail gallery */}
-            {selectedSpecies.images.length > 1 && (
+            {(selectedSpecies.images || []).length > 1 && (
               <div className="p-4 bg-gray-50 dark:bg-gray-700">
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Galeria zdjęć
                 </h3>
                 <div className="flex space-x-3 overflow-x-auto pb-2">
-                  {selectedSpecies.images.map((image, index) => (
+                  {(selectedSpecies.images || []).map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
@@ -274,7 +274,7 @@ export const EncyclopediaPage: React.FC = () => {
                     Przewodnik identyfikacji
                   </h3>
                   <ul className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
-                    {selectedSpecies.identificationGuide.map((guide, index) => (
+                    {(selectedSpecies.identificationGuide || []).map((guide, index) => (
                       <li key={index} className="flex items-start">
                         <span className="text-green-600 mr-3 text-lg">•</span>
                         {guide}
