@@ -43,7 +43,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       </div>
 
       {/* Templates List - Limited Height with Scroll */}
-      <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
+      <div className="max-h-[70vh] overflow-y-auto space-y-2 pr-2">
         {filteredTemplates.map(template => (
           <motion.div
             key={template.id}

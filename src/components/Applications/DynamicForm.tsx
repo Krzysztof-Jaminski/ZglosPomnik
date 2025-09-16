@@ -36,7 +36,6 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       const userDataMap: Record<string, string> = {
         'imie': user.name.split(' ')[0] || '',
         'nazwisko': user.name.split(' ').slice(1).join(' ') || '',
-        'email': user.email || '',
         'telefon': user.phone || '',
         'adres': user.address || '',
         'miasto': user.city || '',

@@ -9,6 +9,7 @@ interface AuthContextType {
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  handleAuthError: (error: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -153,6 +154,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const handleAuthError = (error: any) => {
+    console.log('Handling auth error:', error);
+    if (error instanceof Error && error.message.includes('Brak autoryzacji')) {
+      console.log('401 Unauthorized detected, logging out user');
+      alert('Sesja wygasła lub ktoś inny zalogował się na to konto. Zostaniesz wylogowany.');
+      logout();
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -160,7 +170,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
-    refreshUser
+    refreshUser,
+    handleAuthError
   };
 
   return (

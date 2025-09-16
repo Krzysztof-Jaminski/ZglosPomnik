@@ -15,7 +15,7 @@ type ApplicationStep = 'overview' | 'select-tree' | 'select-municipality' | 'sel
 
 
 export const ApplicationsPage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, handleAuthError } = useAuth();
   const [currentStep, setCurrentStep] = useState<ApplicationStep>('overview');
   const [trees, setTrees] = useState<Tree[]>([]);
   const [templates, setTemplates] = useState<ApplicationTemplate[]>([]);
@@ -29,6 +29,7 @@ export const ApplicationsPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [showAllTrees, setShowAllTrees] = useState(false);
+  const [autoSelectAttempted, setAutoSelectAttempted] = useState(false);
 
   // Save progress to localStorage (commented for testing)
   // useEffect(() => {
@@ -66,19 +67,73 @@ export const ApplicationsPage: React.FC = () => {
         // Pierwszy krok: pobierz drzewa użytkownika
         const treesData = await applicationsService.getUserTrees();
         setTrees(treesData);
-      } catch (error) {
-        console.error('Error loading user trees:', error);
-        // Nie pokazuj alertu jeśli to błąd autoryzacji - użytkownik może nie być zalogowany
-        if (error instanceof Error && !error.message.includes('autoryzacji')) {
-          alert(`Błąd podczas ładowania drzew: ${error.message}`);
-        }
-      } finally {
+          } catch (error) {
+            console.error('Error loading user trees:', error);
+            // Obsłuż błąd autoryzacji
+            if (error instanceof Error && error.message.includes('autoryzacji')) {
+              handleAuthError(error);
+              return;
+            }
+            // Nie pokazuj alertu dla innych błędów
+            console.warn('Error loading user trees:', error);
+          } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
   }, [isAuthenticated]);
+
+  // Load municipalities when step changes to select-municipality
+  useEffect(() => {
+    if (currentStep === 'select-municipality' && municipalities.length === 0) {
+      const loadMunicipalities = async () => {
+        try {
+          setIsLoading(true);
+          const municipalitiesData = await applicationsService.getMunicipalities();
+          console.log('Total municipalities:', municipalitiesData.length);
+          setMunicipalities(municipalitiesData);
+          
+          // Auto-select municipality based on tree location (only once)
+          if (selectedTree && municipalitiesData.length > 0 && !autoSelectAttempted) {
+            const treeAddress = selectedTree.location.address.toLowerCase();
+            console.log('Tree address:', treeAddress);
+            
+            // Try to find municipality by city name in address
+            const matchingMunicipality = municipalitiesData.find(municipality => {
+              const municipalityCity = municipality.city.toLowerCase();
+              const municipalityName = municipality.name.toLowerCase();
+              
+              return treeAddress.includes(municipalityCity) || 
+                     treeAddress.includes(municipalityName) ||
+                     municipalityCity.includes(treeAddress.split(',')[0].trim()) ||
+                     municipalityName.includes(treeAddress.split(',')[0].trim());
+            });
+            
+            if (matchingMunicipality) {
+              console.log('Auto-selected municipality:', matchingMunicipality.name);
+              setSelectedMunicipality(matchingMunicipality);
+            } else {
+              console.log('No matching municipality found, user will need to select manually');
+            }
+            
+            setAutoSelectAttempted(true);
+          }
+        } catch (error) {
+          console.error('Error loading municipalities:', error);
+          if (error instanceof Error && error.message.includes('autoryzacji')) {
+            handleAuthError(error);
+            return;
+          } else {
+            alert(`Błąd podczas ładowania gmin: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadMunicipalities();
+    }
+  }, [currentStep, municipalities.length, selectedTree, autoSelectAttempted]);
 
   // Load templates when municipality is selected
   useEffect(() => {
@@ -92,7 +147,10 @@ export const ApplicationsPage: React.FC = () => {
           console.error('Error loading templates:', error);
           // Sprawdź różne typy błędów
           if (error instanceof Error) {
-            if (error.message.includes('404')) {
+            if (error.message.includes('autoryzacji')) {
+              handleAuthError(error);
+              return;
+            } else if (error.message.includes('404')) {
               console.warn('No templates found for municipality:', selectedMunicipality.id);
               setTemplates([]);
             } else if (error.message.includes('400')) {
@@ -123,6 +181,7 @@ export const ApplicationsPage: React.FC = () => {
     // Pozwól na tworzenie wniosków dla dowolnego drzewa
     setSelectedTree(tree);
     setCurrentStep('select-municipality');
+    setAutoSelectAttempted(false); // Reset auto-select flag for new tree
     
     // Load municipalities after tree selection (auth required)
     try {
@@ -134,7 +193,8 @@ export const ApplicationsPage: React.FC = () => {
     } catch (error) {
       console.error('Error loading municipalities:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
-        alert('Musisz być zalogowany aby zobaczyć dostępne gminy.');
+        handleAuthError(error);
+        return;
       } else {
         alert(`Błąd podczas ładowania gmin: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
       }
@@ -161,6 +221,10 @@ export const ApplicationsPage: React.FC = () => {
       setShowAllTrees(true);
     } catch (error) {
       console.error('Error loading all trees:', error);
+      if (error instanceof Error && error.message.includes('autoryzacji')) {
+        handleAuthError(error);
+        return;
+      }
       alert(`Błąd podczas ładowania drzew: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
     } finally {
       setIsLoading(false);
@@ -192,6 +256,10 @@ export const ApplicationsPage: React.FC = () => {
       setCurrentStep('fill-form');
     } catch (error) {
       console.error('Error creating application:', error);
+      if (error instanceof Error && error.message.includes('autoryzacji')) {
+        handleAuthError(error);
+        return;
+      }
       alert(`Błąd podczas tworzenia wniosku: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
     } finally {
       setIsLoading(false);
@@ -207,6 +275,11 @@ export const ApplicationsPage: React.FC = () => {
       setCurrentStep('submitted');
     } catch (error) {
       console.error('Error submitting application:', error);
+      if (error instanceof Error && error.message.includes('autoryzacji')) {
+        handleAuthError(error);
+        return;
+      }
+      alert(`Błąd podczas składania wniosku: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -228,6 +301,11 @@ export const ApplicationsPage: React.FC = () => {
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error generating PDF:', error);
+      if (error instanceof Error && error.message.includes('autoryzacji')) {
+        handleAuthError(error);
+        return;
+      }
+      alert(`Błąd podczas generowania PDF: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
     } finally {
       setIsLoading(false);
     }
@@ -343,7 +421,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto px-4 sm:px-6"
+      className="max-w-4xl mx-auto px-4 sm:px-6"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -394,14 +472,17 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto px-4 sm:px-6"
+      className="max-w-4xl mx-auto px-4 sm:px-6"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Wybierz gminę
         </h2>
         <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-          Automatycznie wybrana gmina na podstawie lokalizacji drzewa
+          {selectedMunicipality 
+            ? `Automatycznie wybrana gmina: ${selectedMunicipality.name}` 
+            : 'Wybierz gminę dla swojego wniosku'
+          }
         </p>
       </div>
 
@@ -441,7 +522,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto px-4 sm:px-6"
+      className="max-w-4xl mx-auto px-4 sm:px-6"
     >
       <div className="text-center mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
