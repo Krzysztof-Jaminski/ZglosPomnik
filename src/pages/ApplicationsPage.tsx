@@ -8,12 +8,14 @@ import { DynamicForm } from '../components/Applications/DynamicForm';
 import { TemplateSelector } from '../components/Applications/TemplateSelector';
 import { TreeSelector } from '../components/Applications/TreeSelector';
 import { MunicipalitySelector } from '../components/Applications/MunicipalitySelector';
+import { useAuth } from '../context/AuthContext';
 
 type ApplicationStep = 'overview' | 'select-tree' | 'select-municipality' | 'select-template' | 'fill-form' | 'submitted' | 'completed';
 
 
 
 export const ApplicationsPage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [currentStep, setCurrentStep] = useState<ApplicationStep>('overview');
   const [trees, setTrees] = useState<Tree[]>([]);
   const [templates, setTemplates] = useState<ApplicationTemplate[]>([]);
@@ -53,15 +55,14 @@ export const ApplicationsPage: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      if (!isAuthenticated) {
+        console.warn('User not authenticated, skipping data load');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
-        // Sprawdź czy użytkownik jest zalogowany
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-          console.warn('No auth token found, skipping data load');
-          return;
-        }
-        
         // Pierwszy krok: pobierz drzewa użytkownika
         const treesData = await applicationsService.getUserTrees();
         setTrees(treesData);
@@ -77,7 +78,7 @@ export const ApplicationsPage: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [isAuthenticated]);
 
   // Load templates when municipality is selected
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TreePost } from '../components/Feed/TreePost';
 import { TreePost as TreePostType } from '../types';
 import { treesService } from '../services/treesService';
@@ -22,13 +22,8 @@ export const FeedPage: React.FC = () => {
   
   const POSTS_PER_PAGE = 5; // Load 5 posts at a time
 
-  // Load initial posts
-  useEffect(() => {
-    loadPosts(0, true);
-  }, []);
-
   // Load posts function with pagination
-  const loadPosts = async (page: number, isInitialLoad: boolean = false) => {
+  const loadPosts = useCallback(async (page: number, isInitialLoad: boolean = false) => {
     if (isInitialLoad) {
       setIsLoading(true);
     } else {
@@ -104,26 +99,32 @@ export const FeedPage: React.FC = () => {
         setIsLoadingMore(false);
       }
     }
-  };
+  }, []);
 
-  // Load more posts function (called automatically on scroll)
-  const loadMorePosts = () => {
-    if (!isLoadingMore && hasMorePosts) {
-      loadPosts(currentPage + 1, false);
-    }
-  };
-
-  // Infinite scroll detection
+  // Load initial posts
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
-        loadMorePosts();
-      }
-    };
+    loadPosts(0, true);
+  }, [loadPosts]);
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isLoadingMore, hasMorePosts, currentPage]);
+
+  // Infinite scroll detection using Intersection Observer
+  useEffect(() => {
+    const loadMoreTrigger = document.getElementById('load-more-trigger');
+    if (!loadMoreTrigger) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore && hasMorePosts) {
+          console.log('Loading more posts...');
+          loadPosts(currentPage + 1, false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreTrigger);
+    return () => observer.disconnect();
+  }, [isLoadingMore, hasMorePosts, currentPage, loadPosts]);
 
   // Handle scroll to specific tree from map
   useEffect(() => {
@@ -403,13 +404,19 @@ export const FeedPage: React.FC = () => {
           </div>
         )}
 
-        {/* Loading Indicator for infinite scroll */}
-        {!searchQuery && isLoadingMore && (
-          <div className="px-4 py-6">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-              <p className="text-gray-600 dark:text-gray-300">Ładowanie kolejnych postów...</p>
-            </div>
+        {/* Load more trigger element */}
+        {!searchQuery && hasMorePosts && (
+          <div id="load-more-trigger" className="h-10 flex items-center justify-center">
+            {isLoadingMore ? (
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">Ładowanie...</p>
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Przewiń w dół, aby załadować więcej</p>
+              </div>
+            )}
           </div>
         )}
 
