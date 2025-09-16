@@ -51,7 +51,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       {/* Form container */}
       <div className="w-full">
         <div className="text-center mb-6">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Witaj ponownie
           </p>
         </div>
@@ -59,14 +59,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white"
+                className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-gray-800/50 border border-gray-300/50 dark:border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200"
                 placeholder="jan@example.com"
               />
             </div>
@@ -74,20 +74,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
           <div>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
                 required
-                className="w-full pl-10 pr-12 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 autofill:bg-gray-800/50 autofill:text-gray-900 dark:autofill:text-white"
+                className="w-full pl-10 pr-12 py-3 bg-white/80 dark:bg-gray-800/50 border border-gray-300/50 dark:border-gray-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200"
                 placeholder="Hasło"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors duration-200"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -117,15 +117,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <button
               type="button"
               onClick={onSwitchToRegister}
-              className="text-sm text-gray-400 hover:text-green-400 transition-colors duration-200"
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200"
             >
-              Nie masz konta? <span className="text-green-400 hover:text-green-300">Zarejestruj się</span>
+              Nie masz konta? <span className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Zarejestruj się</span>
             </button>
             {onBackToMenu && (
               <button
                 type="button"
                 onClick={onBackToMenu}
-                className="block w-full text-sm text-gray-500 hover:text-gray-300 mt-2 transition-colors duration-200"
+                className="block w-full text-sm text-gray-600 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 mt-2 transition-colors duration-200"
               >
                 ← Powrót do menu
               </button>

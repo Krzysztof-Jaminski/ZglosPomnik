@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, ExternalLink, Clock, CheckCircle, XCircle, ArrowLeft, ArrowRight, Plus, MapPin, Loader2, X } from 'lucide-react';
+import { FileText, Download, ExternalLink, CheckCircle, ArrowLeft, ArrowRight, Plus, Loader2, X } from 'lucide-react';
 import { Tree, ApplicationTemplate, Municipality, Application, FormSchema } from '../types';
 import { applicationsService } from '../services/applicationsService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { DynamicForm } from '../components/Applications/DynamicForm';
 import { TemplateSelector } from '../components/Applications/TemplateSelector';
+import { TreeSelector } from '../components/Applications/TreeSelector';
+import { MunicipalitySelector } from '../components/Applications/MunicipalitySelector';
 
 type ApplicationStep = 'overview' | 'select-tree' | 'select-municipality' | 'select-template' | 'fill-form' | 'submitted' | 'completed';
 
@@ -115,18 +117,6 @@ export const ApplicationsPage: React.FC = () => {
     return steps.indexOf(step) + 1;
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className="w-5 h-5 text-amber-500" />;
-      case 'approved':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'rejected':
-        return <XCircle className="w-5 h-5 text-red-500" />;
-      default:
-        return <Clock className="w-5 h-5 text-gray-500" />;
-    }
-  };
 
   const handleTreeSelect = async (tree: Tree) => {
     // Pozwól na tworzenie wniosków dla dowolnego drzewa
@@ -363,90 +353,14 @@ export const ApplicationsPage: React.FC = () => {
         </p>
       </div>
 
-      {trees.length === 0 ? (
-        <div className="text-center py-8">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl p-6 mb-4 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Nie zgłosiłeś jeszcze żadnych drzew
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Aby utworzyć wniosek, musisz najpierw zgłosić drzewo w aplikacji lub wybrać z już istniejących.
-            </p>
-            <div className="space-y-2">
-              <GlassButton
-                onClick={handleLoadAllTrees}
-                disabled={isLoading}
-                variant="primary"
-                size="sm"
-                icon={isLoading ? Loader2 : Plus}
-              >
-                {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
-              </GlassButton>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-        {trees.map(tree => (
-          <motion.div
-            key={tree.id}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleTreeSelect(tree)}
-                className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 sm:p-4 ${
-                  selectedTree?.id === tree.id ? 'ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
-            }`}
-          >
-            <div className="flex items-start space-x-2">
-              {tree.images && tree.images.length > 0 && (
-                <img
-                  src={tree.images[0]}
-                  alt={tree.species}
-                  className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg"
-                />
-              )}
-              <div className="flex-1">
-                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                  {tree.species}
-                </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 italic mb-1">
-                  {tree.speciesLatin}
-                </p>
-                <p className="text-xs text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-                  {tree.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="w-3 h-3 text-gray-400" />
-                    <span className="text-xs text-gray-500">
-                      {tree.location.lat.toFixed(4)}, {tree.location.lng.toFixed(4)}
-                    </span>
-                  </div>
-                  {getStatusIcon(tree.status)}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-          {!showAllTrees && (
-            <div className="text-center mt-4">
-              <GlassButton
-                onClick={handleLoadAllTrees}
-                disabled={isLoading}
-                variant="secondary"
-                size="sm"
-                icon={isLoading ? Loader2 : Plus}
-                className="px-6 py-2"
-              >
-                {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
-              </GlassButton>
-            </div>
-          )}
-        </>
-      )}
+      <TreeSelector
+        trees={trees}
+        selectedTree={selectedTree}
+        onTreeSelect={handleTreeSelect}
+        onLoadMore={handleLoadAllTrees}
+        isLoading={isLoading}
+        showAllTrees={showAllTrees}
+      />
 
       <div className="flex justify-between mt-2 sm:mt-3">
         <GlassButton
@@ -467,54 +381,20 @@ export const ApplicationsPage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-7xl mx-auto px-1 sm:px-0"
     >
-      <div className="text-center mb-2 sm:mb-3">
-        <h2 className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
+      <div className="text-center mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Wybierz gminę
         </h2>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
           Automatycznie wybrana gmina na podstawie lokalizacji drzewa
         </p>
       </div>
 
-      <div className="space-y-2">
-        {municipalities.map(municipality => (
-          <motion.div
-            key={municipality.id}
-            whileHover={{ scale: 1.01 }}
-            onClick={() => setSelectedMunicipality(municipality)}
-            className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 sm:p-4 ${
-              selectedMunicipality?.id === municipality.id ? 'ring-2 ring-green-500 bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                  {municipality.name}
-                  {!municipality.isActive && (
-                    <span className="ml-2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
-                      Niedostępna
-                    </span>
-                  )}
-                </h3>
-                <div className="space-y-0.5 text-xs text-gray-600 dark:text-gray-400">
-                  <p>Email: {municipality.email}</p>
-                  <p>Telefon: {municipality.phone}</p>
-                  <p>Adres: {municipality.address}, {municipality.city}</p>
-                </div>
-              </div>
-              <div className={`w-4 h-4 rounded-full border-2 ${
-                selectedMunicipality?.id === municipality.id 
-                  ? 'bg-green-600 border-green-600' 
-                  : 'border-gray-300'
-              }`}>
-                {selectedMunicipality?.id === municipality.id && (
-                  <CheckCircle className="w-4 h-4 text-white" />
-                )}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      <MunicipalitySelector
+        municipalities={municipalities}
+        selectedMunicipality={selectedMunicipality}
+        onMunicipalitySelect={setSelectedMunicipality}
+      />
 
       <div className="flex justify-between mt-2 sm:mt-3">
         <GlassButton
@@ -544,6 +424,15 @@ export const ApplicationsPage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-7xl mx-auto px-1 sm:px-0"
     >
+      <div className="text-center mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Wybierz szablon wniosku
+        </h2>
+        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
+          Wybierz odpowiedni szablon dla swojego wniosku
+        </p>
+      </div>
+
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-8 h-8 animate-spin text-green-600" />
@@ -553,10 +442,28 @@ export const ApplicationsPage: React.FC = () => {
           templates={templates}
           selectedTemplate={selectedTemplate}
           onTemplateSelect={handleTemplateSelect}
-          onBack={() => setCurrentStep('select-municipality')}
-          onNext={handleCreateApplication}
         />
       )}
+
+      <div className="flex justify-between mt-2 sm:mt-3">
+        <GlassButton
+          onClick={() => setCurrentStep('select-municipality')}
+          variant="secondary"
+          size="xs"
+          icon={ArrowLeft}
+        >
+          <span style={{ fontSize: '10px' }}>Wstecz</span>
+        </GlassButton>
+        <GlassButton
+          onClick={handleCreateApplication}
+          disabled={!selectedTemplate}
+          variant="primary"
+          size="xs"
+          icon={ArrowRight}
+        >
+          <span style={{ fontSize: '10px' }}>Dalej</span>
+        </GlassButton>
+      </div>
     </motion.div>
   );
 

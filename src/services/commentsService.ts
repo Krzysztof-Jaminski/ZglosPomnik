@@ -288,12 +288,12 @@ class CommentsService {
 
       console.log('Attempting to delete comment:', {
         commentId,
-        url: `/api/Comments/${commentId}`,
+        url: `${API_BASE_URL}/Comments/${commentId}`,
         token: token ? 'exists' : 'missing',
         tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
       });
 
-      const response = await fetch(`/api/Comments/${commentId}`, {
+      const response = await fetch(`${API_BASE_URL}/Comments/${commentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -1,5 +1,5 @@
 import { Application, ApplicationTemplate, FormSchema, ApplicationSubmission, PdfResponse, Tree, Municipality } from '../types';
-const API_BASE_URL = 'http://192.168.10.117:5174/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Get auth token from localStorage
 const getAuthToken = (): string | null => {

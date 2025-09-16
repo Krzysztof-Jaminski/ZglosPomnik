@@ -12,9 +12,9 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://192.168.10.116:5174',
+        target: process.env.VITE_API_BASE_URL || 'https://drzewaapi-app-2024.azurewebsites.net',
         changeOrigin: true,
-        secure: false
+        secure: true
       }
     }
   },
