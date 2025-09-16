@@ -23,7 +23,6 @@ export const TreePost: React.FC<TreePostProps> = ({
   onComment,
   onDelete
 }) => {
-  const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -36,12 +35,12 @@ export const TreePost: React.FC<TreePostProps> = ({
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Load comments when showComments becomes true
+  // Load comments on component mount
   useEffect(() => {
-    if (showComments && !commentsLoaded) {
+    if (!commentsLoaded) {
       loadComments();
     }
-  }, [showComments, commentsLoaded]);
+  }, [commentsLoaded]);
 
   const loadComments = async () => {
     setIsLoadingComments(true);
@@ -419,28 +418,18 @@ export const TreePost: React.FC<TreePostProps> = ({
              <span className="text-sm font-medium">{post.dislikes}</span>
            </button>
           
-           <button
-             onClick={() => setShowComments(!showComments)}
-             className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors min-w-[120px]"
-           >
+           <div className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 min-w-[120px]">
              <MessageCircle className="w-5 h-5" />
              <span className="text-sm font-medium">
-               {showComments ? 'Ukryj' : 'Komentarze'}
+               Komentarze
                {post.commentCount > 0 && ` (${post.commentCount})`}
              </span>
-           </button>
+           </div>
         </div>
       </div>
 
       {/* Comments Section */}
-      <AnimatePresence>
-        {showComments && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4"
-          >
+      <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
             {/* Comment Form */}
             <form onSubmit={handleSubmitComment} className="mb-4">
               <div className="flex space-x-4">
@@ -585,9 +574,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                 })
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </div>
 
       {/* Delete Post Confirmation Modal */}
       <DeleteConfirmationModal

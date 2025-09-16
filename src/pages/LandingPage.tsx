@@ -126,11 +126,11 @@ export const LandingPage = () => {
   // Animacja telefonu
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentScreen((prev) => (prev + 1) % phoneScreens.length);
+      setCurrentScreen((prev) => (prev + 1) % 6); // Stała liczba ekranów
     }, 8000); // 8 sekund
     
     return () => clearInterval(interval);
-  }, [phoneScreens.length]);
+  }, []); // Pusta tablica dependencies
 
 
   const scrollToTop = () => {
@@ -280,9 +280,6 @@ export const LandingPage = () => {
 
             {/* Mobile: Description below phone */}
             <div className="lg:hidden order-2 text-center">
-              <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif' }}>
-                <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
-              </h2>
               <p className="text-base text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
                 Platforma stworzona dla ekologów i miłośników drzew. Szybko zgłaszaj zagrożone drzewa, tworz wnioski o ochronę pomników przyrody i zapobiegaj wycince lasów. Dołącz do społeczności, która aktywnie chroni naszą przyrodę.
               </p>
@@ -304,12 +301,9 @@ export const LandingPage = () => {
               <div className="flex items-center justify-center gap-4 mb-4">
                 <img 
                   src="/logo.png" 
-                  alt="ZgłośPomnik" 
+                  alt="Logo aplikacji" 
                   className="w-12 h-12"
                 />
-                <h2 className="text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif' }}>
-                  <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
-                </h2>
               </div>
                 
               <p className="text-lg text-gray-300 mb-6 leading-relaxed">
@@ -444,7 +438,7 @@ export const LandingPage = () => {
           {/* Dlaczego my? */}
           <div className="text-center">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8" style={{ fontFamily: 'Exo 2, sans-serif' }}>
-              Dlaczego <span className="text-white">ZgłośPomnik</span>?
+              Dlaczego nasza aplikacja?
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="flex flex-col items-center">
@@ -483,7 +477,7 @@ export const LandingPage = () => {
       <footer className="relative z-10 bg-gray-900/80 backdrop-blur-sm py-4 sm:py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center text-gray-500">
-            <p className="text-xs sm:text-sm">© 2025 <span className="text-gray-500" style={{ fontFamily: 'Exo 2, sans-serif' }}>ZgłośPomnik</span>. Wszystkie prawa zastrzeżone.</p>
+            <p className="text-xs sm:text-sm">© 2025 Aplikacja do zgłaszania pomników przyrody. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>
       </footer>
