@@ -19,6 +19,8 @@ class SystemThemePluginWeb implements SystemThemePlugin {
     this.updateThemeColorMeta(options.color);
     // Update Android Chrome navigation bar color
     this.updateAndroidNavigationBarColor(options.color);
+    // Additional PWA-specific updates
+    this.updatePWANavigationBar(options.color);
   }
 
   async setSystemUITheme(options: { isDark: boolean }): Promise<void> {
@@ -59,10 +61,18 @@ class SystemThemePluginWeb implements SystemThemePlugin {
 
     // Update CSS custom property for PWA navbar
     document.documentElement.style.setProperty('--pwa-navbar-color', color);
+    document.documentElement.style.setProperty('--android-navbar-color', color);
     
     // Force update body background for PWA
     if (window.matchMedia('(display-mode: standalone)').matches) {
       document.body.style.backgroundColor = color;
+      document.documentElement.style.backgroundColor = color;
+      
+      // Force update for PWA
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.style.backgroundColor = color;
+      }
     }
 
     // Update manifest theme_color dynamically
@@ -292,6 +302,60 @@ class SystemThemePluginWeb implements SystemThemePlugin {
         viewport.content = currentContent;
       }, 10);
     }
+  }
+
+  private updatePWANavigationBar(color: string): void {
+    // Additional PWA-specific updates for navigation bar
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isPWA) {
+      // Force update all possible elements
+      document.body.style.backgroundColor = color;
+      document.documentElement.style.backgroundColor = color;
+      
+      // Update root element
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.style.backgroundColor = color;
+      }
+      
+      // Force repaint
+      document.body.style.display = 'none';
+      document.body.offsetHeight; // Trigger reflow
+      document.body.style.display = '';
+      
+      // Update CSS variables
+      document.documentElement.style.setProperty('--pwa-navbar-color', color);
+      document.documentElement.style.setProperty('--android-navbar-color', color);
+      
+      // Additional PWA-specific meta tag updates
+      this.updatePWAMetaTags(color);
+    }
+  }
+
+  private updatePWAMetaTags(color: string): void {
+    // Update PWA-specific meta tags
+    const metaTags = [
+      'theme-color',
+      'msapplication-navbutton-color',
+      'msapplication-TileColor',
+      'mobile-web-app-status-bar-style'
+    ];
+    
+    metaTags.forEach(tagName => {
+      let meta = document.querySelector(`meta[name="${tagName}"]:not([media])`) as HTMLMetaElement;
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = tagName;
+        document.head.appendChild(meta);
+      }
+      
+      if (tagName === 'mobile-web-app-status-bar-style') {
+        meta.content = color === '#111827' ? 'black-translucent' : 'default';
+      } else {
+        meta.content = color;
+      }
+    });
   }
 
   private updateStatusBarStyle(isDark: boolean): void {

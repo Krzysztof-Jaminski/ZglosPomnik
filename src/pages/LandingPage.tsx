@@ -245,31 +245,32 @@ export const LandingPage = () => {
 
             {/* Phone Mockup - Left side */}
             <div className="relative flex items-center justify-center order-1 lg:order-1">
-              <div className="relative">
+              <div className="relative w-full max-w-64 sm:max-w-80 lg:w-[28rem] h-[32rem] sm:h-[40rem] lg:h-[48rem]">
                 <div 
-                  className="relative w-full max-w-64 sm:max-w-80 lg:w-[28rem] aspect-[9/19.5] bg-black rounded-[2rem] p-1 shadow-[0_0_40px_rgba(0,0,0,0.3)]"
+                  className="absolute inset-0 bg-black rounded-[2rem] p-1 shadow-[0_0_40px_rgba(0,0,0,0.3)]"
                 >
-                  <div className="w-full h-full bg-black rounded-[1.5rem] overflow-hidden relative">
+                  <div className="absolute inset-1 bg-black rounded-[1.5rem] overflow-hidden">
                     {/* Notch */}
-                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 sm:w-20 h-3 sm:h-4 bg-black rounded-b-xl z-10"></div>
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 sm:w-20 h-3 sm:h-4 bg-black rounded-b-xl z-20"></div>
                     
                     {/* Screen */}
-                    <div className="w-full h-full flex flex-col">
+                    <div className="absolute inset-0 flex flex-col">
                       <div className="h-1 sm:h-2"></div>
                       <div className="flex-1 relative px-0.5">
-                        <div className="w-full h-full rounded-lg overflow-hidden bg-gray-900">
-                          <AnimatePresence mode="wait">
-                            <motion.img 
-                              src={phoneScreens[currentScreen].image} 
-                              alt={phoneScreens[currentScreen].title}
-                              className="w-full h-full object-contain"
-                              key={`phone-screen-${currentScreen}`}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.5 }}
-                            />
-                          </AnimatePresence>
+                        <div className="absolute inset-0 rounded-lg overflow-hidden bg-gray-900">
+                          {/* Static background */}
+                          <div className="absolute inset-0 bg-gray-900"></div>
+                          
+                          {/* Animated image - no AnimatePresence to prevent layout shift */}
+                          <motion.img 
+                            src={phoneScreens[currentScreen].image} 
+                            alt={phoneScreens[currentScreen].title}
+                            className="absolute inset-0 w-full h-full object-contain z-10"
+                            key={`phone-screen-${currentScreen}`}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                          />
                         </div>
                       </div>
                       <div className="h-2 sm:h-3"></div>
@@ -491,24 +492,24 @@ export const LandingPage = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full"
+              className="bg-gray-800 rounded-2xl shadow-xl max-w-md w-full"
             >
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-blue-900 dark:text-white">
+                  <h2 className="text-2xl font-bold text-white">
                     {authMode === 'login' ? 'Zaloguj się' : 'Zarejestruj się'}
                   </h2>
                   <button
                     onClick={closeModal}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="text-gray-400 hover:text-gray-300"
                   >
                     ✕
                   </button>
                 </div>
 
                 {error && (
-                  <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
-                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                  <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-lg">
+                    <p className="text-sm text-red-300">{error}</p>
                   </div>
                 )}
 

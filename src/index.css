@@ -25,7 +25,7 @@
   
   @media (display-mode: standalone) {
     /* For Android PWA */
-    body {
+    html, body {
       background-color: var(--pwa-navbar-color) !important;
       /* Hide browser UI elements */
       -webkit-user-select: none;
@@ -35,7 +35,7 @@
     
     /* For iOS PWA */
     @supports (-webkit-touch-callout: none) {
-      body {
+      html, body {
         background-color: var(--pwa-navbar-color) !important;
       }
     }
@@ -43,6 +43,11 @@
     /* Ensure the main container doesn't override the body background */
     .h-screen {
       background-color: transparent !important;
+    }
+    
+    /* Force PWA navigation bar color */
+    #root {
+      background-color: var(--pwa-navbar-color) !important;
     }
     
     /* Hide scrollbars in PWA mode */
