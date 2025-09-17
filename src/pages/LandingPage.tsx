@@ -265,7 +265,7 @@ export const LandingPage = () => {
                           <motion.img 
                             src={phoneScreens[currentScreen].image} 
                             alt={phoneScreens[currentScreen].title}
-                            className="absolute inset-0 w-full h-full object-contain z-10"
+                            className="absolute inset-0 w-full h-full object-contain z-5"
                             key={`phone-screen-${currentScreen}`}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -273,7 +273,7 @@ export const LandingPage = () => {
                           />
                         </div>
                       </div>
-                      <div className="h-2 sm:h-3"></div>
+                      <div className="h-1 sm:h-1.5"></div>
                     </div>
                   </div>
                 </div>
