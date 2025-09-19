@@ -53,7 +53,15 @@ export const ContactSection = () => {
                 <div className="bg-gray-800/30 backdrop-blur-sm rounded-md lg:bg-transparent lg:border-none p-2 lg:p-0 border border-gray-700/30">
                   <div className="flex flex-col items-center text-center lg:flex-row lg:items-center lg:text-left lg:mb-4">
                     <span className="text-gray-400 text-xs lg:text-sm font-medium mb-0.5 lg:mb-0 lg:mr-3 lg:w-20">Adres:</span>
-                    <span className="text-gray-300 text-xs lg:text-base">ul. Przyrodnicza 123, 00-001 Warszawa</span>
+                    <span className="text-gray-300 text-xs lg:text-base">ul. Przyrodnicza 123</span>
+                  </div>
+                </div>
+                
+                {/* Miasto */}
+                <div className="bg-gray-800/30 backdrop-blur-sm rounded-md lg:bg-transparent lg:border-none p-2 lg:p-0 border border-gray-700/30">
+                  <div className="flex flex-col items-center text-center lg:flex-row lg:items-center lg:text-left lg:mb-4">
+                    <span className="text-gray-400 text-xs lg:text-sm font-medium mb-0.5 lg:mb-0 lg:mr-3 lg:w-20">Miasto:</span>
+                    <span className="text-gray-300 text-xs lg:text-base">00-001 Warszawa</span>
                   </div>
                 </div>
                 
