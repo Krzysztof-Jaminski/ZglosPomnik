@@ -3,9 +3,11 @@ import { Moon, Sun, Monitor, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassButton } from '../UI/GlassButton';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 export const Header: React.FC = () => {
   const { theme, setTheme } = useTheme();
+  const { triggerLightHaptic } = useHapticFeedback();
 
   const themeIcons = {
     light: Sun,
@@ -16,6 +18,7 @@ export const Header: React.FC = () => {
   const ThemeIcon = themeIcons[theme];
 
   const cycleTheme = () => {
+    triggerLightHaptic();
     const themes: Array<'light' | 'dark' | 'auto'> = ['light', 'dark', 'auto'];
     const currentIndex = themes.indexOf(theme);
     const nextTheme = themes[(currentIndex + 1) % themes.length];

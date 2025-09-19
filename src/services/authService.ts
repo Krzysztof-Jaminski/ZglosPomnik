@@ -74,6 +74,10 @@ class AuthService {
     return this.user;
   }
 
+  saveUserData(user: User): void {
+    this.saveUser(user);
+  }
+
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     const response = await fetch(`${API_BASE_URL}/Auth/register`, {
       method: 'POST',

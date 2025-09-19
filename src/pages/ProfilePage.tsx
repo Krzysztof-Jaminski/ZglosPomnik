@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield, Eye, EyeOff, Check, X as XIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { tempImageService } from '../services/tempImageService';
+import { useHapticFeedback } from '../hooks/useHapticFeedback';
 
 interface AdditionalUserData {
   phone: string;
@@ -15,37 +17,148 @@ interface AdditionalUserData {
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { triggerLightHaptic, triggerMediumHaptic, triggerNotificationHaptic } = useHapticFeedback();
   const [notifications, setNotifications] = useState({
     push: true,
     email: false
   });
+  const [fullUserData, setFullUserData] = useState(user);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Dane użytkownika z API (dostępne)
-  const userData = user ? {
-    name: user.name,
-    email: user.email,
-    avatar: user.avatar,
-    registrationDate: user.registrationDate,
-    submissionsCount: user.submissionsCount,
-    verificationsCount: user.verificationsCount
+  const userData = fullUserData ? {
+    name: fullUserData.name,
+    email: fullUserData.email,
+    avatar: fullUserData.avatar,
+    registrationDate: fullUserData.registrationDate,
+    submissionsCount: fullUserData.submissionsCount,
+    verificationsCount: fullUserData.verificationsCount
   } : null;
   
   // Dane użytkownika z API
   const [additionalData, setAdditionalData] = useState({
-    phone: user?.phone || 'Nie podano',
-    address: user?.address || 'Nie podano',
-    city: user?.city || 'Nie podano',
-    postalCode: user?.postalCode || 'Nie podano'
+    phone: fullUserData?.phone || 'Nie podano',
+    address: fullUserData?.address || 'Nie podano',
+    city: fullUserData?.city || 'Nie podano',
+    postalCode: fullUserData?.postalCode || 'Nie podano'
   });
   
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(additionalData);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [editBasicData, setEditBasicData] = useState({
+    name: '',
+    email: ''
+  });
+  const [editAvatar, setEditAvatar] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+  const [passwordValidation, setPasswordValidation] = useState({
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+    passwordsMatch: false
+  });
+
+  // Pobierz pełne dane użytkownika z endpointu /api/Users/current
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoadingProfile(true);
+        console.log('Fetching user data from /api/Users/current...');
+        
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.error('No auth token found');
+          return;
+        }
+
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Users/current`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'accept': '*/*'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const userData = await response.json();
+        console.log('User data received from /api/Users/current:', userData);
+        
+        setFullUserData(userData);
+        
+        // Aktualizuj dodatkowe dane
+        setAdditionalData({
+          phone: userData.phone || 'Nie podano',
+          address: userData.address || 'Nie podano',
+          city: userData.city || 'Nie podano',
+          postalCode: userData.postalCode || 'Nie podano'
+        });
+        
+        setEditData({
+          phone: userData.phone || 'Nie podano',
+          address: userData.address || 'Nie podano',
+          city: userData.city || 'Nie podano',
+          postalCode: userData.postalCode || 'Nie podano'
+        });
+        
+        setEditAvatar(userData.avatar || '');
+        setEditBasicData({
+          name: userData.name || '',
+          email: userData.email || ''
+        });
+
+        // Zapisz zaktualizowane dane do localStorage
+        localStorage.setItem('user_data', JSON.stringify(userData));
+        
+      } catch (error) {
+        console.error('Failed to fetch user data from /api/Users/current:', error);
+        // W przypadku błędu, użyj danych z kontekstu
+        setFullUserData(user);
+        
+        setAdditionalData({
+          phone: user.phone || 'Nie podano',
+          address: user.address || 'Nie podano',
+          city: user.city || 'Nie podano',
+          postalCode: user.postalCode || 'Nie podano'
+        });
+        
+        setEditData({
+          phone: user.phone || 'Nie podano',
+          address: user.address || 'Nie podano',
+          city: user.city || 'Nie podano',
+          postalCode: user.postalCode || 'Nie podano'
+        });
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   const handleNotificationToggle = (type: 'push' | 'email') => {
+    triggerLightHaptic();
     setNotifications(prev => ({
       ...prev,
       [type]: !prev[type]
@@ -55,18 +168,130 @@ export const ProfilePage: React.FC = () => {
 
 
   const handleSaveData = () => {
-    setShowPasswordModal(true);
+    triggerMediumHaptic();
+    handleConfirmSave();
   };
 
-  const handleConfirmSave = () => {
-    setAdditionalData(editData);
-    setIsEditing(false);
-    setShowPasswordModal(false);
-    setConfirmPassword('');
+  const handleConfirmSave = async () => {
+    if (!fullUserData) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // Upload avatara jeśli został wybrany nowy plik
+      let avatarUrl = editAvatar;
+      if (avatarFile) {
+        setIsUploadingAvatar(true);
+        const uploadResult = await tempImageService.uploadImage(avatarFile);
+        if (uploadResult.success && uploadResult.url) {
+          avatarUrl = uploadResult.url;
+          console.log('Avatar uploaded successfully:', avatarUrl);
+        } else {
+          alert('Błąd podczas przesyłania avatara: ' + (uploadResult.error || 'Nieznany błąd'));
+          return;
+        }
+        setIsUploadingAvatar(false);
+      }
+      
+      // Przygotuj dane do wysłania na serwer
+      const updateData: any = {};
+      
+      // Podstawowe dane
+      if (editBasicData.name.trim() !== '') {
+        updateData.name = editBasicData.name;
+      }
+      
+      if (editBasicData.email.trim() !== '') {
+        updateData.email = editBasicData.email;
+      }
+      
+      // Dodatkowe dane
+      if (editData.phone !== 'Nie podano' && editData.phone.trim() !== '') {
+        updateData.phone = editData.phone;
+      }
+      
+      if (editData.address !== 'Nie podano' && editData.address.trim() !== '') {
+        updateData.address = editData.address;
+      }
+      
+      if (editData.city !== 'Nie podano' && editData.city.trim() !== '') {
+        updateData.city = editData.city;
+      }
+      
+      if (editData.postalCode !== 'Nie podano' && editData.postalCode.trim() !== '') {
+        updateData.postalCode = editData.postalCode;
+      }
+      
+      if (avatarUrl && avatarUrl.trim() !== '') {
+        updateData.avatar = avatarUrl;
+      }
+
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        alert('Brak tokenu autoryzacji');
+        return;
+      }
+
+      console.log('Sending user update to server:', updateData);
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Users/${fullUserData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      // Aktualizuj dane lokalnie po udanym zapisie na serwerze
+      const updatedUserData = {
+        ...fullUserData,
+        name: editBasicData.name || fullUserData.name,
+        email: editBasicData.email || fullUserData.email,
+        phone: editData.phone === 'Nie podano' ? null : editData.phone,
+        address: editData.address === 'Nie podano' ? null : editData.address,
+        city: editData.city === 'Nie podano' ? null : editData.city,
+        postalCode: editData.postalCode === 'Nie podano' ? null : editData.postalCode,
+        avatar: avatarUrl || ''
+      };
+      
+      setFullUserData(updatedUserData);
+      setAdditionalData(editData);
+      
+      // Zapisz do localStorage
+      localStorage.setItem('user_data', JSON.stringify(updatedUserData));
+      
+      setIsEditing(false);
+      
+      // Pokaż komunikat o udanym zapisie
+      triggerNotificationHaptic('success');
+      alert('Zmiany zostały pomyślnie zapisane na serwerze!');
+      
+    } catch (error) {
+      console.error('Failed to update user data:', error);
+      triggerNotificationHaptic('error');
+      alert('Wystąpił błąd podczas zapisywania zmian. Spróbuj ponownie.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancelEdit = () => {
+    triggerLightHaptic();
     setEditData(additionalData);
+    setEditAvatar(fullUserData?.avatar || '');
+    setEditBasicData({
+      name: fullUserData?.name || '',
+      email: fullUserData?.email || ''
+    });
+    setAvatarFile(null);
     setIsEditing(false);
   };
 
@@ -77,13 +302,194 @@ export const ProfilePage: React.FC = () => {
     }));
   };
 
+  const handleAvatarFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Sprawdź czy to obraz
+      if (!tempImageService.isValidImageFile(file)) {
+        alert('Proszę wybrać plik obrazu (JPEG, PNG, GIF, WebP)');
+        return;
+      }
+      
+      // Sprawdź rozmiar pliku (max 5MB)
+      if (!tempImageService.isValidFileSize(file, 5)) {
+        alert('Plik jest za duży. Maksymalny rozmiar to 5MB');
+        return;
+      }
+      
+      setAvatarFile(file);
+      
+      // Utwórz podgląd
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setEditAvatar(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleLogout = () => {
+    triggerMediumHaptic();
     setShowLogoutModal(true);
   };
 
   const confirmLogout = () => {
+    triggerNotificationHaptic('success');
     logout();
     navigate('/');
+  };
+
+  const handlePasswordChange = (field: keyof typeof passwordData, value: string) => {
+    setPasswordData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Walidacja w czasie rzeczywistym
+    if (field === 'newPassword') {
+      validatePassword(value);
+    } else if (field === 'confirmPassword') {
+      validatePasswordMatch(passwordData.newPassword, value);
+    }
+  };
+
+  const validatePassword = (password: string) => {
+    setPasswordValidation(prev => ({
+      ...prev,
+      minLength: password.length >= 8,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    }));
+  };
+
+  const validatePasswordMatch = (newPassword: string, confirmPassword: string) => {
+    setPasswordValidation(prev => ({
+      ...prev,
+      passwordsMatch: newPassword === confirmPassword && newPassword.length > 0
+    }));
+  };
+
+  const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const handleChangePassword = async () => {
+    // Walidacja
+    if (!passwordData.currentPassword.trim()) {
+      alert('Wprowadź aktualne hasło');
+      return;
+    }
+    
+    if (!passwordData.newPassword.trim()) {
+      alert('Wprowadź nowe hasło');
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 8) {
+      alert('Nowe hasło musi mieć co najmniej 8 znaków');
+      return;
+    }
+    
+    // Sprawdź wszystkie warunki hasła
+    const allConditionsMet = Object.values(passwordValidation).every(condition => condition);
+    if (!allConditionsMet) {
+      alert('Nowe hasło nie spełnia wszystkich wymagań');
+      return;
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('Nowe hasła nie są identyczne');
+      return;
+    }
+    
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      alert('Nowe hasło musi być inne od aktualnego');
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        alert('Brak tokenu autoryzacji');
+        return;
+      }
+
+      // Sprawdź czy aktualne hasło jest poprawne - logujemy się ponownie
+      const loginResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        },
+        body: JSON.stringify({
+          email: fullUserData?.email,
+          password: passwordData.currentPassword
+        })
+      });
+
+      if (!loginResponse.ok) {
+        alert('Aktualne hasło jest niepoprawne');
+        return;
+      }
+
+      // Wyślij żądanie zmiany hasła
+      const changePasswordResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      if (!changePasswordResponse.ok) {
+        const errorText = await changePasswordResponse.text();
+        console.error('Password change error:', errorText);
+        throw new Error(`Błąd zmiany hasła: ${changePasswordResponse.status}`);
+      }
+
+      // Wyczyść formularz i zamknij modal
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setPasswordValidation({
+        minLength: false,
+        hasUppercase: false,
+        hasLowercase: false,
+        hasNumber: false,
+        hasSpecialChar: false,
+        passwordsMatch: false
+      });
+      setShowPasswords({
+        current: false,
+        new: false,
+        confirm: false
+      });
+      setShowChangePasswordModal(false);
+      
+      triggerNotificationHaptic('success');
+      alert('Hasło zostało pomyślnie zmienione!');
+      
+    } catch (error) {
+      console.error('Failed to change password:', error);
+      triggerNotificationHaptic('error');
+      alert('Wystąpił błąd podczas zmiany hasła. Spróbuj ponownie.');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   // Jeśli użytkownik nie jest zalogowany, przekieruj na stronę logowania
@@ -105,6 +511,23 @@ export const ProfilePage: React.FC = () => {
           >
             Zaloguj się
           </GlassButton>
+        </div>
+      </div>
+    );
+  }
+
+  // Jeśli ładujemy dane profilu
+  if (isLoadingProfile) {
+    return (
+      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Ładowanie profilu...
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Pobieranie danych użytkownika
+          </p>
         </div>
       </div>
     );
@@ -156,7 +579,10 @@ export const ProfilePage: React.FC = () => {
               </div>
               
               <GlassButton
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={() => {
+                  triggerLightHaptic();
+                  setIsEditing(!isEditing);
+                }}
                 variant="secondary"
                 size="sm"
                 icon={isEditing ? X : Edit}
@@ -169,10 +595,10 @@ export const ProfilePage: React.FC = () => {
 
             {isEditing ? (
               <div className="space-y-4">
-                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    <strong>Uwaga:</strong> Imię, nazwisko i email można zmienić tylko przez administratora. 
-                    Poniżej możesz edytować tylko dodatkowe informacje.
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Informacja:</strong> Możesz edytować wszystkie swoje dane. 
+                    Zmiany są zapisywane na serwerze.
                   </p>
                 </div>
                 
@@ -182,9 +608,9 @@ export const ProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={userData.name}
-                    disabled
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    value={editBasicData.name}
+                    onChange={(e) => setEditBasicData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
                 </div>
                 
@@ -194,10 +620,46 @@ export const ProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="email"
-                    value={userData.email}
-                    disabled
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    value={editBasicData.email}
+                    onChange={(e) => setEditBasicData(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
+                </div>
+                
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
+                    Avatar
+                  </label>
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarFileChange}
+                      className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Obsługiwane formaty: JPEG, PNG, GIF, WebP. Maksymalny rozmiar: 5MB
+                    </p>
+                    {editAvatar && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Podgląd:</p>
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                          <img 
+                            src={editAvatar} 
+                            alt="Avatar preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              const nextElement = target.nextElementSibling as HTMLElement;
+                              target.style.display = 'none';
+                              if (nextElement) nextElement.style.display = 'flex';
+                            }}
+                          />
+                          <User className="w-6 h-6 text-gray-400 hidden" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div>
@@ -265,8 +727,11 @@ export const ProfilePage: React.FC = () => {
                     size="sm"
                     className="flex-1"
                     icon={Save}
+                    disabled={isSaving}
                   >
-                    <span className="text-base">Zapisz</span>
+                    <span className="text-base">
+                      {isSaving ? (isUploadingAvatar ? 'Przesyłanie avatara...' : 'Zapisywanie...') : 'Zapisz'}
+                    </span>
                   </GlassButton>
                 </div>
               </div>
@@ -280,13 +745,13 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  <span className="text-gray-500 dark:text-gray-500 text-base">
+                  <span className="text-gray-700 dark:text-gray-300 text-base">
                     {additionalData.phone}
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  <span className="text-gray-500 dark:text-gray-500 text-base">
+                  <span className="text-gray-700 dark:text-gray-300 text-base">
                     {additionalData.address}, {additionalData.city} {additionalData.postalCode}
                   </span>
                 </div>
@@ -396,7 +861,10 @@ export const ProfilePage: React.FC = () => {
             
             <div className="space-y-3">
               <GlassButton
-                onClick={() => setShowChangePasswordModal(true)}
+                onClick={() => {
+                  triggerLightHaptic();
+                  setShowChangePasswordModal(true);
+                }}
                 variant="secondary"
                 size="xs"
                 className="w-full text-left"
@@ -408,7 +876,10 @@ export const ProfilePage: React.FC = () => {
               </GlassButton>
               
               <GlassButton
-                onClick={() => navigate('/admin')}
+                onClick={() => {
+                  triggerLightHaptic();
+                  navigate('/admin');
+                }}
                 variant="secondary"
                 size="xs"
                 className="w-full text-left"
@@ -435,49 +906,6 @@ export const ProfilePage: React.FC = () => {
         </div>
 
 
-        {/* Password Confirmation Modal */}
-        {showPasswordModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
-            >
-              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
-                Potwierdź zmiany
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
-                Wprowadź hasło aby potwierdzić zmiany.
-              </p>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Hasło"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4 text-base" 
-              />
-              <div className="flex space-x-3">
-                <GlassButton
-                  onClick={() => setShowPasswordModal(false)}
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1"
-                >
-                  <span className="text-sm">Anuluj</span>
-                </GlassButton>
-                <GlassButton
-                  onClick={handleConfirmSave}
-                  variant="primary"
-                  size="sm"
-                  className="flex-1"
-                  icon={Save}
-                >
-                  <span className="text-base">Potwierdź</span>
-                </GlassButton>
-              </div>
-            </motion.div>
-          </div>
-        )}
 
         {/* Change Password Modal */}
         {showChangePasswordModal && (
@@ -494,25 +922,155 @@ export const ProfilePage: React.FC = () => {
                 Wprowadź nowe hasło dla swojego konta.
               </p>
               <div className="space-y-4">
-                <input
-                  type="password"
-                  placeholder="Aktualne hasło"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
-                />
-                <input
-                  type="password"
-                  placeholder="Nowe hasło"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
-                />
-                <input
-                  type="password"
-                  placeholder="Potwierdź nowe hasło"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
-                />
+                {/* Aktualne hasło */}
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? "text" : "password"}
+                    placeholder="Aktualne hasło"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('current')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+
+                {/* Nowe hasło */}
+                <div className="relative">
+                  <input
+                    type={showPasswords.new ? "text" : "password"}
+                    placeholder="Nowe hasło"
+                    value={passwordData.newPassword}
+                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('new')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+
+                {/* Potwierdzenie hasła */}
+                <div className="relative">
+                  <input
+                    type={showPasswords.confirm ? "text" : "password"}
+                    placeholder="Potwierdź nowe hasło"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('confirm')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+
+                {/* Wymagania hasła */}
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                    Wymagania hasła:
+                  </h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        {passwordValidation.minLength ? (
+                          <Check className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XIcon className="w-4 h-4 text-red-500" />
+                        )}
+                        <span className={`text-sm ${passwordValidation.minLength ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          Co najmniej 8 znaków
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {passwordValidation.hasUppercase ? (
+                          <Check className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XIcon className="w-4 h-4 text-red-500" />
+                        )}
+                        <span className={`text-sm ${passwordValidation.hasUppercase ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          Co najmniej jedna wielka litera
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {passwordValidation.hasLowercase ? (
+                          <Check className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XIcon className="w-4 h-4 text-red-500" />
+                        )}
+                        <span className={`text-sm ${passwordValidation.hasLowercase ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          Co najmniej jedna mała litera
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {passwordValidation.hasNumber ? (
+                          <Check className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XIcon className="w-4 h-4 text-red-500" />
+                        )}
+                        <span className={`text-sm ${passwordValidation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          Co najmniej jedna cyfra
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {passwordValidation.hasSpecialChar ? (
+                          <Check className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XIcon className="w-4 h-4 text-red-500" />
+                        )}
+                        <span className={`text-sm ${passwordValidation.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          Co najmniej jeden znak specjalny
+                        </span>
+                      </div>
+                      {passwordData.confirmPassword && (
+                        <div className="flex items-center space-x-2">
+                          {passwordValidation.passwordsMatch ? (
+                            <Check className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <XIcon className="w-4 h-4 text-red-500" />
+                          )}
+                          <span className={`text-sm ${passwordValidation.passwordsMatch ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            Hasła są identyczne
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
               </div>
               <div className="flex space-x-3 mt-6">
                 <GlassButton
-                  onClick={() => setShowChangePasswordModal(false)}
+                  onClick={() => {
+                    triggerLightHaptic();
+                    setPasswordData({
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: ''
+                    });
+                    setPasswordValidation({
+                      minLength: false,
+                      hasUppercase: false,
+                      hasLowercase: false,
+                      hasNumber: false,
+                      hasSpecialChar: false,
+                      passwordsMatch: false
+                    });
+                    setShowPasswords({
+                      current: false,
+                      new: false,
+                      confirm: false
+                    });
+                    setShowChangePasswordModal(false);
+                  }}
                   variant="secondary"
                   size="sm"
                   className="flex-1"
@@ -521,15 +1079,18 @@ export const ProfilePage: React.FC = () => {
                 </GlassButton>
                 <GlassButton
                   onClick={() => {
-                    // TODO: Implement password change logic
-                    setShowChangePasswordModal(false);
+                    triggerMediumHaptic();
+                    handleChangePassword();
                   }}
                   variant="primary"
                   size="sm"
                   className="flex-1"
                   icon={Save}
+                  disabled={isChangingPassword}
                 >
-                  <span className="text-base">Zapisz</span>
+                  <span className="text-base">
+                    {isChangingPassword ? 'Zmienianie...' : 'Zapisz'}
+                  </span>
                 </GlassButton>
               </div>
             </motion.div>
@@ -552,7 +1113,10 @@ export const ProfilePage: React.FC = () => {
               </p>
               <div className="flex space-x-3">
                 <GlassButton
-                  onClick={() => setShowLogoutModal(false)}
+                  onClick={() => {
+                    triggerLightHaptic();
+                    setShowLogoutModal(false);
+                  }}
                   variant="secondary"
                   size="sm"
                   className="flex-1"

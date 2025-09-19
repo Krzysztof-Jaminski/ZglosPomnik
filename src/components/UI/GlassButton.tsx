@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { DivideIcon as LucideIcon } from 'lucide-react';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 interface GlassButtonProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
   className = '',
   title
 }) => {
+  const { triggerLightHaptic } = useHapticFeedback();
   const baseClasses = `
     relative overflow-hidden
     backdrop-blur-md
@@ -83,10 +85,17 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
     lg: 'w-10 h-10'
   };
 
+  const handleClick = () => {
+    if (!disabled) {
+      triggerLightHaptic();
+      onClick?.();
+    }
+  };
+
   return (
     <motion.button
       type={type}
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       title={title}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]}`}

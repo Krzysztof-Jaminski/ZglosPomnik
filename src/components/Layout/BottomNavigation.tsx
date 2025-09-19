@@ -2,9 +2,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Map, Rss, TreePine, FileText, BookOpen } from 'lucide-react';
 import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 export const BottomNavigation: React.FC = () => {
   const isKeyboardOpen = useKeyboardStatus();
+  const { triggerLightHaptic } = useHapticFeedback();
 
   const navItems = [
     { to: '/map', icon: Map, label: 'Mapa' },
@@ -23,6 +25,7 @@ export const BottomNavigation: React.FC = () => {
           <NavLink
             key={to}
             to={to}
+            onClick={() => triggerLightHaptic()}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center py-2 px-3 min-w-0 flex-1 transition-colors focus:outline-none focus:ring-0 ${
                 isActive

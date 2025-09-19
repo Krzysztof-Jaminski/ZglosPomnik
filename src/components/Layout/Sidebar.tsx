@@ -1,8 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Map, Rss, TreePine, FileText, BookOpen, User, Shield } from 'lucide-react';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 const Sidebar: React.FC = () => {
+  const { triggerLightHaptic } = useHapticFeedback();
+  
   const navItems = [
     { to: '/map', icon: Map, label: 'Mapa' },
     { to: '/report', icon: TreePine, label: 'Zgłoś drzewo' },
@@ -21,6 +24,7 @@ const Sidebar: React.FC = () => {
             <NavLink
               key={to}
               to={to}
+              onClick={() => triggerLightHaptic()}
               className={({ isActive }) =>
                 `flex items-center space-x-2 sm:space-x-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors ${
                   isActive
