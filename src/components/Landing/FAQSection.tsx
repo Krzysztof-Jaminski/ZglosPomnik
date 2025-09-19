@@ -16,7 +16,7 @@ const FAQItem = ({ question, answer, index }: { question: string; answer: string
       <motion.button
         whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.8)' }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 text-left flex justify-between items-center text-white hover:text-green-400 transition-colors duration-300"
+        className="w-full px-6 py-4 text-left flex justify-between items-center text-white transition-colors duration-300"
       >
         <span className="font-semibold text-lg">{question}</span>
         <motion.span
@@ -36,7 +36,7 @@ const FAQItem = ({ question, answer, index }: { question: string; answer: string
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="px-6 pb-4 text-gray-300 leading-relaxed">
+            <div className="px-6 pb-8 pt-2 text-gray-300 text-lg leading-relaxed">
               {answer}
             </div>
           </motion.div>

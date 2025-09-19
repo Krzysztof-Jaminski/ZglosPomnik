@@ -55,13 +55,13 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
   ];
 
   return (
-    <section className="relative z-10 min-h-screen flex items-center">
+    <section className="relative z-10 min-h-screen flex items-center py-16">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
-          {/* Phone Mockup - Left side */}
-          <div className="relative flex items-center justify-center order-1 lg:order-1">
+          {/* Phone Mockup - Right side */}
+          <div className="relative flex items-center justify-center order-2 lg:order-1">
             <div className="relative w-96 h-[48rem]">
-              <div className="absolute inset-0 bg-black rounded-[2rem] p-1 shadow-[0_0_40px_rgba(0,0,0,0.3)]">
+              <div className="absolute inset-0 bg-black rounded-[2rem] p-1 shadow-[0_0_40px_rgba(0,0,0,0.3)] phone-gradient-border">
                 <div className="absolute inset-1 bg-black rounded-[1.5rem] overflow-hidden">
                   {/* Notch */}
                   <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-3 bg-black rounded-b-xl z-20"></div>
@@ -89,8 +89,8 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
             </div>
           </div>
 
-          {/* Mobile: Content - Below phone */}
-          <div className="lg:hidden order-2 text-center">
+          {/* Mobile: Content - Above phone */}
+          <div className="lg:hidden order-1 text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -133,8 +133,8 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
             </motion.div>
           </div>
 
-          {/* Desktop: Content - Right side */}
-          <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-2 lg:order-2 text-center">
+          {/* Desktop: Content - Left side */}
+          <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-1 lg:order-2 text-center">
             <h2 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'Exo 2, sans-serif' }}>
               Ochrona pomników przyrody
               <br />

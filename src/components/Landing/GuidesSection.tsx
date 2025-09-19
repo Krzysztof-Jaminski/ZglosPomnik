@@ -59,9 +59,9 @@ export const GuidesSection = ({ onShowAuthModal }: GuidesSectionProps) => {
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
               onClick={() => onShowAuthModal('login')}
-              className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-green-400/50 transition-all duration-300 hover:scale-105 cursor-pointer group"
+              className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-green-400/50 transition-all duration-300 hover:scale-105 cursor-pointer group text-center"
             >
-              <div className="w-12 h-12 bg-green-400/20 rounded-full flex items-center justify-center mb-4 group-hover:bg-green-400/30 transition-colors duration-300">
+              <div className="w-12 h-12 bg-green-400/20 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:bg-green-400/30 transition-colors duration-300">
                 <span className="text-green-400 text-xl font-bold">{index + 1}</span>
               </div>
               <h3 className="text-xl font-bold text-white mb-3 group-hover:text-green-400 transition-colors duration-300">{guide.title}</h3>
