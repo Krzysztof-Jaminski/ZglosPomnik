@@ -118,6 +118,21 @@
     }
   }
 
+  /* Hide iOS status bar in PWA */
+  @media (display-mode: standalone) {
+    @supports (-webkit-touch-callout: none) {
+      /* iOS Safari PWA */
+      body {
+        -webkit-appearance: none;
+      }
+      
+      /* Hide the status bar area */
+      #app-layout {
+        padding-top: 0 !important;
+      }
+    }
+  }
+
   /* Remove focus ring from header links */
   header a:focus,
   header a:focus-visible,
