@@ -15,6 +15,9 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     webContentsDebuggingEnabled: true
   },
+  ios: {
+    icon: 'resources/ios/icon/icon-1024.png'
+  },
   server: {
     androidScheme: 'http'
   }

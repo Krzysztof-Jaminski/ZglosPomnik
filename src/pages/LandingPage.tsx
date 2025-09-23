@@ -102,7 +102,7 @@ export const LandingPage = () => {
   // Pokaż loading podczas sprawdzania uwierzytelniania lub ładowania background
   if (isLoading || !backgroundLoaded) {
   return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div id="app-layout" className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
           <div className="text-white text-lg mb-2">Ładowanie...</div>
           <div className="text-gray-400 text-sm">
@@ -114,7 +114,7 @@ export const LandingPage = () => {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div id="app-layout" className="min-h-screen relative">
       {/* Background Image */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-gray-900/80 to-gray-900/90 z-10"></div>

@@ -104,6 +104,20 @@
     }
   }
 
+  /* iOS Safe Area Insets for PWA and iOS */
+  @supports (padding: env(safe-area-inset-top)) {
+    #app-layout {
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    
+    /* For iOS PWA specifically */
+    @media (display-mode: standalone) {
+      #app-layout {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+    }
+  }
+
   /* Remove focus ring from header links */
   header a:focus,
   header a:focus-visible,

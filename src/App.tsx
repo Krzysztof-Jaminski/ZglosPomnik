@@ -54,7 +54,7 @@ const MainContent: React.FC = () => {
   useSystemTheme(actualTheme);
 
   return (
-    <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden flex flex-col max-w-full">
+    <div id="app-layout" className="h-screen w-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden flex flex-col max-w-full">
       <Header />
       
       <div className="flex flex-1 overflow-y-auto w-full">
