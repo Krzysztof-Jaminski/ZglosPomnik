@@ -1,8 +1,9 @@
 // Serwis do pobierania drzew z API
-import { Tree } from '../types';
+import { Tree, ApiTreeSubmission } from '../types';
 import { authService } from './authService';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://drzewaapi-app-2024.azurewebsites.net/api';
+console.log('TreesService API_BASE_URL:', API_BASE_URL);
 
 class TreesService {
   // Pobierz wszystkie drzewa
@@ -13,7 +14,7 @@ class TreesService {
         throw new Error('No authentication token');
       }
 
-      const response = await fetch(`${API_BASE_URL}/Trees`, {
+      const response = await fetch(`${API_BASE_URL}/trees`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -23,8 +24,25 @@ class TreesService {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Token wygasł - nie wylogowuj automatycznie, tylko rzuć błąd
-          throw new Error('Authentication token expired');
+          // Token wygasł - spróbuj odświeżyć
+          console.log('Token expired, attempting to refresh...');
+          const newToken = await authService.refreshAccessToken();
+          if (newToken) {
+            // Spróbuj ponownie z nowym tokenem
+            const retryResponse = await fetch(`${API_BASE_URL}/trees`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${newToken}`,
+                'accept': '*/*'
+              }
+            });
+            
+            if (retryResponse.ok) {
+              const retryData = await retryResponse.json();
+              return retryData;
+            }
+          }
+          throw new Error('Authentication token expired and refresh failed');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -45,7 +63,7 @@ class TreesService {
         throw new Error('No authentication token');
       }
 
-      const response = await fetch(`${API_BASE_URL}/Trees/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/trees/${id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -81,7 +99,7 @@ class TreesService {
       }
 
       // Jeśli API ma endpoint do pobierania drzew w okolicy
-      const response = await fetch(`${API_BASE_URL}/Trees/nearby?lat=${lat}&lng=${lng}&radius=${radius}`, {
+      const response = await fetch(`${API_BASE_URL}/trees/nearby?lat=${lat}&lng=${lng}&radius=${radius}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -118,7 +136,7 @@ class TreesService {
         throw new Error('No authentication token');
       }
 
-      const response = await fetch(`${API_BASE_URL}/Trees/${treeId}/vote`, {
+      const response = await fetch(`${API_BASE_URL}/trees/${treeId}/vote`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -154,7 +172,7 @@ class TreesService {
         throw new Error('No authentication token');
       }
 
-      const response = await fetch(`${API_BASE_URL}/Trees/${treeId}/vote`, {
+      const response = await fetch(`${API_BASE_URL}/trees/${treeId}/vote`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -178,8 +196,8 @@ class TreesService {
     }
   }
 
-  // Submit tree report to API
-  async submitTreeReport(treeData: any): Promise<any> {
+  // Submit tree report to API with multipart/form-data
+  async submitTreeReport(treeData: ApiTreeSubmission, photos: File[]): Promise<any> {
     try {
       const token = authService.getToken();
       console.log('Token from authService:', token ? 'exists' : 'null');
@@ -187,22 +205,90 @@ class TreesService {
         throw new Error('No authentication token');
       }
 
-      console.log('Submitting tree report to API:', treeData);
-      console.log('Request URL:', `${API_BASE_URL}/Trees`);
+      // Validate photos
+      if (photos.length === 0) {
+        throw new Error('At least one photo is required');
+      }
+      if (photos.length > 5) {
+        throw new Error('Maximum 5 photos allowed');
+      }
 
-      const response = await fetch(`${API_BASE_URL}/Trees`, {
+      // Validate photo formats
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      for (const photo of photos) {
+        if (!allowedTypes.includes(photo.type)) {
+          throw new Error(`Invalid photo format: ${photo.type}. Allowed: JPG, PNG, JPEG`);
+        }
+      }
+
+      console.log('Submitting tree report to API:', treeData);
+      console.log('Photos count:', photos.length);
+      console.log('Request URL:', `${API_BASE_URL}/trees`);
+
+      // Create FormData
+      const formData = new FormData();
+      
+      // Add tree data fields
+      formData.append('speciesId', treeData.speciesId);
+      formData.append('location.lat', treeData.location.lat.toString());
+      formData.append('location.lng', treeData.location.lng.toString());
+      formData.append('location.address', treeData.location.address);
+      formData.append('circumference', treeData.circumference.toString());
+      formData.append('height', treeData.height.toString());
+      formData.append('condition', treeData.condition);
+      formData.append('estimatedAge', treeData.estimatedAge.toString());
+      
+      // Add optional fields
+      if (treeData.isAlive !== undefined) {
+        formData.append('isAlive', treeData.isAlive.toString());
+      }
+      if (treeData.description) {
+        formData.append('description', treeData.description);
+      }
+      if (treeData.isMonument !== undefined) {
+        formData.append('isMonument', treeData.isMonument.toString());
+      }
+      
+      // Add photos
+      console.log('Adding photos to FormData:');
+      photos.forEach((photo, index) => {
+        console.log(`Photo ${index + 1}:`, {
+          name: photo.name,
+          size: photo.size,
+          type: photo.type
+        });
+        formData.append('images', photo);
+      });
+      
+      // Debug FormData contents
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+
+      const response = await fetch(`${API_BASE_URL}/trees`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
           'accept': '*/*'
+          // Don't set Content-Type, let browser set it with boundary
         },
-        body: JSON.stringify(treeData)
+        body: formData
       });
 
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Authentication token expired');
+        }
+        if (response.status === 400) {
+          throw new Error('Bad request - check photo requirements (1-5 photos, JPG/PNG/JPEG)');
+        }
+        if (response.status === 422) {
+          throw new Error('Validation error - check all required fields');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -210,7 +296,9 @@ class TreesService {
       const data = await response.json();
       console.log('Response status:', response.status);
       console.log('Response URL:', response.url);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       console.log('Tree report submitted successfully:', data);
+      console.log('Returned tree images:', data.imageUrls);
       return data;
     } catch (error) {
       console.error('Submit tree report error:', error);
@@ -228,11 +316,11 @@ class TreesService {
 
       console.log('Attempting to delete tree:', {
         treeId,
-        url: `${API_BASE_URL}/Trees/${treeId}`,
+        url: `${API_BASE_URL}/trees/${treeId}`,
         token: token ? 'exists' : 'missing'
       });
 
-      const response = await fetch(`${API_BASE_URL}/Trees/${treeId}`, {
+      const response = await fetch(`${API_BASE_URL}/trees/${treeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

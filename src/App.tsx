@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './pages/LandingPage';
 import { Header } from './components/Layout/Header';
 import { Sidebar } from './components/Layout/Sidebar';
@@ -82,15 +83,17 @@ const MainContent: React.FC = () => {
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <BackButtonHandler />
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/*" element={<MainContent />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <Router>
+            <BackButtonHandler />
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/*" element={<MainContent />} />
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

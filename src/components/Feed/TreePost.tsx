@@ -7,6 +7,7 @@ import { DeleteConfirmationModal } from '../UI/DeleteConfirmationModal';
 import { commentsService } from '../../services/commentsService';
 import { treesService } from '../../services/treesService';
 import { useAuth } from '../../context/AuthContext';
+import { useCommentState, useUIState } from '../../hooks/useLocalState';
 
 interface TreePostProps {
   post: TreePostType;
@@ -14,6 +15,8 @@ interface TreePostProps {
   onDislike: (postId: string) => void;
   onComment: (postId: string, comment: string, userId?: string) => void;
   onDelete?: (postId: string) => void;
+  getComment?: (postId: string) => string;
+  setComment?: (postId: string, comment: string) => void;
 }
 
 export const TreePost: React.FC<TreePostProps> = ({
@@ -21,14 +24,22 @@ export const TreePost: React.FC<TreePostProps> = ({
   onLike,
   onDislike,
   onComment,
-  onDelete
+  onDelete,
+  getComment,
+  setComment
 }) => {
-  const [newComment, setNewComment] = useState('');
+  // Używamy hooków do zarządzania lokalnym stanem
+  const [newComment, setNewComment, { clearValue: clearComment }] = useCommentState(post.id);
+  const [showComments, setShowComments] = useUIState('feed', `showComments_${post.id}`, false);
+  
+  // Jeśli mamy funkcje z props, używaj ich zamiast lokalnego stanu
+  const commentValue = getComment ? getComment(post.id) : newComment;
+  const updateComment = setComment ? (value: string) => setComment(post.id, value) : setNewComment;
+  
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
@@ -94,17 +105,17 @@ export const TreePost: React.FC<TreePostProps> = ({
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!commentValue.trim()) return;
 
     setIsSubmittingComment(true);
     try {
       // Pass userId to the comment creation
       if (user?.id) {
-        await onComment(post.id, newComment, user.id);
+        await onComment(post.id, commentValue, user.id);
       } else {
-        await onComment(post.id, newComment);
+        await onComment(post.id, commentValue);
       }
-      setNewComment('');
+      clearComment(); // Clear the comment input using the hook's clear function
       // Reload comments after adding new one
       await loadComments();
     } catch (error) {
@@ -379,10 +390,10 @@ export const TreePost: React.FC<TreePostProps> = ({
       </div>
 
       {/* Photos */}
-        {post.images.length > 0 && (
+        {post.imageUrls && post.imageUrls.length > 0 && (
           <div className="mb-4 sm:mb-6">
             <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-              {post.images.map((image, index) => (
+              {post.imageUrls.map((image, index) => (
                 <img
                   key={index}
                   src={image}
@@ -449,8 +460,8 @@ export const TreePost: React.FC<TreePostProps> = ({
                 </div>
                 <div className="flex-1">
                   <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
+                    value={commentValue}
+                    onChange={(e) => updateComment(e.target.value)}
                     placeholder="Napisz komentarz..."
                     rows={3}
                     className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
@@ -458,7 +469,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                   <div className="flex justify-end mt-3">
                     <GlassButton
                       type="submit"
-                      disabled={!newComment.trim() || isSubmittingComment}
+                      disabled={!commentValue.trim() || isSubmittingComment}
                       variant="primary"
                       size="sm"
                     >

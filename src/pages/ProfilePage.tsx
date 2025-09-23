@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { tempImageService } from '../services/tempImageService';
 import { useHapticFeedback } from '../hooks/useHapticFeedback';
 
 interface AdditionalUserData {
@@ -32,8 +31,8 @@ export const ProfilePage: React.FC = () => {
     email: fullUserData.email,
     avatar: fullUserData.avatar,
     registrationDate: fullUserData.registrationDate,
-    submissionsCount: fullUserData.submissionsCount,
-    verificationsCount: fullUserData.verificationsCount
+    submissionsCount: fullUserData.statistics.submissionCount,
+    verificationsCount: fullUserData.statistics.applicationCount
   } : null;
   
   // Dane użytkownika z API
@@ -182,14 +181,10 @@ export const ProfilePage: React.FC = () => {
       let avatarUrl = editAvatar;
       if (avatarFile) {
         setIsUploadingAvatar(true);
-        const uploadResult = await tempImageService.uploadImage(avatarFile);
-        if (uploadResult.success && uploadResult.url) {
-          avatarUrl = uploadResult.url;
-          console.log('Avatar uploaded successfully:', avatarUrl);
-        } else {
-          alert('Błąd podczas przesyłania avatara: ' + (uploadResult.error || 'Nieznany błąd'));
-          return;
-        }
+        // TODO: Implement avatar upload to backend API
+        // For now, create a local URL for preview
+        avatarUrl = URL.createObjectURL(avatarFile);
+        console.log('Avatar prepared for upload:', avatarUrl);
         setIsUploadingAvatar(false);
       }
       
@@ -306,13 +301,15 @@ export const ProfilePage: React.FC = () => {
     const file = event.target.files?.[0];
     if (file) {
       // Sprawdź czy to obraz
-      if (!tempImageService.isValidImageFile(file)) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
         alert('Proszę wybrać plik obrazu (JPEG, PNG, GIF, WebP)');
         return;
       }
       
       // Sprawdź rozmiar pliku (max 5MB)
-      if (!tempImageService.isValidFileSize(file, 5)) {
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
         alert('Plik jest za duży. Maksymalny rozmiar to 5MB');
         return;
       }

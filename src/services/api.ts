@@ -12,8 +12,40 @@ import { Tree } from '../types';
 export const api = {
   // Trees
   async getTrees(): Promise<Tree[]> {
-    // TODO: Implement real API call
-    return [];
+    // Mock data for testing
+    return [
+      {
+        id: '1',
+        userData: {
+          userName: 'Test User',
+          avatar: '',
+          userId: '1'
+        },
+        species: 'Dąb szypułkowy',
+        speciesLatin: 'Quercus robur',
+        location: {
+          lat: 50.041187,
+          lng: 21.999121,
+          address: 'Rzeszów, Park'
+        },
+        circumference: 150,
+        height: 25,
+        condition: 'dobry',
+        isAlive: true,
+        estimatedAge: 100,
+        description: 'Piękny dąb w parku miejskim',
+        imageUrls: [],
+        isMonument: true,
+        status: 'approved',
+        submissionDate: new Date().toISOString(),
+        approvalDate: new Date().toISOString(),
+        votes: {
+          like: 5,
+          dislike: 0
+        },
+        commentCount: 0
+      }
+    ];
   },
 
   async getTree(_id: string) {
@@ -99,9 +131,9 @@ export const api = {
   },
 
   async getCurrentUser() {
-    console.warn('api.getCurrentUser is deprecated. Use authService.getCurrentUser instead.');
+    console.warn('api.getCurrentUser is deprecated. Use authService.getCurrentUserData() instead.');
     const { authService } = await import('./authService');
-    return authService.getCurrentUser();
+    return authService.getCurrentUserData();
   },
 
   // Comments
@@ -110,17 +142,4 @@ export const api = {
     return [];
   },
 
-  // File upload - TYMCZASOWE: używa ImgBB
-  async uploadPhoto(file: File) {
-    // Import tymczasowego serwisu
-    const { tempImageService } = await import('./tempImageService');
-    
-    const result = await tempImageService.uploadImage(file);
-    
-    if (result.success && result.url) {
-      return result.url;
-    } else {
-      throw new Error(result.error || 'Upload failed');
-    }
-  }
 };

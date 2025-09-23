@@ -293,11 +293,12 @@ class SystemThemePluginWeb implements SystemThemePlugin {
     document.documentElement.style.setProperty('--theme-color', color);
     document.documentElement.style.setProperty('--background-color', color);
     
-    // Force update viewport
+    // Force update by temporarily modifying and restoring the viewport
     const viewport = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
     if (viewport) {
       const currentContent = viewport.content;
-      viewport.content = currentContent + ';';
+      // Temporarily modify viewport to force a reflow
+      viewport.content = currentContent.replace('width=device-width', 'width=device-width, initial-scale=1.0');
       setTimeout(() => {
         viewport.content = currentContent;
       }, 10);

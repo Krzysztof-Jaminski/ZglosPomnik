@@ -767,29 +767,12 @@ export const ApplicationsPage: React.FC = () => {
             onSubmit={handleFormSubmit}
             onBack={() => handleStepChange('select-template')}
             isSubmitting={isSubmitting}
+            selectedTree={selectedTree}
+            selectedMunicipality={selectedMunicipality}
+            selectedTemplate={selectedTemplate}
           />
         </div>
         
-        <div className="mt-6 mb-8 flex justify-between">
-          <GlassButton
-            onClick={() => handleStepChange('select-template')}
-            variant="secondary"
-            size="sm"
-            icon={ArrowLeft}
-          >
-            Wstecz
-          </GlassButton>
-          
-          <GlassButton
-            onClick={() => handleFormSubmit({})}
-            disabled={isSubmitting}
-            variant="primary"
-            size="sm"
-            icon={isSubmitting ? undefined : CheckCircle}
-          >
-            {isSubmitting ? 'Wysyłanie...' : 'Wyślij wniosek'}
-          </GlassButton>
-        </div>
       </div>
     );
   };

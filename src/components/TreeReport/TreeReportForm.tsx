@@ -1,11 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X, Search, ChevronDown, ChevronUp, ZoomIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Species, NewTreeReport, ApiTreeSubmission } from '../../types';
+import { Species, ApiTreeSubmission } from '../../types';
 import { speciesService } from '../../services/speciesService';
-import { api } from '../../services/api';
 import { treesService } from '../../services/treesService';
-import { storage } from '../../utils/storage';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { GlassButton } from '../UI/GlassButton';
 import { useAuth } from '../../context/AuthContext';
@@ -216,16 +214,16 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       const newPhotos = Array.from(files).slice(0, 5 - photos.length);
       
       // Walidacja plików
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      
       for (const file of newPhotos) {
-        // Import tymczasowego serwisu
-        const { tempImageService } = await import('../../services/tempImageService');
-        
-        if (!tempImageService.isValidImageFile(file)) {
-          alert(`Plik ${file.name} nie jest prawidłowym obrazem. Dozwolone formaty: JPEG, PNG, GIF, WebP`);
+        if (!allowedTypes.includes(file.type)) {
+          alert(`Plik ${file.name} nie jest prawidłowym obrazem. Dozwolone formaty: JPG, PNG, JPEG`);
           return;
         }
         
-        if (!tempImageService.isValidFileSize(file, 5)) {
+        if (file.size > maxSize) {
           alert(`Plik ${file.name} jest za duży. Maksymalny rozmiar: 5MB`);
           return;
         }
@@ -254,38 +252,15 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
 
     try {
       if (isOnline) {
-        // Upload photos first if any
-        let imageUrls: string[] = [];
-        if (photos.length > 0) {
-          console.log(`Uploading ${photos.length} photos...`);
-          for (let i = 0; i < photos.length; i++) {
-            const photo = photos[i];
-            try {
-              console.log(`Uploading photo ${i + 1}/${photos.length}: ${photo.name}`);
-              const uploadedUrl = await api.uploadPhoto(photo);
-              imageUrls.push(uploadedUrl);
-              console.log(`Photo ${i + 1} uploaded successfully: ${uploadedUrl}`);
-            } catch (error) {
-              console.error(`Error uploading photo ${i + 1}:`, error);
-              setIsSubmitting(false);
-              return;
-            }
-          }
-          console.log(`All photos uploaded successfully. URLs:`, imageUrls);
+        // Validate photos
+        if (photos.length === 0) {
+          alert('Proszę dodać przynajmniej jedno zdjęcie drzewa');
+          setIsSubmitting(false);
+          return;
         }
-
-        // Generate random UUID for the tree
-        const generateUUID = () => {
-          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-          });
-        };
 
         // Transform data to match API specification
         const apiTreeData: ApiTreeSubmission = {
-          id: generateUUID(), // Generate random UUID
           speciesId: selectedSpecies.id.toUpperCase(), // Convert to uppercase for backend
           location: {
             lat: latitude,
@@ -298,21 +273,21 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           isAlive: isAlive,
           estimatedAge: estimatedAge ? parseInt(estimatedAge) : 0,
           description: notes,
-          images: imageUrls
+          isMonument: false // Default to false, can be changed later
         };
 
-        // Submit to API
+        // Submit to API with photos
         console.log('=== TREE SUBMISSION DEBUG ===');
-        console.log('Generated tree ID:', apiTreeData.id);
         console.log('Species ID (original):', selectedSpecies.id);
         console.log('Species ID (uppercase):', apiTreeData.speciesId);
         console.log('Species name:', selectedSpecies.polishName);
         console.log('Plot number:', plotNumber);
         console.log('Address:', apiTreeData.location.address);
         console.log('Location:', apiTreeData.location);
+        console.log('Photos count:', photos.length);
         console.log('Full API data:', apiTreeData);
         
-        const result = await treesService.submitTreeReport(apiTreeData);
+        const result = await treesService.submitTreeReport(apiTreeData, photos);
         console.log('Tree report submitted successfully:', result);
         
         setSubmitSuccess(true);
@@ -338,38 +313,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           onSubmit?.();
         }, 4000);
       } else {
-        // Offline mode - store for later sync
-        const report: NewTreeReport = {
-          species: selectedSpecies.latinName,
-          commonName: selectedSpecies.polishName,
-          latitude,
-          longitude,
-          notes,
-          photos,
-          pierśnica: pierśnica ? parseFloat(pierśnica) : undefined,
-          height: height ? parseFloat(height) : undefined,
-          plotNumber: plotNumber || undefined
-        };
-        storage.addPendingReport(report);
-        setSubmitSuccess(true);
-        
-        // Reset form
-        setSelectedSpecies(null);
-        setSpeciesQuery('');
-        setNotes('');
-        setPhotos([]);
-        setPierśnica('');
-        setHeight('');
-        setPlotNumber('');
-        setCondition('dobry');
-        setIsAlive(true);
-        setEstimatedAge('');
-        
-        // Navigate to map after 4 seconds
-        setTimeout(() => {
-          setSubmitSuccess(false);
-          onSubmit?.();
-        }, 4000);
+        // Offline mode - show message that internet is required
+        alert('Wymagane połączenie z internetem do wysłania zgłoszenia. Proszę sprawdzić połączenie i spróbować ponownie.');
+        setIsSubmitting(false);
+        return;
       }
     } catch (error) {
       console.error('Error submitting report:', error);

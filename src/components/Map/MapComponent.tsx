@@ -7,7 +7,8 @@ import { Satellite, Map as MapIcon } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { TreeInfoPopup } from './TreeInfoPopup';
-import { useAuth } from '../../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
+import { useContext } from 'react';
 
 interface MapComponentProps {
   onGoToFeed?: (treeId: string) => void;
@@ -31,7 +32,8 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
   const [showTreePopup, setShowTreePopup] = useState(false);
   const [currentClickMarker, setCurrentClickMarker] = useState<any>(null);
   const onTreeSelectRef = useRef(onTreeSelect);
-  const { isAuthenticated } = useAuth();
+  const authContext = useContext(AuthContext);
+  const isAuthenticated = authContext?.isAuthenticated || false;
 
   // Update ref when onTreeSelect changes
   useEffect(() => {
@@ -150,14 +152,26 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       try {
         let treesData;
         
+        console.log('=== LOADING TREES ===');
+        console.log('isAuthenticated:', isAuthenticated);
+        
         if (isAuthenticated) {
           // Użyj prawdziwego API dla zalogowanych użytkowników
+          console.log('Loading trees from API...');
           treesData = await treesService.getTrees();
+          console.log('API returned trees:', treesData.length);
         } else {
           // Użyj mock data dla niezalogowanych użytkowników
+          console.log('Loading mock trees...');
           treesData = await api.getTrees();
+          console.log('Mock returned trees:', treesData.length);
         }
         
+        console.log('Final trees data:', treesData);
+        console.log('First tree details:', treesData[0]);
+        if (treesData[0]) {
+          console.log('First tree images:', treesData[0].imageUrls);
+        }
         setTrees(treesData);
         
         if (map) {
@@ -197,6 +211,11 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         }
       } catch (error) {
         console.error('Error loading trees:', error);
+        console.log('Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          isAuthenticated,
+          error
+        });
       }
     };
 

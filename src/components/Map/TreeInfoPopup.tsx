@@ -89,10 +89,10 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
         )}
 
         {/* Photo */}
-        {tree.images.length > 0 && (
+        {tree.imageUrls && tree.imageUrls.length > 0 && (
           <div className="mb-3 sm:mb-4 relative">
             <img
-              src={tree.images[0]}
+              src={tree.imageUrls?.[0] || ''}
               alt="Tree photo"
               className="w-full h-32 sm:h-42 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
               onClick={() => setShowImageModal(true)}
@@ -203,7 +203,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
                 <X className="w-8 h-8" />
               </button>
               <img
-                src={tree.images[0]}
+                src={tree.imageUrls?.[0] || ''}
                 alt="Tree photo - enlarged"
                 className="max-w-full max-h-[80vh] object-contain rounded-lg"
               />

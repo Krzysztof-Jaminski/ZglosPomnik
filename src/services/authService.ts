@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://drzewaapi-app-2024.azurewebsites.net/api';
+console.log('AuthService API_BASE_URL:', API_BASE_URL);
 
 export interface RegisterRequest {
   firstName: string;
@@ -27,10 +28,13 @@ export interface User {
   address: string | null;
   city: string | null;
   postalCode: string | null;
-  avatar: string;
+  avatar: string | null;
   registrationDate: string;
-  submissionsCount?: number;
-  verificationsCount?: number;
+  role: string;
+  statistics: {
+    submissionCount: number;
+    applicationCount: number;
+  };
 }
 
 class AuthService {
@@ -94,17 +98,18 @@ class AuthService {
     }
 
     const data = await response.json();
-    const token = data.token || data.accessToken || data.access_token || data.jwt || data.authToken;
+    const accessToken = data.accessToken;
+    const refreshToken = data.refreshToken;
     
-    if (token) {
-      this.token = token;
-      localStorage.setItem('auth_token', token);
+    if (accessToken) {
+      this.token = accessToken;
+      localStorage.setItem('auth_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('refresh_token', refreshToken);
+      }
     }
 
-    // Save user data
-    if (data.user) {
-      this.saveUser(data.user);
-    }
+    // User data will be fetched separately from /api/user/profile endpoint
 
     return data;
   }
@@ -126,24 +131,64 @@ class AuthService {
 
     const data = await response.json();
     console.log('Login response data:', data);
-    const token = data.token || data.accessToken || data.access_token || data.jwt || data.authToken;
-    console.log('Extracted token:', token ? 'found' : 'not found');
+    const accessToken = data.accessToken;
+    const refreshToken = data.refreshToken;
+    console.log('Extracted accessToken:', accessToken ? 'found' : 'not found');
+    console.log('Extracted refreshToken:', refreshToken ? 'found' : 'not found');
     
-    if (token) {
-      this.token = token;
-      localStorage.setItem('auth_token', token);
-      console.log('Token saved to localStorage');
+    if (accessToken) {
+      this.token = accessToken;
+      localStorage.setItem('auth_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('refresh_token', refreshToken);
+      }
+      console.log('Tokens saved to localStorage');
     } else {
-      console.error('No token found in login response');
+      console.error('No accessToken found in login response');
     }
 
-    // Save user data
-    if (data.user) {
-      this.saveUser(data.user);
-      console.log('User data saved to localStorage:', data.user);
-    }
+    // User data will be fetched separately from /api/user/profile endpoint
 
     return data;
+  }
+
+  async refreshAccessToken(): Promise<string | null> {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      console.log('No refresh token available');
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Auth/refresh-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        },
+        body: JSON.stringify({ refreshToken })
+      });
+
+      if (!response.ok) {
+        console.error('Token refresh failed:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      const newAccessToken = data.accessToken;
+      
+      if (newAccessToken) {
+        this.token = newAccessToken;
+        localStorage.setItem('auth_token', newAccessToken);
+        console.log('Access token refreshed successfully');
+        return newAccessToken;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      return null;
+    }
   }
 
   logout(): void {
@@ -151,6 +196,7 @@ class AuthService {
     this.clearUser();
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
     }
   }
 
@@ -178,82 +224,63 @@ class AuthService {
     return this.token;
   }
 
-  async getCurrentUser(): Promise<User> {
-    if (!this.token) {
-      if (typeof localStorage === 'undefined') {
-        throw new Error('No authentication token');
-      }
-      
-      const storedToken = localStorage.getItem('auth_token');
-      if (storedToken) {
-        this.token = storedToken;
-      } else {
-        throw new Error('No authentication token');
-      }
-    }
-
-    const response = await fetch(`${API_BASE_URL}/Auth/me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'accept': '*/*'
-      }
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return {
-          id: 'temp',
-          email: 'user@example.com',
-          name: 'User',
-          phone: null,
-          address: null,
-          city: null,
-          postalCode: null,
-          avatar: '',
-          registrationDate: new Date().toISOString(),
-          submissionsCount: 0,
-          verificationsCount: 0
-        };
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  }
 
   async validateToken(): Promise<boolean> {
     return !!this.token;
   }
 
-  async refreshToken(): Promise<string> {
-    if (!this.token) {
-      throw new Error('No authentication token to refresh');
-    }
-    
-    if (typeof localStorage === 'undefined') {
-      throw new Error('localStorage is not available, cannot refresh token');
+  async getUserProfile(): Promise<User> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('No authentication token');
     }
 
-    const response = await fetch(`${API_BASE_URL}/Auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'accept': '*/*'
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/current`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'accept': '*/*'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Try to refresh token
+          const newToken = await this.refreshAccessToken();
+          if (newToken) {
+            // Retry with new token
+            const retryResponse = await fetch(`${API_BASE_URL}/users/current`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${newToken}`,
+                'accept': '*/*'
+              }
+            });
+            
+            if (!retryResponse.ok) {
+              throw new Error('Failed to fetch user profile after token refresh');
+            }
+            
+            const userData = await retryResponse.json();
+            this.saveUser(userData);
+            return userData;
+          } else {
+            throw new Error('Authentication token expired and refresh failed');
+          }
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    });
 
-    if (!response.ok) {
-      this.logout();
-      throw new Error('Token refresh failed');
+      const userData = await response.json();
+      this.saveUser(userData);
+      return userData;
+    } catch (error) {
+      console.error('Get user profile error:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    this.token = data.token;
-    localStorage.setItem('auth_token', data.token);
-    
-    return data.token;
   }
+
 }
 
 // Eksportuj singleton instance

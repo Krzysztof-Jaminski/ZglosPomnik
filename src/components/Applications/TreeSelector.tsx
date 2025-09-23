@@ -103,9 +103,9 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
             }`}
           >
             <div className="flex items-start space-x-3">
-              {tree.images && tree.images.length > 0 && (
+              {tree.imageUrls && tree.imageUrls.length > 0 && (
                 <img
-                  src={tree.images[0]}
+                  src={tree.imageUrls?.[0] || ''}
                   alt={tree.species}
                   className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
                 />

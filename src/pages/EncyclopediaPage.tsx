@@ -6,17 +6,21 @@ import { SpeciesCard } from '../components/Encyclopedia/SpeciesCard';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { GlassButton } from '../components/UI/GlassButton';
+import { useSearchState, useSelectedState, useUIState } from '../hooks/useLocalState';
 
 
 export const EncyclopediaPage: React.FC = () => {
   const location = useLocation();
   const [species, setSpecies] = useState<Species[]>([]);
   const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
-  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Używamy hooków do zarządzania lokalnym stanem
+  const [searchQuery, setSearchQuery] = useSearchState('encyclopedia');
+  const [selectedSpecies, setSelectedSpecies] = useSelectedState<Species>('encyclopedia', 'species');
+  const [selectedImageIndex, setSelectedImageIndex] = useUIState('encyclopedia', 'selectedImageIndex', 0);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useUIState('encyclopedia', 'isImageViewerOpen', false);
+  
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
   useEffect(() => {
     const loadSpecies = async () => {
@@ -342,7 +346,7 @@ export const EncyclopediaPage: React.FC = () => {
 
   // Image viewer modal
   if (isImageViewerOpen && selectedSpecies) {
-    const currentImage = (selectedSpecies as Species).images[selectedImageIndex];
+    const currentImage = (selectedSpecies as Species).images?.[selectedImageIndex];
     return (
       <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
         <div className="relative max-w-6xl max-h-full p-4">
