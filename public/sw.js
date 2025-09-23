@@ -25,6 +25,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip node_modules requests in development
+  if (url.pathname.includes('/node_modules/')) {
+    return;
+  }
+
+  // Skip development server requests
+  if (url.pathname.includes('/@vite/') || url.pathname.includes('/@fs/')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

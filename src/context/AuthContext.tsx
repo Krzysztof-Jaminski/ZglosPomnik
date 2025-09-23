@@ -78,39 +78,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const token = localStorage.getItem('auth_token');
         
         if (token) {
-          // Jeśli mamy token, spróbuj pobrać dane użytkownika z API
-          try {
-            const userData = await authService.getUserProfile();
-            setUser(userData);
-            console.log('User data loaded from API:', userData);
-          } catch (error) {
-            console.warn('Failed to load user data from API, using cached data:', error);
-            // Fallback do zapisanych danych jeśli API nie działa
-            const cachedUserData = authService.getCurrentUserData();
-            if (cachedUserData) {
-              setUser(cachedUserData);
-              console.log('User data loaded from cache:', cachedUserData);
-            } else {
-              // Ostatni fallback - podstawowe dane
-              const fallbackUser = {
-                id: 'temp',
-                email: 'user@example.com',
-                name: 'User',
-                phone: null,
-                address: null,
-                city: null,
-                postalCode: null,
-                avatar: null,
-                registrationDate: new Date().toISOString(),
-                role: 'User',
-                statistics: {
-                  submissionCount: 0,
-                  applicationCount: 0
-                }
-              };
-              setUser(fallbackUser);
-              console.log('Using fallback user data for token:', fallbackUser);
-            }
+          // Jeśli mamy token, sprawdź czy mamy zapisane dane użytkownika
+          const cachedUserData = authService.getCurrentUserData();
+          if (cachedUserData) {
+            setUser(cachedUserData);
+            console.log('User data loaded from cache:', cachedUserData);
+          } else {
+            // Jeśli nie mamy zapisanych danych, nie wywołuj API automatycznie
+            // Użytkownik będzie musiał się zalogować ponownie
+            console.log('No cached user data found, user needs to login');
+            // Wyczyść nieprawidłowy token
+            localStorage.removeItem('auth_token');
+            authService.logout();
           }
         } else {
           // No token found
