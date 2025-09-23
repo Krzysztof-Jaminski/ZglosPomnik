@@ -97,12 +97,12 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="mb-8"
             >
-              <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+              <h2 className="text-xl font-bold text-white dark:text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif' }}>
                 Ochrona pomników przyrody
                 <br />
-                <span className="text-white">nigdy nie była tak prosta</span>
+                <span className="text-white dark:text-white">nigdy nie była tak prosta</span>
               </h2>
-              <p className="text-gray-300 text-sm mb-4">
+              <p className="text-gray-300 dark:text-gray-300 text-sm mb-4">
                 Kompleksowa platforma do ochrony pomników przyrody. Odkrywaj drzewa na interaktywnej mapie, zgłaszaj nowe lokalizacje z precyzyjnym GPS, tworz profesjonalne wnioski zgodne ze standardami gmin, korzystaj z encyklopedii gatunków i dołącz do społeczności miłośników przyrody.
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
@@ -122,7 +122,7 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
             >
               <DarkGlassButton
                 onClick={() => {
-                  setCurrentScreen((prev) => (prev + 1) % phoneScreens.length);
+                  onShowAuthModal('login');
                 }}
                 variant="primary"
                 size="md"
@@ -135,12 +135,12 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
 
           {/* Desktop: Content - Left side */}
           <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-1 lg:order-2 text-center">
-            <h2 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+            <h2 className="text-2xl font-bold text-white dark:text-white mb-6" style={{ fontFamily: 'Exo 2, sans-serif' }}>
               Ochrona pomników przyrody
               <br />
-              <span className="text-white">nigdy nie była tak prosta</span>
+              <span className="text-white dark:text-white">nigdy nie była tak prosta</span>
             </h2>
-            <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+            <p className="text-lg text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
               Kompleksowa platforma do ochrony pomników przyrody. Odkrywaj drzewa na interaktywnej mapie, zgłaszaj nowe lokalizacje z precyzyjnym GPS, tworz profesjonalne wnioski zgodne ze standardami gmin, korzystaj z encyklopedii gatunków i dołącz do społeczności miłośników przyrody. Wszystko w jednej aplikacji - od identyfikacji po ochronę.
             </p>
 

@@ -95,10 +95,10 @@ export const FeaturesSection = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white dark:text-white mb-4">
               Jak działa nasza aplikacja?
             </h2>
-            <p className="text-lg text-gray-300 max-w-3xl mx-auto">
+            <p className="text-lg text-gray-300 dark:text-gray-300 max-w-3xl mx-auto">
               Przejdź przez każdą funkcjonalność i zobacz, jak skutecznie chronić pomniki przyrody
             </p>
           </motion.div>
@@ -117,16 +117,16 @@ export const FeaturesSection = () => {
                 <div className="w-12 h-12 bg-green-400/20 rounded-full flex items-center justify-center">
                   {React.createElement(features[0].icon, { className: "w-6 h-6 text-green-400" })}
                 </div>
-                <h3 className="text-2xl font-bold text-white">{features[0].title}</h3>
+                <h3 className="text-2xl font-bold text-white dark:text-white">{features[0].title}</h3>
               </div>
-              <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+              <p className="text-lg text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
                 {features[0].description}
               </p>
               <div className="space-y-4">
                 {features[0].features.map((feat, featIndex) => (
                   <div key={featIndex} className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                    <span className="text-gray-300">{feat}</span>
+                    <span className="text-gray-300 dark:text-gray-300">{feat}</span>
                   </div>
                 ))}
               </div>
@@ -173,16 +173,16 @@ export const FeaturesSection = () => {
                 <div className="w-12 h-12 bg-green-400/20 rounded-full flex items-center justify-center">
                   {React.createElement(features[1].icon, { className: "w-6 h-6 text-green-400" })}
                 </div>
-                <h3 className="text-2xl font-bold text-white">{features[1].title}</h3>
+                <h3 className="text-2xl font-bold text-white dark:text-white">{features[1].title}</h3>
               </div>
-              <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+              <p className="text-lg text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
                 {features[1].description}
               </p>
               <div className="space-y-4">
                 {features[1].features.map((feat, featIndex) => (
                   <div key={featIndex} className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                    <span className="text-gray-300">{feat}</span>
+                    <span className="text-gray-300 dark:text-gray-300">{feat}</span>
                   </div>
                 ))}
                </div>
@@ -229,16 +229,16 @@ export const FeaturesSection = () => {
                 <div className="w-12 h-12 bg-green-400/20 rounded-full flex items-center justify-center">
                   {React.createElement(features[2].icon, { className: "w-6 h-6 text-green-400" })}
                 </div>
-                <h3 className="text-2xl font-bold text-white">{features[2].title}</h3>
+                <h3 className="text-2xl font-bold text-white dark:text-white">{features[2].title}</h3>
               </div>
-              <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+              <p className="text-lg text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
                 {features[2].description}
               </p>
               <div className="space-y-4">
                 {features[2].features.map((feat, featIndex) => (
                   <div key={featIndex} className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                    <span className="text-gray-300">{feat}</span>
+                    <span className="text-gray-300 dark:text-gray-300">{feat}</span>
                   </div>
                 ))}
               </div>
@@ -285,16 +285,16 @@ export const FeaturesSection = () => {
                 <div className="w-12 h-12 bg-green-400/20 rounded-full flex items-center justify-center">
                   {React.createElement(features[3].icon, { className: "w-6 h-6 text-green-400" })}
                 </div>
-                <h3 className="text-2xl font-bold text-white">{features[3].title}</h3>
+                <h3 className="text-2xl font-bold text-white dark:text-white">{features[3].title}</h3>
               </div>
-              <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+              <p className="text-lg text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
                 {features[3].description}
               </p>
               <div className="space-y-4">
                 {features[3].features.map((feat, featIndex) => (
                   <div key={featIndex} className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                    <span className="text-gray-300">{feat}</span>
+                    <span className="text-gray-300 dark:text-gray-300">{feat}</span>
                   </div>
                 ))}
                </div>
@@ -341,16 +341,16 @@ export const FeaturesSection = () => {
                 <div className="w-12 h-12 bg-green-400/20 rounded-full flex items-center justify-center">
                   {React.createElement(features[4].icon, { className: "w-6 h-6 text-green-400" })}
                 </div>
-                <h3 className="text-2xl font-bold text-white">{features[4].title}</h3>
+                <h3 className="text-2xl font-bold text-white dark:text-white">{features[4].title}</h3>
               </div>
-              <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+              <p className="text-lg text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
                 {features[4].description}
               </p>
               <div className="space-y-4">
                 {features[4].features.map((feat, featIndex) => (
                   <div key={featIndex} className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                    <span className="text-gray-300">{feat}</span>
+                    <span className="text-gray-300 dark:text-gray-300">{feat}</span>
                   </div>
                 ))}
               </div>
@@ -397,16 +397,16 @@ export const FeaturesSection = () => {
                 <div className="w-12 h-12 bg-green-400/20 rounded-full flex items-center justify-center">
                   {React.createElement(features[5].icon, { className: "w-6 h-6 text-green-400" })}
                 </div>
-                <h3 className="text-2xl font-bold text-white">{features[5].title}</h3>
+                <h3 className="text-2xl font-bold text-white dark:text-white">{features[5].title}</h3>
               </div>
-              <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+              <p className="text-lg text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
                 {features[5].description}
               </p>
               <div className="space-y-4">
                 {features[5].features.map((feat, featIndex) => (
                   <div key={featIndex} className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                    <span className="text-gray-300">{feat}</span>
+                    <span className="text-gray-300 dark:text-gray-300">{feat}</span>
                   </div>
                 ))}
                </div>

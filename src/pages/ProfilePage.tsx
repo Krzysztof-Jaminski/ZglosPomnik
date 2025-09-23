@@ -32,7 +32,7 @@ export const ProfilePage: React.FC = () => {
     avatar: fullUserData.avatar,
     registrationDate: fullUserData.registrationDate,
     submissionsCount: fullUserData.statistics.submissionCount,
-    verificationsCount: fullUserData.statistics.applicationCount
+    applicationsCount: fullUserData.statistics.applicationCount
   } : null;
   
   // Dane użytkownika z API
@@ -221,41 +221,17 @@ export const ProfilePage: React.FC = () => {
         updateData.avatar = avatarUrl;
       }
 
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        alert('Brak tokenu autoryzacji');
-        return;
-      }
-
       console.log('Sending user update to server:', updateData);
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Users/${fullUserData.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'accept': '*/*'
-        },
-        body: JSON.stringify(updateData)
+      // Use the new API endpoint for updating user data
+      const { authService } = await import('../services/authService');
+      const updatedUserData = await authService.updateUserData({
+        phone: updateData.phone,
+        address: updateData.address,
+        city: updateData.city,
+        postalCode: updateData.postalCode,
+        avatar: updateData.avatar
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-      }
-
-      // Aktualizuj dane lokalnie po udanym zapisie na serwerze
-      const updatedUserData = {
-        ...fullUserData,
-        name: editBasicData.name || fullUserData.name,
-        email: editBasicData.email || fullUserData.email,
-        phone: editData.phone === 'Nie podano' ? null : editData.phone,
-        address: editData.address === 'Nie podano' ? null : editData.address,
-        city: editData.city === 'Nie podano' ? null : editData.city,
-        postalCode: editData.postalCode === 'Nie podano' ? null : editData.postalCode,
-        avatar: avatarUrl || ''
-      };
       
       setFullUserData(updatedUserData);
       setAdditionalData(editData);
@@ -436,25 +412,13 @@ export const ProfilePage: React.FC = () => {
         return;
       }
 
-      // Wyślij żądanie zmiany hasła
-      const changePasswordResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Auth/change-password`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'accept': '*/*'
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        })
+      // Use the new API endpoint for changing password
+      const { authService } = await import('../services/authService');
+      await authService.changePassword({
+        oldPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmNewPassword: passwordData.confirmPassword
       });
-
-      if (!changePasswordResponse.ok) {
-        const errorText = await changePasswordResponse.text();
-        console.error('Password change error:', errorText);
-        throw new Error(`Błąd zmiany hasła: ${changePasswordResponse.status}`);
-      }
 
       // Wyczyść formularz i zamknij modal
       setPasswordData({
@@ -784,10 +748,10 @@ export const ProfilePage: React.FC = () => {
               </div>
               <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {userData.verificationsCount}
+                  {userData.applicationsCount}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Weryfikacji
+                  Wniosków
                 </div>
               </div>
             </div>

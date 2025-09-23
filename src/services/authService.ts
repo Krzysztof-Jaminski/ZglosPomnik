@@ -281,6 +281,150 @@ class AuthService {
     }
   }
 
+  // Update user data
+  async updateUserData(userData: {
+    phone?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    avatar?: string;
+  }): Promise<User> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('No authentication token');
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Users/data`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        },
+        body: JSON.stringify({
+          userId: null, // API expects null for current user
+          phone: userData.phone || null,
+          address: userData.address || null,
+          city: userData.city || null,
+          postalCode: userData.postalCode || null,
+          avatar: userData.avatar || null
+        })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Try to refresh token
+          const newToken = await this.refreshAccessToken();
+          if (newToken) {
+            // Retry with new token
+            const retryResponse = await fetch(`${API_BASE_URL}/Users/data`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${newToken}`,
+                'Content-Type': 'application/json',
+                'accept': '*/*'
+              },
+              body: JSON.stringify({
+                userId: null,
+                phone: userData.phone || null,
+                address: userData.address || null,
+                city: userData.city || null,
+                postalCode: userData.postalCode || null,
+                avatar: userData.avatar || null
+              })
+            });
+            
+            if (!retryResponse.ok) {
+              throw new Error('Failed to update user data after token refresh');
+            }
+            
+            const updatedUserData = await retryResponse.json();
+            this.saveUser(updatedUserData);
+            return updatedUserData;
+          } else {
+            throw new Error('Authentication token expired and refresh failed');
+          }
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const updatedUserData = await response.json();
+      this.saveUser(updatedUserData);
+      return updatedUserData;
+    } catch (error) {
+      console.error('Update user data error:', error);
+      throw error;
+    }
+  }
+
+  // Change password
+  async changePassword(passwordData: {
+    oldPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+  }): Promise<void> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('No authentication token');
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Users/password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        },
+        body: JSON.stringify({
+          userId: null, // API expects null for current user
+          oldPassword: passwordData.oldPassword,
+          newPassword: passwordData.newPassword,
+          confirmNewPassword: passwordData.confirmNewPassword
+        })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Try to refresh token
+          const newToken = await this.refreshAccessToken();
+          if (newToken) {
+            // Retry with new token
+            const retryResponse = await fetch(`${API_BASE_URL}/Users/password`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${newToken}`,
+                'Content-Type': 'application/json',
+                'accept': '*/*'
+              },
+              body: JSON.stringify({
+                userId: null,
+                oldPassword: passwordData.oldPassword,
+                newPassword: passwordData.newPassword,
+                confirmNewPassword: passwordData.confirmNewPassword
+              })
+            });
+            
+            if (!retryResponse.ok) {
+              throw new Error('Failed to change password after token refresh');
+            }
+            
+            return; // Password change successful
+          } else {
+            throw new Error('Authentication token expired and refresh failed');
+          }
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Password change successful
+    } catch (error) {
+      console.error('Change password error:', error);
+      throw error;
+    }
+  }
+
 }
 
 // Eksportuj singleton instance
