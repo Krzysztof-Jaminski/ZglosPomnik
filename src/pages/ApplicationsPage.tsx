@@ -629,8 +629,8 @@ export const ApplicationsPage: React.FC = () => {
           onClick={() => handleStepChange('select-tree')}
           variant="primary"
           size="sm"
-          icon={Plus}
           className="px-4 py-2"
+          icon={Plus}
         >
           <span className="text-base">Rozpocznij tworzenie wniosku</span>
         </GlassButton>

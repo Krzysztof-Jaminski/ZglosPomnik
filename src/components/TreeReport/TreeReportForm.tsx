@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, X, Search, ChevronDown, ChevronUp, ZoomIn } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Species, ApiTreeSubmission } from '../../types';
 import { speciesService } from '../../services/speciesService';
@@ -377,21 +377,20 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           
           {/* Search input */}
           <div className="relative">
-            <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 text-gray-400" />
             <input
               type="text"
               value={speciesQuery}
               onChange={(e) => setSpeciesQuery(e.target.value)}
               onFocus={handleSpeciesInputFocus}
               placeholder="Polska lub łacińska nazwa"
-              className="w-full pl-8 sm:pl-10 pr-10 sm:pr-14 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-3 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
             />
             <button
               type="button"
               onClick={() => setShowSpeciesPanel(!showSpeciesPanel)}
               className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
-              {showSpeciesPanel ? <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" /> : <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />}
+              {showSpeciesPanel ? '▲' : '▼'}
             </button>
           </div>
 
@@ -472,7 +471,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                                       {typeLabels[image.type] || 'Zdjęcie'}
                                     </div>
                                     <div className="absolute top-1 right-1 bg-black/70 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <ZoomIn className="w-4 h-4" />
+                                      🔍
                                     </div>
                                   </div>
                                 );
@@ -629,7 +628,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                 variant="secondary"
                 size="xs"
                 className="flex-1"
-                icon={Camera}
               >
                 Zrób zdjęcie
               </GlassButton>
@@ -639,7 +637,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                 variant="secondary"
                 size="xs"
                 className="flex-1"
-                icon={Upload}
               >
                 Wybierz z galerii
               </GlassButton>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Loader2, Plus } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import { Tree } from '../../types';
 import { GlassButton } from '../UI/GlassButton';
 import { motion } from 'framer-motion';
@@ -66,7 +66,6 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
               disabled={isLoading}
               variant="primary"
               size="sm"
-              icon={isLoading ? Loader2 : Plus}
             >
               {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
             </GlassButton>
@@ -151,7 +150,6 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
             disabled={isLoading}
             variant="secondary"
             size="sm"
-            icon={isLoading ? Loader2 : Plus}
             className="px-6 py-2"
           >
             {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
