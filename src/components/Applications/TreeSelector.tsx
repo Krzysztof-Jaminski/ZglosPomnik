@@ -108,6 +108,8 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
                   src={tree.imageUrls?.[0] || ''}
                   alt={tree.species}
                   className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                  crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                  referrerPolicy="no-referrer"
                 />
               )}
               <div className="flex-1 min-w-0">

@@ -397,6 +397,8 @@ export const TreePost: React.FC<TreePostProps> = ({
                 <img
                   key={index}
                   src={image}
+                  crossOrigin={image.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                  referrerPolicy="no-referrer"
                   alt={`Tree photo ${index + 1}`}
                   className="rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                   style={{ maxHeight: '80vh', maxWidth: '100%', objectFit: 'contain' }}

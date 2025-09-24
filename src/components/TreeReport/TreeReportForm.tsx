@@ -466,6 +466,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                                         e.stopPropagation();
                                         setEnlargedImage(image.imageUrl);
                                       }}
+                                      crossOrigin={image.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
                                     />
                                     <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
                                       {typeLabels[image.type] || 'Zdjęcie'}
@@ -551,6 +552,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                   src={selectedSpecies.images[0]?.imageUrl || '/logo.png'}
                   alt={selectedSpecies.images[0]?.altText || selectedSpecies.polishName}
                   className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
+                  crossOrigin={selectedSpecies.images[0]?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
                 />
                 <div className="flex-1">
                   <h4 className="text-base sm:text-lg font-medium text-green-900 dark:text-green-300">

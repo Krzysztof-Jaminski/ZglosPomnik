@@ -64,7 +64,18 @@ export const ApplicationsPage: React.FC = () => {
     }
     return null;
   });
-  const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
+  const [currentApplication, setCurrentApplication] = useState<Application | null>(() => {
+    // Try to restore application from localStorage
+    const savedApplication = localStorage.getItem('currentApplication');
+    if (savedApplication) {
+      try {
+        return JSON.parse(savedApplication);
+      } catch (error) {
+        console.error('Error parsing saved application:', error);
+      }
+    }
+    return null;
+  });
   const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,6 +107,13 @@ export const ApplicationsPage: React.FC = () => {
     }
   }, [selectedTemplate]);
 
+  // Save current application to localStorage
+  useEffect(() => {
+    if (currentApplication) {
+      localStorage.setItem('currentApplication', JSON.stringify(currentApplication));
+    }
+  }, [currentApplication]);
+
   // Load data based on restored step after initial data load
   useEffect(() => {
     const loadDataForRestoredStep = async () => {
@@ -116,18 +134,39 @@ export const ApplicationsPage: React.FC = () => {
           setTemplates(templatesData);
         }
 
-        // If we're on form step and no form schema, try to create application
+        // If we're on form step and no form schema, check if we have existing application or create new one
         if (currentStep === 'fill-form' && !formSchema && selectedTemplate && selectedTree) {
-          console.log('Creating application for restored step');
-          const application = await applicationsService.createApplication(
-            selectedTemplate.id,
-            selectedTree.id,
-            `Wniosek dla drzewa ${selectedTree.species}`
-          );
-          setCurrentApplication(application);
-          
-          const schema = await applicationsService.getFormSchema(application.id);
-          setFormSchema(schema);
+          if (currentApplication && currentApplication.id) {
+            console.log('Loading existing application for restored step:', currentApplication.id);
+            try {
+              const schema = await applicationsService.getFormSchema(currentApplication.id);
+              setFormSchema(schema);
+            } catch (error) {
+              console.error('Error loading form schema for existing application:', error);
+              // If schema loading fails, create new application
+              console.log('Creating new application due to schema loading error');
+              const application = await applicationsService.createApplication(
+                selectedTemplate.id,
+                selectedTree.id,
+                `Wniosek dla drzewa ${selectedTree.species}`
+              );
+              setCurrentApplication(application);
+              
+              const schema = await applicationsService.getFormSchema(application.id);
+              setFormSchema(schema);
+            }
+          } else {
+            console.log('Creating new application for restored step');
+            const application = await applicationsService.createApplication(
+              selectedTemplate.id,
+              selectedTree.id,
+              `Wniosek dla drzewa ${selectedTree.species}`
+            );
+            setCurrentApplication(application);
+            
+            const schema = await applicationsService.getFormSchema(application.id);
+            setFormSchema(schema);
+          }
         }
       } catch (error) {
         console.error('Error loading data for restored step:', error);
@@ -136,7 +175,7 @@ export const ApplicationsPage: React.FC = () => {
     };
 
     loadDataForRestoredStep();
-  }, [isAuthenticated, isLoading, currentStep, municipalities.length, templates.length, selectedMunicipality, selectedTemplate, selectedTree, formSchema]);
+  }, [isAuthenticated, isLoading, currentStep, municipalities.length, templates.length, selectedMunicipality, selectedTemplate, selectedTree, formSchema, currentApplication?.id]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -381,6 +420,7 @@ export const ApplicationsPage: React.FC = () => {
       localStorage.removeItem('selectedMunicipality');
       localStorage.removeItem('selectedTemplate');
       localStorage.removeItem('applicationFormData');
+      localStorage.removeItem('currentApplication');
     } catch (error) {
       console.error('Error submitting application:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
@@ -436,6 +476,7 @@ export const ApplicationsPage: React.FC = () => {
         localStorage.removeItem('selectedMunicipality');
         localStorage.removeItem('selectedTemplate');
         localStorage.removeItem('applicationFormData');
+        localStorage.removeItem('currentApplication');
         
         // Resetuj stan tylko jeśli nie zachowujemy kroku
         handleStepChange('overview');
@@ -490,6 +531,7 @@ export const ApplicationsPage: React.FC = () => {
     localStorage.removeItem('selectedMunicipality');
     localStorage.removeItem('selectedTemplate');
     localStorage.removeItem('applicationFormData');
+    localStorage.removeItem('currentApplication');
     handleStepChange('overview');
     setSelectedTree(null);
     setSelectedMunicipality(null);

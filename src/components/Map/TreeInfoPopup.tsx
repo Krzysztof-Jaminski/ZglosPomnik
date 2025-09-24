@@ -96,6 +96,8 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
               alt="Tree photo"
               className="w-full h-32 sm:h-42 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
               onClick={() => setShowImageModal(true)}
+              crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+              referrerPolicy="no-referrer"
             />
             <div className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full">
               <ZoomIn className="w-4 h-4" />
@@ -206,6 +208,8 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
                 src={tree.imageUrls?.[0] || ''}
                 alt="Tree photo - enlarged"
                 className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                referrerPolicy="no-referrer"
               />
             </motion.div>
           </motion.div>

@@ -188,6 +188,7 @@ export const EncyclopediaPage: React.FC = () => {
                   alt={(selectedSpecies.images || [])[selectedImageIndex]?.altText || selectedSpecies.polishName}
                   className="w-full h-96 sm:h-[40rem] md:h-[48rem] lg:h-[56rem] xl:h-[64rem] 2xl:h-[72rem] object-cover cursor-pointer"
                   onClick={() => openImageViewer(selectedImageIndex)}
+                  crossOrigin={(selectedSpecies.images || [])[selectedImageIndex]?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
                 />
               </div>
               
@@ -245,6 +246,7 @@ export const EncyclopediaPage: React.FC = () => {
                         src={image?.imageUrl}
                         alt={image?.altText || selectedSpecies.polishName}
                         className="w-full h-full object-cover"
+                        crossOrigin={image?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
                       />
                     </button>
                   ))}
@@ -361,6 +363,7 @@ export const EncyclopediaPage: React.FC = () => {
             src={currentImage?.imageUrl}
             alt={currentImage?.altText || (selectedSpecies as Species).polishName}
             className="max-w-full max-h-full object-contain"
+            crossOrigin={currentImage?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
           />
           
           {((selectedSpecies as Species).images?.length || 0) > 1 && (

@@ -21,6 +21,8 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, onClick }) =>
           src={species.images[0]?.imageUrl || '/logo.png'}
           alt={species.images[0]?.altText || species.polishName}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          crossOrigin={species.images[0]?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+          referrerPolicy="no-referrer"
         />
       </div>
       
