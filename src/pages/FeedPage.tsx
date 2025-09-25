@@ -7,6 +7,7 @@ import { api } from '../services/api';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Search } from 'lucide-react';
 
 export const FeedPage: React.FC = () => {
   const [allPosts, setAllPosts] = useState<TreePostType[]>([]);
@@ -345,13 +346,14 @@ export const FeedPage: React.FC = () => {
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <div className="flex gap-3">
             {/* Search Input */}
-            <div className="flex-1">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Szukaj postów..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
             

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Species, ApiTreeSubmission } from '../../types';
 import { speciesService } from '../../services/speciesService';
@@ -376,13 +376,14 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           
           {/* Search input */}
           <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               value={speciesQuery}
               onChange={(e) => setSpeciesQuery(e.target.value)}
               onFocus={handleSpeciesInputFocus}
               placeholder="Polska lub łacińska nazwa"
-              className="w-full px-3 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full pl-10 pr-12 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
             />
             <button
               type="button"

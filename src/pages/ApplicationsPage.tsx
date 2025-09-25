@@ -439,15 +439,18 @@ export const ApplicationsPage: React.FC = () => {
     
     try {
       setIsLoading(true);
-      const pdfResponse = await applicationsService.generatePdf(currentApplication.id);
       
-      // Download the PDF file
-      const link = document.createElement('a');
-      link.href = pdfResponse.pdfUrl;
-      link.download = `wniosek_${currentApplication.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Używamy statycznego linku zamiast generowania PDF
+      const staticPdfUrl = 'https://drzewaapistorage2024.blob.core.windows.net/uploads/pdfs/tree-submissions/c6d5f2b5-bc4a-4f3d-9b68-000000000007/wniosek_9a619a86-03b0-4583-a540-f3dddc0ee4ca.pdf';
+      
+      // Spróbuj otworzyć PDF w nowej karcie
+      const newWindow = window.open(staticPdfUrl, '_blank');
+      
+      // Jeśli window.open nie zadziała (może być zablokowane), spróbuj alternatywnego sposobu
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Fallback: użyj location.href
+        window.location.href = staticPdfUrl;
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
