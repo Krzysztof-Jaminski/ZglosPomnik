@@ -2,9 +2,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Map, Rss, TreePine, FileText, BookOpen, User, Shield } from 'lucide-react';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
+import { useAuth } from '../../context/AuthContext';
 
 const Sidebar: React.FC = () => {
   const { triggerLightHaptic } = useHapticFeedback();
+  const { isAdmin } = useAuth();
   
   const navItems = [
     { to: '/map', icon: Map, label: 'Mapa' },
@@ -13,7 +15,7 @@ const Sidebar: React.FC = () => {
     { to: '/applications', icon: FileText, label: 'Wnioski' },
     { to: '/encyclopedia', icon: BookOpen, label: 'Encyklopedia' },
     { to: '/profile', icon: User, label: 'Profil' },
-    { to: '/admin', icon: Shield, label: 'Panel administratora' }
+    ...(isAdmin ? [{ to: '/admin', icon: Shield, label: 'Panel administratora' }] : [])
   ];
 
   return (

@@ -57,7 +57,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         setHeight(formData.height || '');
         setPlotNumber(formData.plotNumber || '');
         setCondition(formData.condition || 'dobry');
-        setIsAlive(formData.isAlive !== undefined ? formData.isAlive : true);
+        // isAlive nie jest przywracane z localStorage - zostaje domyślne
         setEstimatedAge(formData.estimatedAge || '');
         setNotes(formData.notes || '');
         
@@ -144,7 +144,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     }
   }, [speciesQuery, allSpecies]);
 
-  // Auto-save form data to localStorage
+  // Auto-save form data to localStorage (bez isAlive - nie zapisujemy tego pola)
   React.useEffect(() => {
     const saveFormData = async () => {
       try {
@@ -159,7 +159,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           height,
           plotNumber,
           condition,
-          isAlive,
           estimatedAge,
           notes,
           photos: photoBase64s,
@@ -173,7 +172,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     };
     
     saveFormData();
-  }, [speciesQuery, pierśnica, height, plotNumber, condition, isAlive, estimatedAge, notes, photos, latitude, longitude]);
+  }, [speciesQuery, pierśnica, height, plotNumber, condition, estimatedAge, notes, photos, latitude, longitude]);
 
   // Convert File to base64 for localStorage
   const fileToBase64 = (file: File): Promise<string> => {
@@ -674,7 +673,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               onChange={(e) => setPierśnica(e.target.value)}
               placeholder="np. 120"
               min="0"
-              step="0.1"
+              step="1"
               className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
@@ -688,7 +687,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               onChange={(e) => setHeight(e.target.value)}
               placeholder="np. 15"
               min="0"
-              step="0.1"
+              step="1"
               className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
@@ -726,15 +725,11 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             </label>
             <input
               type="text"
-              value={isAlive ? 'tak' : 'nie'}
-              onChange={(e) => {
+              defaultValue={isAlive ? 'tak' : 'nie'}
+              onBlur={(e) => {
                 const value = e.target.value.toLowerCase();
-                if (value === 'tak' || value === 'yes' || value === 'true' || value === '1') {
-                  setIsAlive(true);
-                } else if (value === 'nie' || value === 'no' || value === 'false' || value === '0') {
-                  setIsAlive(false);
-                }
-                // Allow user to type freely - don't force immediate conversion
+                // Wszystko co nie jest "nie" = "tak"
+                setIsAlive(value !== 'nie');
               }}
               placeholder="tak / nie"
               className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"

@@ -5,9 +5,10 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<void>;
-  logout: () => void;
+  logout: (isManual?: boolean) => void;
   handleAuthError: (error: any) => void;
 }
 
@@ -31,25 +32,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   
-  // Funkcja do czyszczenia lokalnego stanu użytkownika
-  const clearUserState = useCallback(() => {
+  // Funkcja do czyszczenia lokalnego stanu użytkownika (tylko przy ręcznym wylogowaniu)
+  const clearUserState = useCallback((isManual: boolean = true) => {
     if (typeof window === 'undefined') return;
     
-    // Lista kluczy do wyczyszczenia
+    if (!isManual) {
+      console.log('Automatic logout detected - localStorage will NOT be cleared');
+      return;
+    }
+    
+    console.log('Manual logout detected - clearing all user data from localStorage');
+    
+    // Lista kluczy do wyczyszczenia przy ręcznym wylogowaniu
     const keysToRemove: string[] = [];
     
     // Przejdź przez wszystkie klucze w localStorage
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key) {
-        // Usuń klucze związane z komentarzami, wyszukiwaniem, wybranymi elementami, formularzami i UI
+        // Usuń klucze związane z danymi użytkownika (ale zachowaj auth_token i refresh_token - te usuwa authService)
         if (key.startsWith('comment_') || 
             key.startsWith('search_') || 
             key.startsWith('encyclopedia_selected_') ||
             key.startsWith('feed_selected_') ||
             key.startsWith('form_') ||
             key.startsWith('encyclopedia_ui_') ||
-            key.startsWith('feed_ui_')) {
+            key.startsWith('feed_ui_') ||
+            key === 'applicationStep' ||
+            key === 'selectedTree' ||
+            key === 'selectedMunicipality' ||
+            key === 'selectedTemplate' ||
+            key === 'currentApplication' ||
+            key === 'applicationFormData' ||
+            key === 'treeReportFormData' ||
+            key === 'user_data' ||
+            key === 'comments_cache' ||
+            key === 'comments_last_sync' ||
+            key === 'zglospomnik-data' ||
+            key === 'theme') {
           keysToRemove.push(key);
         }
       }
@@ -60,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem(key);
     });
     
-    console.log(`Cleared ${keysToRemove.length} user state keys from localStorage`);
+    console.log(`Cleared ${keysToRemove.length} user state keys from localStorage (manual logout)`);
   }, []);
 
   // Sprawdź czy użytkownik jest już zalogowany przy inicjalizacji
@@ -185,26 +205,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = (isManual: boolean = true) => {
     authService.logout();
     setUser(null);
-    clearUserState(); // Wyczyść lokalny stan użytkownika
+    clearUserState(isManual); // Wyczyść lokalny stan użytkownika tylko przy ręcznym wylogowaniu
   };
 
 
   const handleAuthError = (error: any) => {
     console.log('Handling auth error:', error);
     if (error instanceof Error && error.message.includes('Brak autoryzacji')) {
-      console.log('401 Unauthorized detected, logging out user');
-      alert('Sesja wygasła lub ktoś inny zalogował się na to konto. Zostaniesz wylogowany.');
-      logout();
+      console.log('401 Unauthorized detected, logging out user automatically');
+      const errorMessage = 'Sesja wygasła lub wystąpił problem z autoryzacją. ' +
+        'Jeśli problem się powtarza, spróbuj się wylogować ręcznie i zalogować ponownie.';
+      alert(errorMessage);
+      logout(false); // false = automatyczne wylogowanie, nie czyści localStorage
     }
   };
+
+  // Sprawdź czy użytkownik jest administratorem (admin = 1, user = 0)
+  const isAdmin = user?.role === 1 || user?.role === '1' || user?.role === 'Admin' || user?.role === 'admin';
 
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     isLoading,
+    isAdmin,
     login,
     register,
     logout,

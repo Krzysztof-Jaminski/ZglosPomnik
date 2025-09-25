@@ -327,7 +327,12 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
       
       try {
         // Try the correct Gemini API endpoint
-        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyD9zJL2i0CjmQ28st6jDSB3nzt2VMMUd20`, {
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+          throw new Error('Brak klucza API Gemini. Skonfiguruj VITE_GEMINI_API_KEY w pliku .env');
+        }
+        
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
