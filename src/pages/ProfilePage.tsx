@@ -15,7 +15,7 @@ interface AdditionalUserData {
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { triggerLightHaptic, triggerMediumHaptic, triggerNotificationHaptic } = useHapticFeedback();
   const [notifications, setNotifications] = useState({
     push: true,
