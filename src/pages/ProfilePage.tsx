@@ -836,22 +836,20 @@ export const ProfilePage: React.FC = () => {
                 </span>
               </GlassButton>
               
-              {isAdmin && (
-                <GlassButton
-                  onClick={() => {
-                    triggerLightHaptic();
-                    navigate('/admin');
-                  }}
-                  variant="secondary"
-                  size="xs"
-                  className="w-full text-left"
-                  icon={Shield}
-                >
-                  <span className="text-gray-700 dark:text-gray-300 text-sm">
-                    Panel administratora
-                  </span>
-                </GlassButton>
-              )}
+              <GlassButton
+                onClick={() => {
+                  triggerLightHaptic();
+                  navigate('/admin');
+                }}
+                variant="secondary"
+                size="xs"
+                className="w-full text-left"
+                icon={Shield}
+              >
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                  Panel administratora
+                </span>
+              </GlassButton>
               
               <GlassButton
                 onClick={handleLogout}

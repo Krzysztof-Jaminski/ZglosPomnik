@@ -44,13 +44,53 @@ export const AdminPage: React.FC = () => {
         setIsLoading(true);
         setError(null);
         
-        // Load all data
-        const [treesData, usersData, speciesData, commentsData] = await Promise.all([
+        // Load all data with mock data for now
+        const [treesData, usersData] = await Promise.all([
           adminService.getAllTrees(),
-          adminService.getAllUsers(),
-          adminService.getAllSpecies(),
-          adminService.getAllComments()
+          adminService.getAllUsers()
         ]);
+        
+        // Use mock data for species and comments
+        const speciesData: Species[] = [
+          {
+            id: '1',
+            polishName: 'Dąb szypułkowy',
+            latinName: 'Quercus robur',
+            family: 'Bukowate',
+            description: 'Duże drzewo liściaste',
+            identificationGuide: ['Kora szara i spękana', 'Liście klapowane'],
+            seasonalChanges: {
+              spring: 'Pąki pęcznieją',
+              summer: 'Pełne ulistnienie',
+              autumn: 'Żółte liście',
+              winter: 'Bez liści'
+            },
+            images: [],
+            traits: {
+              maxHeight: 40,
+              lifespan: '500+ lat',
+              nativeToPoland: true
+            }
+          }
+        ];
+        
+        const commentsData: Comment[] = [
+          {
+            id: '1',
+            treeSubmissionId: '1',
+            treePolishName: 'Dąb szypułkowy',
+            userId: '1',
+            userData: {
+              userName: 'Test User',
+              avatar: ''
+            },
+            content: 'To jest testowy komentarz',
+            datePosted: new Date().toISOString(),
+            isLegend: false,
+            votes: { like: 0, dislike: 0 },
+            userVote: null
+          }
+        ];
         
         setTrees(treesData);
         setUsers(usersData);
