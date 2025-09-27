@@ -15,7 +15,7 @@ interface AdditionalUserData {
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const { triggerLightHaptic, triggerMediumHaptic, triggerNotificationHaptic } = useHapticFeedback();
   const [notifications, setNotifications] = useState({
     push: true,
@@ -81,7 +81,6 @@ export const ProfilePage: React.FC = () => {
       
       try {
         setIsLoadingProfile(true);
-        console.log('Fetching user data from /api/Users/current...');
         
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -102,7 +101,6 @@ export const ProfilePage: React.FC = () => {
         }
 
         const userData = await response.json();
-        console.log('User data received from /api/Users/current:', userData);
         
         setFullUserData(userData);
         
@@ -184,7 +182,6 @@ export const ProfilePage: React.FC = () => {
         // TODO: Implement avatar upload to backend API
         // For now, create a local URL for preview
         avatarUrl = URL.createObjectURL(avatarFile);
-        console.log('Avatar prepared for upload:', avatarUrl);
         setIsUploadingAvatar(false);
       }
       
@@ -221,7 +218,6 @@ export const ProfilePage: React.FC = () => {
         updateData.avatar = avatarUrl;
       }
 
-      console.log('Sending user update to server:', updateData);
 
       // Use the new API endpoint for updating user data
       const { authService } = await import('../services/authService');

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Search } from 'lucide-react';
+import { X, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Species, ApiTreeSubmission } from '../../types';
 import { speciesService } from '../../services/speciesService';
@@ -7,6 +7,7 @@ import { treesService } from '../../services/treesService';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { GlassButton } from '../UI/GlassButton';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 
 interface TreeReportFormProps {
@@ -45,6 +46,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isOnline = useOnlineStatus();
   const { isAuthenticated, user, isLoading } = useAuth();
+  const navigate = useNavigate();
 
   // Load form data from localStorage on mount
   React.useEffect(() => {
@@ -135,11 +137,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     );
     
     if (exactMatch) {
-      console.log('Found exact match for species:', exactMatch.polishName, 'ID:', exactMatch.id);
       setSelectedSpecies(exactMatch);
     } else {
-      console.log('No exact match found for query:', query);
-      console.log('Available species:', allSpecies.map(s => s.polishName));
       setSelectedSpecies(null);
     }
   }, [speciesQuery, allSpecies]);
@@ -241,7 +240,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     if (!selectedSpecies || !latitude || !longitude) return;
 
     // Check authentication status
-    console.log('Auth status:', { isAuthenticated, user: user?.email });
     if (!isAuthenticated) {
       console.error('User is not authenticated');
       return;
@@ -276,18 +274,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         };
 
         // Submit to API with photos
-        console.log('=== TREE SUBMISSION DEBUG ===');
-        console.log('Species ID (original):', selectedSpecies.id);
-        console.log('Species ID (uppercase):', apiTreeData.speciesId);
-        console.log('Species name:', selectedSpecies.polishName);
-        console.log('Plot number:', plotNumber);
-        console.log('Address:', apiTreeData.location.address);
-        console.log('Location:', apiTreeData.location);
-        console.log('Photos count:', photos.length);
-        console.log('Full API data:', apiTreeData);
         
         const result = await treesService.submitTreeReport(apiTreeData, photos);
-        console.log('Tree report submitted successfully:', result);
         
         setSubmitSuccess(true);
         
@@ -383,14 +371,15 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               onChange={(e) => setSpeciesQuery(e.target.value)}
               onFocus={handleSpeciesInputFocus}
               placeholder="Polska lub łacińska nazwa"
-              className="w-full pl-10 pr-12 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full pl-10 pr-12 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
             <button
               type="button"
               onClick={() => setShowSpeciesPanel(!showSpeciesPanel)}
-              className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-0 focus:ring-offset-0"
+              style={{ outline: 'none', boxShadow: 'none' }}
             >
-              {showSpeciesPanel ? '▲' : '▼'}
+              {showSpeciesPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
 
@@ -470,9 +459,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                                     <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
                                       {typeLabels[image.type] || 'Zdjęcie'}
                                     </div>
-                                    <div className="absolute top-1 right-1 bg-black/70 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                      🔍
-                                    </div>
                                   </div>
                                 );
                               })}
@@ -504,11 +490,18 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                                       isAlive,
                                       estimatedAge,
                                       notes,
-                                      photos: photoBase64s
+                                      photos: photoBase64s,
+                                      latitude,
+                                      longitude
                                     };
                                     localStorage.setItem('treeReportFormData', JSON.stringify(formData));
-                                    // Navigate to encyclopedia
-                                    window.location.href = `/encyclopedia?species=${species.id}&returnTo=report`;
+                                    // Navigate to encyclopedia using React Router with state
+                                    navigate('/encyclopedia', { 
+                                      state: { 
+                                        selectedSpecies: species.id,
+                                        returnTo: 'report'
+                                      }
+                                    });
                                   } catch (error) {
                                     console.error('Error saving form data:', error);
                                   }
@@ -675,7 +668,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               placeholder="np. 120"
               min="0"
               step="1"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
           <div>
@@ -689,7 +682,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               placeholder="np. 15"
               min="0"
               step="1"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
           <div>
@@ -701,7 +694,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               value={plotNumber}
               onChange={(e) => setPlotNumber(e.target.value)}
               placeholder="np. 123/4"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
         </div>
@@ -717,7 +710,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               value={condition}
               onChange={(e) => setCondition(e.target.value)}
               placeholder="np. dobry, średni, słaby"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
           <div>
@@ -733,7 +726,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                 setIsAlive(value !== 'nie');
               }}
               placeholder="tak / nie"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
           <div>
@@ -747,7 +740,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               placeholder="np. 50"
               min="0"
               step="1"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
         </div>
@@ -767,7 +760,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             }}
             placeholder="Opisz stan drzewa, potrzebne działania, szczególne cechy..."
             rows={5}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[120px]"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[120px]"
           />
         </div>
 

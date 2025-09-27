@@ -4,13 +4,14 @@ import { Species } from '../types';
 import { speciesService } from '../services/speciesService';
 import { SpeciesCard } from '../components/Encyclopedia/SpeciesCard';
 import { motion } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useSearchState, useSelectedState, useUIState } from '../hooks/useLocalState';
 
 
 export const EncyclopediaPage: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [species, setSpecies] = useState<Species[]>([]);
   const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
   
@@ -29,21 +30,21 @@ export const EncyclopediaPage: React.FC = () => {
         setSpecies(data);
         setFilteredSpecies(data);
         
-        // Check if we should show a specific species from URL params
+        // Check if we should show a specific species from location state or URL params
         const urlParams = new URLSearchParams(window.location.search);
-        const speciesId = urlParams.get('species');
+        const speciesIdFromUrl = urlParams.get('species');
+        const speciesIdFromState = location.state?.selectedSpecies;
+        
+        
+        // Priority: location state first, then URL params
+        const speciesId = speciesIdFromState || speciesIdFromUrl;
         
         if (speciesId) {
           const speciesItem = data.find(s => s.id === speciesId);
           if (speciesItem) {
             setSelectedSpecies(speciesItem);
           }
-        } else if (location.state?.selectedSpecies) {
-          // Fallback to location state
-          const speciesItem = data.find(s => s.id === location.state.selectedSpecies);
-          if (speciesItem) {
-            setSelectedSpecies(speciesItem);
-          }
+        } else {
         }
       } catch (error) {
         console.error('Error loading species:', error);
@@ -53,7 +54,7 @@ export const EncyclopediaPage: React.FC = () => {
     };
 
     loadSpecies();
-  }, [location.state]);
+  }, [location.state, location.search]);
 
   useEffect(() => {
     let filtered = species;
@@ -155,13 +156,17 @@ export const EncyclopediaPage: React.FC = () => {
             <GlassButton
               onClick={() => {
                 const urlParams = new URLSearchParams(window.location.search);
-                const returnTo = urlParams.get('returnTo');
+                const returnToFromUrl = urlParams.get('returnTo');
+                const returnToFromState = location.state?.returnTo;
+                
+                // Priority: location state first, then URL params
+                const returnTo = returnToFromState || returnToFromUrl;
                 
                 if (returnTo === 'report') {
-                  // Return to report page
-                  window.location.href = '/report';
+                  // Return to report page using React Router
+                  navigate('/report');
                 } else {
-                  // Return to encyclopedia list
+                  // Return to encyclopedia list - clear selected species
                   setSelectedSpecies(null);
                 }
               }}
@@ -169,7 +174,7 @@ export const EncyclopediaPage: React.FC = () => {
               size="xs"
               icon={ArrowLeft}
             >
-              {new URLSearchParams(window.location.search).get('returnTo') === 'report' 
+              {(location.state?.returnTo === 'report' || new URLSearchParams(window.location.search).get('returnTo') === 'report')
                 ? 'Powrót do zgłoszenia' 
                 : 'Powrót do encyklopedii'
               }
