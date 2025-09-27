@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Trash2, Users, TreePine, Calendar, BarChart3, AlertCircle, Plus, Edit, MessageSquare, Leaf } from 'lucide-react';
+import { Shield, AlertCircle } from 'lucide-react';
 import { Tree, Species, Comment } from '../types';
 import { adminService, AdminUser, AdminStats, SpeciesFormData } from '../services/adminService';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
+import { AdminNavigation } from '../components/Admin/AdminNavigation';
+import { AdminStats as AdminStatsComponent } from '../components/Admin/AdminStats';
+import { AdminTrees } from '../components/Admin/AdminTrees';
+import { AdminUsers } from '../components/Admin/AdminUsers';
+import { AdminSpecies } from '../components/Admin/AdminSpecies';
+import { AdminComments } from '../components/Admin/AdminComments';
+import { AdminModals } from '../components/Admin/AdminModals';
 
 export const AdminPage: React.FC = () => {
   const [trees, setTrees] = useState<Tree[]>([]);
@@ -231,7 +238,15 @@ export const AdminPage: React.FC = () => {
         await adminService.updateSpecies(editingSpecies.id, speciesFormData);
         setSpecies(prev => prev.map(species => 
           species.id === editingSpecies.id 
-            ? { ...species, ...speciesFormData }
+            ? { 
+                ...species, 
+                ...speciesFormData,
+                traits: {
+                  ...species.traits,
+                  ...speciesFormData.traits,
+                  maxHeight: speciesFormData.traits.maxHeight || 0
+                }
+              }
             : species
         ));
         alert('Gatunek został zaktualizowany!');
@@ -246,6 +261,11 @@ export const AdminPage: React.FC = () => {
       console.error('Error saving species:', error);
       alert('Błąd podczas zapisywania gatunku!');
     }
+  };
+
+  const closeSpeciesModal = () => {
+    setShowSpeciesModal(false);
+    setEditingSpecies(null);
   };
 
   if (isLoading) {
@@ -297,761 +317,59 @@ export const AdminPage: React.FC = () => {
           </p>
         </motion.div>
 
-        {/* Navigation Buttons */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <BarChart3 className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                Nawigacja
-              </h3>
-            </div>
-            <div className="space-y-3">
-          <GlassButton
-            onClick={() => setActiveTab('stats')}
-            variant={activeTab === 'stats' ? 'primary' : 'secondary'}
-            size="md"
-            icon={BarChart3}
-            className="w-full"
-          >
-            <span className="text-sm sm:text-base">Statystyki</span>
-          </GlassButton>
-          
-          <GlassButton
-            onClick={() => setActiveTab('trees')}
-            variant={activeTab === 'trees' ? 'primary' : 'secondary'}
-            size="md"
-            icon={TreePine}
-            className="w-full"
-          >
-                <span className="text-sm sm:text-base">Drzewa {trees.length > 0 && `(${trees.length})`}</span>
-          </GlassButton>
-          
-          <GlassButton
-            onClick={() => setActiveTab('users')}
-            variant={activeTab === 'users' ? 'primary' : 'secondary'}
-            size="md"
-            icon={Users}
-            className="w-full"
-          >
-                <span className="text-sm sm:text-base">Użytkownicy {users.length > 0 && `(${users.length})`}</span>
-          </GlassButton>
-
-          <GlassButton
-            onClick={() => setActiveTab('species')}
-            variant={activeTab === 'species' ? 'primary' : 'secondary'}
-            size="md"
-            icon={Leaf}
-            className="w-full"
-          >
-                <span className="text-sm sm:text-base">Gatunki {species.length > 0 && `(${species.length})`}</span>
-          </GlassButton>
-
-          <GlassButton
-            onClick={() => setActiveTab('comments')}
-            variant={activeTab === 'comments' ? 'primary' : 'secondary'}
-            size="md"
-            icon={MessageSquare}
-            className="w-full"
-          >
-                <span className="text-sm sm:text-base">Komentarze {comments.length > 0 && `(${comments.length})`}</span>
-          </GlassButton>
-            </div>
-          </div>
-          </div>
+        {/* Navigation */}
+        <AdminNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          counts={{
+            trees: trees.length,
+            users: users.length,
+            species: species.length,
+            comments: comments.length
+          }}
+        />
 
         {/* Content */}
-            {activeTab === 'stats' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <BarChart3 className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                  Statystyki systemu
-                </h3>
-              </div>
-                
-                {stats ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {stats.totalUsers}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Użytkownicy
-                        </div>
-                      </div>
+        {activeTab === 'stats' && (
+          <AdminStatsComponent stats={stats} />
+        )}
 
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {stats.totalTrees}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Drzewa
-                    </div>
-                        </div>
-                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      {stats.totalComments}
-                      </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Komentarze
-                        </div>
-                      </div>
-                  <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                      {stats.pendingTrees}
-                        </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Oczekujące
-                      </div>
-                  </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400">Brak danych statystycznych</p>
-                  </div>
-                )}
-            </div>
-              </div>
-            )}
-
-            {activeTab === 'trees' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <TreePine className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                  Zgłoszenia drzew
-                </h3>
-              </div>
-              
-                {trees.length === 0 ? (
-                  <div className="text-center py-8">
-                    <TreePine className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 text-lg">Brak zgłoszeń drzew</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {trees.map((tree, index) => (
-                  <motion.div
-                    key={tree.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 hover:shadow-xl transition-all"
-                      >
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
-                              {tree.species}
-                        </h3>
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                              {tree.speciesLatin}
-                            </p>
-                            <div className="flex items-center space-x-4 text-gray-500 text-sm">
-                              <div className="flex items-center space-x-1">
-                                <Users className="w-4 h-4" />
-                                <span>{tree.userData?.userName || 'Nieznany'}</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Calendar className="w-4 h-4" />
-                                <span>{new Date(tree.submissionDate).toLocaleDateString('pl-PL')}</span>
-                              </div>
-                            </div>
-                      </div>
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        tree.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                        tree.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                      }`}>
-                        {tree.status === 'approved' ? 'Zatwierdzone' : tree.status === 'rejected' ? 'Odrzucone' : 'Oczekujące'}
-                      </span>
-                    </div>
-                    
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                    <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4 text-gray-500 text-sm">
-                              <span>Komentarze: {tree.commentCount || 0}</span>
-                              <span>Polubienia: {tree.votes?.like || 0}</span>
-                      </div>
-                      <GlassButton 
-                              size="sm" 
-                        variant="danger"
-                        icon={Trash2}
-                        onClick={() => handleDeletePost(tree.id)}
-                              title="Usuń drzewo i wszystkie komentarze"
-                      >
-                              <span className="text-xs">Usuń</span>
-                      </GlassButton>
-                          </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-            </div>
-              </div>
-            )}
+        {activeTab === 'trees' && (
+          <AdminTrees trees={trees} onDeleteTree={handleDeletePost} />
+        )}
 
         {activeTab === 'users' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <Users className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                  Użytkownicy
-                </h3>
-              </div>
-              
-                {users.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 text-lg">Brak użytkowników</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                {users.map((user, index) => (
-                  <motion.div
-                    key={user.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 hover:shadow-xl transition-all"
-                  >
-                      <div className="flex items-center space-x-3 mb-4">
-                        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                          <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                          {user.name}
-                        </h3>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm">
-                            {user.email}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                          <Calendar className="w-4 h-4" />
-                          <span>Dołączył: {new Date(user.registeredAt).toLocaleDateString('pl-PL')}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                          <BarChart3 className="w-4 h-4" />
-                          <span>Zgłoszeń: {user.reportsCount || 0}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                          user.status === 'banned' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                          'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                        }`}>
-                          {user.status === 'active' ? 'Aktywny' : user.status === 'banned' ? 'Zablokowany' : 'Nieaktywny'}
-                            </span>
-                      <GlassButton 
-                            size="sm" 
-                        variant="danger" 
-                        icon={Trash2}
-                        onClick={() => handleDeleteUser(user.id)}
-                        title="Usuń użytkownika"
-                      >
-                            <span className="text-xs">Usuń</span>
-                      </GlassButton>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-            </div>
-          </div>
-            )}
+          <AdminUsers users={users} onDeleteUser={handleDeleteUser} />
+        )}
 
-        {/* Species Management Tab */}
         {activeTab === 'species' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <Leaf className="w-5 h-5 text-green-600" />
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                    Zarządzanie gatunkami
-                  </h3>
-                </div>
-                <GlassButton
-                  onClick={handleAddSpecies}
-                  variant="primary"
-                  size="sm"
-                  icon={Plus}
-                >
-                  <span className="text-sm">Dodaj gatunek</span>
-                </GlassButton>
-              </div>
-              
-              {species.length === 0 ? (
-                <div className="text-center py-8">
-                  <Leaf className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">Brak gatunków</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {species.map((spec, index) => (
-                    <motion.div
-                      key={spec.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 hover:shadow-xl transition-all"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
-                            {spec.polishName}
-                          </h3>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                            {spec.latinName}
-                          </p>
-                          <p className="text-gray-500 dark:text-gray-400 text-xs">
-                            Rodzina: {spec.family}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {spec.description && (
-                        <div className="mb-4">
-                          <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
-                            {spec.description}
-                          </p>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                          <span>Wysokość: {spec.traits.maxHeight}m</span>
-                        </div>
-                        <div className="flex space-x-2">
-                          <GlassButton 
-                            size="sm" 
-                            variant="secondary"
-                            icon={Edit}
-                            onClick={() => handleEditSpecies(spec)}
-                            title="Edytuj gatunek"
-                          >
-                            <span className="text-xs">Edytuj</span>
-                          </GlassButton>
-                          <GlassButton 
-                            size="sm" 
-                            variant="danger"
-                            icon={Trash2}
-                            onClick={() => handleDeleteSpecies(spec.id)}
-                            title="Usuń gatunek"
-                          >
-                            <span className="text-xs">Usuń</span>
-                          </GlassButton>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <AdminSpecies 
+            species={species} 
+            onDeleteSpecies={handleDeleteSpecies}
+            onEditSpecies={handleEditSpecies}
+            onAddSpecies={handleAddSpecies}
+          />
         )}
 
-        {/* Comments Management Tab */}
         {activeTab === 'comments' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <MessageSquare className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                  Zarządzanie komentarzami
-                </h3>
-              </div>
-              
-              {comments.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">Brak komentarzy</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {comments.map((comment, index) => (
-                    <motion.div
-                      key={comment.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 hover:shadow-xl transition-all"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                              <Users className="w-4 h-4 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
-                                {comment.userData.userName}
-                              </h4>
-                              <p className="text-gray-500 dark:text-gray-400 text-xs">
-                                {comment.treePolishName}
-                              </p>
-                            </div>
-                          </div>
-                          <p className="text-gray-700 dark:text-gray-300 text-sm mb-3">
-                            {comment.content}
-                          </p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500">
-                            <span>{new Date(comment.datePosted).toLocaleDateString('pl-PL')}</span>
-                            <span>Polubienia: {comment.votes.like}</span>
-                            <span>Niepolubienia: {comment.votes.dislike}</span>
-                            {comment.isLegend && (
-                              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
-                                Legenda
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <GlassButton 
-                          size="sm" 
-                          variant="danger"
-                          icon={Trash2}
-                          onClick={() => handleDeleteComment(comment.id)}
-                          title="Usuń komentarz"
-                        >
-                          <span className="text-xs">Usuń</span>
-                        </GlassButton>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <AdminComments comments={comments} onDeleteComment={handleDeleteComment} />
         )}
 
-        {/* Password Confirmation Modal */}
-        {showPasswordModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-3">
-                Potwierdź usunięcie
-              </h3>
-              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-4">
-                Wprowadź hasło administratora aby potwierdzić usunięcie.
-              </p>
-              <input
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                placeholder="Hasło administratora"
-                className="w-full px-4 py-3 text-base sm:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-gray-700 dark:text-white mb-4"
-              />
-              <div className="flex space-x-3">
-                <GlassButton
-                  onClick={cancelDelete}
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1"
-                >
-                  <span className="text-sm sm:text-base">Anuluj</span>
-                </GlassButton>
-                <GlassButton
-                  onClick={confirmDelete}
-                  variant="danger"
-                  size="sm"
-                  className="flex-1"
-                  disabled={!deletePassword}
-                >
-                  <span className="text-sm sm:text-base">Usuń</span>
-                </GlassButton>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Species Form Modal */}
-        {showSpeciesModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-4">
-                {editingSpecies ? 'Edytuj gatunek' : 'Dodaj nowy gatunek'}
-              </h3>
-              
-              <form onSubmit={handleSpeciesSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Nazwa polska *
-                    </label>
-                    <input
-                      type="text"
-                      value={speciesFormData.polishName}
-                      onChange={(e) => setSpeciesFormData(prev => ({ ...prev, polishName: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Nazwa łacińska *
-                    </label>
-                    <input
-                      type="text"
-                      value={speciesFormData.latinName}
-                      onChange={(e) => setSpeciesFormData(prev => ({ ...prev, latinName: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Rodzina *
-                  </label>
-                  <input
-                    type="text"
-                    value={speciesFormData.family}
-                    onChange={(e) => setSpeciesFormData(prev => ({ ...prev, family: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Opis
-                  </label>
-                  <textarea
-                    value={speciesFormData.description}
-                    onChange={(e) => setSpeciesFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Przewodnik identyfikacji
-                  </label>
-                  <textarea
-                    value={speciesFormData.identificationGuide?.join('\n') || ''}
-                    onChange={(e) => setSpeciesFormData(prev => ({ 
-                      ...prev, 
-                      identificationGuide: e.target.value.split('\n').filter(line => line.trim()) 
-                    }))}
-                    rows={3}
-                    placeholder="Każda linia to osobny punkt przewodnika"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Wiosna *
-                    </label>
-                    <input
-                      type="text"
-                      value={speciesFormData.seasonalChanges.spring}
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        seasonalChanges: { ...prev.seasonalChanges, spring: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Lato *
-                    </label>
-                    <input
-                      type="text"
-                      value={speciesFormData.seasonalChanges.summer}
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        seasonalChanges: { ...prev.seasonalChanges, summer: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Jesień *
-                    </label>
-                    <input
-                      type="text"
-                      value={speciesFormData.seasonalChanges.autumn}
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        seasonalChanges: { ...prev.seasonalChanges, autumn: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Zima *
-                    </label>
-                    <input
-                      type="text"
-                      value={speciesFormData.seasonalChanges.winter}
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        seasonalChanges: { ...prev.seasonalChanges, winter: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Maksymalna wysokość (m)
-                    </label>
-                    <input
-                      type="number"
-                      value={speciesFormData.traits.maxHeight || ''}
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        traits: { ...prev.traits, maxHeight: parseInt(e.target.value) || 0 }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Długość życia
-                    </label>
-                    <input
-                      type="text"
-                      value={speciesFormData.traits.lifespan || ''}
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        traits: { ...prev.traits, lifespan: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={speciesFormData.traits.nativeToPoland || false}
-                        onChange={(e) => setSpeciesFormData(prev => ({ 
-                          ...prev, 
-                          traits: { ...prev.traits, nativeToPoland: e.target.checked }
-                        }))}
-                        className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Rodzimy dla Polski
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Zdjęcie drzewa
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        treeImage: e.target.files?.[0]
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Zdjęcie liścia
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        leafImage: e.target.files?.[0]
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Zdjęcie kory
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        barkImage: e.target.files?.[0]
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Zdjęcie owocu
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setSpeciesFormData(prev => ({ 
-                        ...prev, 
-                        fruitImage: e.target.files?.[0]
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex space-x-3 pt-4">
-                  <GlassButton
-                    type="button"
-                    onClick={() => setShowSpeciesModal(false)}
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <span className="text-sm">Anuluj</span>
-                  </GlassButton>
-                  <GlassButton
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <span className="text-sm">{editingSpecies ? 'Zaktualizuj' : 'Dodaj'}</span>
-                  </GlassButton>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        {/* Modals */}
+        <AdminModals
+          showPasswordModal={showPasswordModal}
+          deletePassword={deletePassword}
+          setDeletePassword={setDeletePassword}
+          confirmDelete={confirmDelete}
+          cancelDelete={cancelDelete}
+          deleteAction={deleteAction}
+          showSpeciesModal={showSpeciesModal}
+          editingSpecies={editingSpecies}
+          speciesFormData={speciesFormData}
+          setSpeciesFormData={setSpeciesFormData}
+          handleSpeciesSubmit={handleSpeciesSubmit}
+          closeSpeciesModal={closeSpeciesModal}
+        />
       </div>
     </div>
   );
