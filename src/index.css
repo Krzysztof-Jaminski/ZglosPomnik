@@ -173,6 +173,12 @@
     box-shadow: none !important;
   }
 
+  /* Remove focus from arrow buttons */
+  .no-focus:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   /* Remove green focus from negative/danger actions */
   button.danger:focus,
   button.negative:focus,

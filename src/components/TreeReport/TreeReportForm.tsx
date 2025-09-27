@@ -376,8 +376,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             <button
               type="button"
               onClick={() => setShowSpeciesPanel(!showSpeciesPanel)}
-              className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-0 focus:ring-offset-0"
-              style={{ outline: 'none', boxShadow: 'none' }}
+              className="no-focus absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               {showSpeciesPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
