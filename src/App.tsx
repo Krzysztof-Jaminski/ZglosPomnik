@@ -50,7 +50,7 @@ const MainContent: React.FC = () => {
         <Sidebar />
         
         <main className={`flex-1 overflow-y-auto w-full max-w-full transition-all duration-300 ${
-          isKeyboardOpen ? 'pb-0' : 'pb-20 sm:pb-0'
+          isKeyboardOpen ? 'pb-0' : 'pb-16 sm:pb-0'
         }`}>
           <Routes>
             <Route path="/map" element={<MapPage />} />

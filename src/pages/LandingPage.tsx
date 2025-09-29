@@ -127,64 +127,64 @@ export const LandingPage = () => {
       </div>
 
       {/* Top Navigation - Fixed */}
-      <nav className="fixed top-0 left-0 right-0 z-40 py-2 sm:py-3 bg-gray-900/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <nav className="fixed top-0 left-0 right-0 z-40 py-1 sm:py-2 bg-gray-900/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-2 sm:px-3">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1 sm:gap-2">
               <img 
                 src="/logo.png" 
                 alt="ZgłośPomnik" 
-                className="w-10 h-10 sm:w-12 sm:h-12"
+                className="w-7 h-7 sm:w-8 sm:h-8"
               />
-              <span className="text-lg sm:text-2xl font-bold" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+              <span className="text-sm sm:text-lg font-bold" style={{ fontFamily: 'Exo 2, sans-serif' }}>
                 <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
               </span>
             </div>
             
             {/* Navigation Links - Desktop Only */}
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2">
               <DarkGlassButton
                 onClick={scrollToTop}
                 variant="secondary"
-                size="sm"
-                className="text-xs px-3 py-1"
+                size="xs"
+                className="text-xs px-2 py-0.5"
               >
                 Home
               </DarkGlassButton>
               <DarkGlassButton
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
                 variant="secondary"
-                size="sm"
-                className="text-xs px-3 py-1"
+                size="xs"
+                className="text-xs px-2 py-0.5"
               >
                 Funkcje
               </DarkGlassButton>
               <DarkGlassButton
                 onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
                 variant="secondary"
-                size="sm"
-                className="text-xs px-3 py-1"
+                size="xs"
+                className="text-xs px-2 py-0.5"
               >
                 FAQ
               </DarkGlassButton>
               <DarkGlassButton
                 onClick={() => document.getElementById('guides')?.scrollIntoView({ behavior: 'smooth' })}
                 variant="secondary"
-                size="sm"
-                className="text-xs px-3 py-1"
+                size="xs"
+                className="text-xs px-2 py-0.5"
               >
                 Poradniki
               </DarkGlassButton>
               <DarkGlassButton
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                 variant="secondary"
-                size="sm"
-                className="text-xs px-3 py-1"
+                size="xs"
+                className="text-xs px-2 py-0.5"
               >
                 Kontakt
               </DarkGlassButton>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4 text-xs">
+            <div className="flex items-center gap-1 sm:gap-2 text-xs">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <DarkGlassButton
                   onClick={() => {

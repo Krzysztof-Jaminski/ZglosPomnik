@@ -557,19 +557,19 @@ export const ApplicationsPage: React.FC = () => {
       <div className="flex items-center justify-center">
         {[1, 2, 3, 4, 5].map((step, index) => (
           <React.Fragment key={step}>
-            <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 ${
+            <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 ${
               step <= currentStepNumber 
                 ? 'bg-green-600 border-green-600 text-white' 
                 : 'bg-gray-200 border-gray-300 text-gray-500'
             }`}>
               {step < currentStepNumber ? (
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
               ) : (
-                <span className="text-sm sm:text-base font-semibold">{step}</span>
+                <span className="text-xs sm:text-sm font-semibold">{step}</span>
               )}
             </div>
             {index < totalSteps - 1 && (
-              <div className={`w-8 sm:w-12 h-1 mx-1 sm:mx-2 ${
+              <div className={`w-6 sm:w-8 h-1 mx-1 ${
                 step < currentStepNumber ? 'bg-green-600' : 'bg-gray-300'
               }`} />
             )}
@@ -583,45 +583,45 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-7xl mx-auto px-1 sm:px-0"
+      className="flex-1 flex flex-col justify-center px-1 sm:px-0"
     >
-      <div className="text-center mb-4 sm:mb-6">
-        <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-2" />
-        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="text-center mb-2 sm:mb-3">
+        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mx-auto mb-1" />
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
           Jak stworzyć wniosek?
         </h2>
-        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-md mx-auto">
           Proces tworzenia wniosku składa się z kilku prostych kroków. Pomożemy Ci przygotować kompletny wniosek do gminy.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 sm:p-5 text-center">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3 mb-2 sm:mb-3">
+        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 sm:p-3 text-center">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-1 text-xs font-bold">
             1
           </div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Wybierz drzewo</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Wybierz drzewo</h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400">
             Wybierz swoje drzewo oczekujące na weryfikację lub pomnik przyrody
           </p>
         </div>
 
-        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 sm:p-5 text-center">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
+        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 sm:p-3 text-center">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-1 text-xs font-bold">
             2
           </div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Wybierz gminę</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Wybierz gminę</h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400">
             Wybierz gminę, do której chcesz wysłać wniosek
           </p>
         </div>
 
-        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 sm:p-5 text-center">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
+        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 sm:p-3 text-center">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-1 text-xs font-bold">
             3
           </div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Wypełnij formularz</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Wypełnij formularz</h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400">
             Wypełnij dynamiczny formularz na podstawie wybranego szablonu
           </p>
         </div>
@@ -631,11 +631,11 @@ export const ApplicationsPage: React.FC = () => {
         <GlassButton
           onClick={() => handleStepChange('select-tree')}
           variant="primary"
-          size="sm"
-          className="px-4 py-2"
+          size="xs"
+          className="px-3 py-1"
           icon={Plus}
         >
-          <span className="text-base">Rozpocznij tworzenie wniosku</span>
+          <span className="text-sm">Rozpocznij tworzenie wniosku</span>
         </GlassButton>
       </div>
     </motion.div>
@@ -645,13 +645,13 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-200px)] flex flex-col"
+      className="flex-1 flex flex-col px-2 sm:px-3"
     >
-      <div className="text-center mb-4 sm:mb-6">
-        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="text-center mb-2 sm:mb-3">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
           Wybierz drzewo
         </h2>
-        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           {showAllTrees ? 'Wszystkie dostępne drzewa' : 'Wybierz drzewo, dla którego chcesz utworzyć wniosek'}
         </p>
       </div>
@@ -668,11 +668,11 @@ export const ApplicationsPage: React.FC = () => {
         />
       </div>
 
-      <div className="mt-6 mb-8 flex justify-between">
+      <div className="mt-3 mb-4 flex justify-between">
         <GlassButton
           onClick={() => handleStepChange('overview')}
           variant="secondary"
-          size="sm"
+          size="xs"
           icon={ArrowLeft}
         >
           Wstecz
@@ -681,7 +681,7 @@ export const ApplicationsPage: React.FC = () => {
           onClick={() => handleStepChange('select-municipality')}
           disabled={!selectedTree}
           variant="primary"
-          size="sm"
+          size="xs"
           icon={ArrowRight}
         >
           Dalej
@@ -694,13 +694,13 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-200px)] flex flex-col"
+      className="flex-1 flex flex-col px-2 sm:px-3"
     >
-      <div className="text-center mb-4 sm:mb-6">
-        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="text-center mb-2 sm:mb-3">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
           Wybierz gminę
         </h2>
-        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           {selectedMunicipality 
             ? `Automatycznie wybrana gmina: ${selectedMunicipality.name}` 
             : 'Wybierz gminę dla swojego wniosku'
@@ -716,11 +716,11 @@ export const ApplicationsPage: React.FC = () => {
         />
       </div>
 
-      <div className="mt-6 mb-8 flex justify-between">
+      <div className="mt-3 mb-4 flex justify-between">
         <GlassButton
           onClick={() => handleStepChange('select-tree')}
           variant="secondary"
-          size="sm"
+          size="xs"
           icon={ArrowLeft}
         >
           Wstecz
@@ -729,7 +729,7 @@ export const ApplicationsPage: React.FC = () => {
           onClick={() => handleStepChange('select-template')}
           disabled={!selectedMunicipality}
           variant="primary"
-          size="sm"
+          size="xs"
           icon={ArrowRight}
         >
           Dalej
@@ -742,21 +742,21 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-200px)] flex flex-col"
+      className="flex-1 flex flex-col px-2 sm:px-3"
     >
-      <div className="text-center mb-4 sm:mb-6">
-        <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="text-center mb-2 sm:mb-3">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
           Wybierz szablon wniosku
         </h2>
-        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Wybierz odpowiedni szablon dla swojego wniosku
         </p>
       </div>
 
       <div className="flex-1">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-6 h-6 animate-spin text-green-600" />
           </div>
         ) : (
           <TemplateSelector
@@ -767,11 +767,11 @@ export const ApplicationsPage: React.FC = () => {
         )}
       </div>
 
-      <div className="mt-6 mb-8 flex justify-between">
+      <div className="mt-3 mb-4 flex justify-between">
         <GlassButton
           onClick={() => handleStepChange('select-municipality')}
           variant="secondary"
-          size="sm"
+          size="xs"
           icon={ArrowLeft}
         >
           Wstecz
@@ -780,7 +780,7 @@ export const ApplicationsPage: React.FC = () => {
           onClick={handleCreateApplication}
           disabled={!selectedTemplate}
           variant="primary"
-          size="sm"
+          size="xs"
           icon={ArrowRight}
         >
           Dalej
@@ -795,29 +795,26 @@ export const ApplicationsPage: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-7xl mx-auto px-1 sm:px-0"
+          className="flex-1 flex items-center justify-center px-1 sm:px-0"
         >
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-6 h-6 animate-spin text-green-600" />
           </div>
         </motion.div>
       );
     }
 
     return (
-      <div className="min-h-[calc(100vh-200px)] flex flex-col">
-        <div className="flex-1">
-          <DynamicForm
-            schema={formSchema}
-            onSubmit={handleFormSubmit}
-            onBack={() => handleStepChange('select-template')}
-            isSubmitting={isSubmitting}
-            selectedTree={selectedTree}
-            selectedMunicipality={selectedMunicipality}
-            selectedTemplate={selectedTemplate}
-          />
-        </div>
-        
+      <div className="flex-1 flex flex-col">
+        <DynamicForm
+          schema={formSchema}
+          onSubmit={handleFormSubmit}
+          onBack={() => handleStepChange('select-template')}
+          isSubmitting={isSubmitting}
+          selectedTree={selectedTree}
+          selectedMunicipality={selectedMunicipality}
+          selectedTemplate={selectedTemplate}
+        />
       </div>
     );
   };
@@ -826,14 +823,14 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto text-center"
+      className="flex-1 flex flex-col justify-center text-center px-2 sm:px-3"
     >
-      <div className="mb-6">
-        <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="mb-3">
+        <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-2" />
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
           Wniosek został wysłany!
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
           Twój wniosek został pomyślnie wysłany. Możesz teraz pobrać PDF i wysłać go do gminy przez ePUAP.
         </p>
       </div>
@@ -914,7 +911,7 @@ export const ApplicationsPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl sm:max-w-none mx-auto text-center px-1 sm:px-0"
+      className="flex-1 flex flex-col justify-center text-center px-1 sm:px-0"
     >
       <div className="mb-3 sm:mb-4">
         <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-1 sm:mb-2" />
@@ -1019,23 +1016,25 @@ export const ApplicationsPage: React.FC = () => {
 
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto flex flex-col">
+      <div className="flex-1 flex flex-col px-2 sm:px-3 py-1 sm:py-2">
         {(currentStep !== 'overview' && currentStep !== 'completed') && (
-          <div className="mb-2 sm:mb-4">
+          <div className="mb-1 sm:mb-2">
             {renderProgressBar()}
           </div>
         )}
 
-        <AnimatePresence mode="wait">
-          {currentStep === 'overview' && renderOverview()}
-          {currentStep === 'select-tree' && renderTreeSelection()}
-          {currentStep === 'select-municipality' && renderMunicipalitySelection()}
-          {currentStep === 'select-template' && renderTemplateSelection()}
-          {currentStep === 'fill-form' && renderFormFilling()}
-          {currentStep === 'submitted' && renderSubmitted()}
-          {currentStep === 'completed' && renderCompleted()}
-        </AnimatePresence>
+        <div className="flex-1 flex flex-col">
+          <AnimatePresence mode="wait">
+            {currentStep === 'overview' && renderOverview()}
+            {currentStep === 'select-tree' && renderTreeSelection()}
+            {currentStep === 'select-municipality' && renderMunicipalitySelection()}
+            {currentStep === 'select-template' && renderTemplateSelection()}
+            {currentStep === 'fill-form' && renderFormFilling()}
+            {currentStep === 'submitted' && renderSubmitted()}
+            {currentStep === 'completed' && renderCompleted()}
+          </AnimatePresence>
+        </div>
 
 
         {/* Instructions Modal */}

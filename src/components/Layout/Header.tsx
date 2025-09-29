@@ -2,7 +2,6 @@ import React from 'react';
 import { Moon, Sun, Monitor, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
-import { GlassButton } from '../UI/GlassButton';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 export const Header: React.FC = () => {
@@ -26,43 +25,39 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 h-14 sm:h-18 w-full">
-      <div className="w-full px-3">
-        <div className="flex justify-between items-center h-14 sm:h-18 w-full">
-          <div className="flex items-center space-x-4 focus:outline-none focus:ring-0 focus:ring-offset-0">
-            <Link to="/map" className="flex items-center space-x-1 sm:space-x-2 focus:outline-none focus:ring-0 focus:ring-offset-0">
+    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 h-10 sm:h-12 w-full">
+      <div className="w-full px-2">
+        <div className="flex justify-between items-center h-10 sm:h-12 w-full">
+          <div className="flex items-center space-x-2 focus:outline-none focus:ring-0 focus:ring-offset-0">
+            <Link to="/map" className="flex items-center space-x-1 focus:outline-none focus:ring-0 focus:ring-offset-0">
               <img 
                 src="/logo.png" 
                 alt="ZgłośPomnik" 
-                className="w-12 h-12 sm:w-10 sm:h-10"
+                className="w-8 h-8 sm:w-7 sm:h-7"
               />
-              <h1 className="text-lg sm:text-2xl font-bold focus:outline-none focus:ring-0 focus:ring-offset-0 -mt-1" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+              <h1 className="text-sm sm:text-lg font-bold focus:outline-none focus:ring-0 focus:ring-offset-0 -mt-0.5" style={{ fontFamily: 'Exo 2, sans-serif' }}>
                 <span className="text-blue-600 dark:text-blue-500">Zgłoś</span><span className="text-green-600 dark:text-green-400">Pomnik</span>
               </h1>
             </Link>
           </div>
           
           <div className="flex items-center justify-end flex-1 space-x-2">
-            <GlassButton
+            <button
               onClick={cycleTheme}
-              size="xs"
-              variant="secondary"
               title={`Current theme: ${theme}`}
-              icon={ThemeIcon}
-              className="flex items-center justify-center"
+              className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
+              <ThemeIcon className="w-5 h-5" />
               <span className="sr-only">Toggle theme</span>
-            </GlassButton>
+            </button>
             <Link to="/profile" className="focus:outline-none">
-              <GlassButton
-                size="xs"
-                variant="secondary"
+              <button
                 title="Profil użytkownika"
-                icon={User}
-                className="flex items-center justify-center"
+                className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
+                <User className="w-5 h-5" />
                 <span className="sr-only">Profil</span>
-              </GlassButton>
+              </button>
             </Link>
           </div>
         </div>

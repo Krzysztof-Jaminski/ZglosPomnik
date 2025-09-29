@@ -20,21 +20,21 @@ export const BottomNavigation: React.FC = () => {
     <nav className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 sm:hidden bottom-nav transition-all duration-300 ${
       isKeyboardOpen ? 'hidden' : 'block'
     }`}>
-      <div className="flex justify-around items-center py-3">
+      <div className="flex justify-around items-center py-2">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             onClick={() => triggerLightHaptic()}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center py-2 px-3 min-w-0 flex-1 transition-colors focus:outline-none focus:ring-0 ${
+              `flex flex-col items-center justify-center py-1 px-2 min-w-0 flex-1 transition-colors focus:outline-none focus:ring-0 ${
                 isActive
                   ? 'text-green-700 dark:text-green-400'
                   : 'text-blue-600 dark:text-gray-400'
               }`
             }
           >
-            <Icon className="w-7 h-7 mb-1" />
+            <Icon className="w-5 h-5 mb-0.5" />
             <span className="text-xs font-medium truncate">{label}</span>
           </NavLink>
         ))}

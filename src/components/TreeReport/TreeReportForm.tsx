@@ -341,13 +341,13 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       exit={{ opacity: 0, y: 20 }}
       className="w-full"
     >
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-3">
         {onCancel && (
           <button
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
-            <X className="w-4 h-4 sm:w-6 sm:h-6" />
+            <X className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         )}
       </div>
@@ -356,7 +356,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 sm:p-5 mb-6 sm:mb-8 text-base sm:text-lg"
+          className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 text-sm sm:text-base"
         >
           <p className="text-green-800 dark:text-green-200">
             Tryb offline - zgłoszenie zostanie zsynchronizowane po powrocie internetu
@@ -365,7 +365,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       )}
 
 
-      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
         {/* Sekcja 1: Gatunek drzewa do Pierśnicy */}
         <TreeReportFormSectionSpecies
           speciesQuery={speciesQuery}
@@ -427,7 +427,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         />
 
         {/* Submit button */}
-        <div className="flex space-x-2 sm:space-x-3">
+        <div className="flex space-x-1 sm:space-x-2">
           {onCancel && (
             <GlassButton
               type="button"

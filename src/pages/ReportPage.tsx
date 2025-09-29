@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { TreeReportForm } from '../components/TreeReport/TreeReportForm';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GlassButton } from '../components/UI/GlassButton';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 
 interface SavedFormData {
@@ -21,6 +22,53 @@ export const ReportPage: React.FC = () => {
   // Synchronize photos with form
   const handlePhotosChange = (newPhotos: File[]) => {
     setPhotos(newPhotos);
+  };
+
+  // Camera functionality
+  const takePhoto = async () => {
+    try {
+      const image = await Camera.getPhoto({
+        quality: 80,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera
+      });
+
+      if (image.webPath) {
+        // Convert URI to File
+        const response = await fetch(image.webPath);
+        const blob = await response.blob();
+        const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        const newPhotos = [...photos, file].slice(0, 5); // Max 5 photos
+        handlePhotosChange(newPhotos);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+    }
+  };
+
+  const selectFromGallery = async () => {
+    try {
+      const image = await Camera.getPhoto({
+        quality: 80,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Photos
+      });
+
+      if (image.webPath) {
+        // Convert URI to File
+        const response = await fetch(image.webPath);
+        const blob = await response.blob();
+        const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        const newPhotos = [...photos, file].slice(0, 5); // Max 5 photos
+        handlePhotosChange(newPhotos);
+      }
+    } catch (error) {
+      console.error('Error selecting photo:', error);
+    }
   };
 
   // Initialize location from navigation state or localStorage
@@ -129,20 +177,20 @@ export const ReportPage: React.FC = () => {
     navigate('/map');
   }, [navigate]);
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-6 sm:py-8 overflow-y-auto">
-      <div className="w-full px-6 sm:px-8">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
+      <div className="w-full px-3 sm:px-4">
 
 
 
         {/* Wyświetlanie lokalizacji */}
         {selectedLocation && (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2 sm:p-3 mb-2 sm:mb-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`w-3 h-3 rounded-full ${selectedLocation ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                <span className="text-base font-semibold text-green-600 dark:text-green-400">Lokalizacja</span>
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${selectedLocation ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                <span className="text-sm font-semibold text-green-600 dark:text-green-400">Lokalizacja</span>
               </div>
-              <div className="text-sm text-green-700 dark:text-green-300 font-mono text-center">
+              <div className="text-xs text-green-700 dark:text-green-300 font-mono text-center">
                 {selectedLocation ? (
                   <>
                     <div>Lat: {selectedLocation.lat.toFixed(5)}</div>
@@ -156,15 +204,15 @@ export const ReportPage: React.FC = () => {
           </div>
         )}
 
-        <div className="space-y-2 sm:space-y-3">
-          <div className="space-y-2">
+        <div className="space-y-1 sm:space-y-2">
+          <div className="space-y-1">
             <GlassButton
               onClick={handleLocationButtonClick}
               className="w-full"
               size="xs"
               variant="primary"
             >
-              <span className="text-sm">
+              <span className="text-xs">
                 Użyj mojej lokalizacji
               </span>
             </GlassButton>
@@ -174,21 +222,18 @@ export const ReportPage: React.FC = () => {
               size="xs"
               variant="secondary"
             >
-              <span className="text-sm">
+              <span className="text-xs">
                 Wybierz lokalizację na mapie
               </span>
             </GlassButton>
           </div>
 
           {/* Photos Section */}
-          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border border-purple-200/50 dark:border-purple-400/30 rounded-xl p-3 sm:p-4 shadow-xl w-full my-2 sm:my-3">
-            <div className="space-y-3">
-              <div className="flex gap-2">
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border border-purple-200/50 dark:border-purple-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full my-1 sm:my-2">
+            <div className="space-y-2">
+              <div className="flex gap-1">
                 <GlassButton
-                  onClick={() => {
-                    // Camera functionality - would need camera API
-                    console.log('Take photo');
-                  }}
+                  onClick={takePhoto}
                   className="flex-1"
                   size="xs"
                   variant="primary"
@@ -196,18 +241,7 @@ export const ReportPage: React.FC = () => {
                   <span className="text-xs">Zrób zdjęcie</span>
                 </GlassButton>
                 <GlassButton
-                  onClick={() => {
-                    // File input for gallery
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.multiple = true;
-                  input.onchange = (e) => {
-                    const files = Array.from((e.target as HTMLInputElement).files || []);
-                    handlePhotosChange([...photos, ...files].slice(0, 5)); // Max 5 photos
-                  };
-                    input.click();
-                  }}
+                  onClick={selectFromGallery}
                   className="flex-1"
                   size="xs"
                   variant="secondary"
@@ -218,18 +252,18 @@ export const ReportPage: React.FC = () => {
               
               {/* Photo Preview */}
               {photos.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1">
                   {photos.map((photo, index) => (
                     <div key={index} className="relative group">
                       <img
                         src={URL.createObjectURL(photo)}
                         alt={`Zdjęcie ${index + 1}`}
-                        className="w-full h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                        className="w-full h-12 sm:h-16 object-cover rounded border border-gray-200 dark:border-gray-600"
                       />
                       <button
                         type="button"
                         onClick={() => handlePhotosChange(photos.filter((_, i) => i !== index))}
-                        className="absolute top-1 right-1 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        className="absolute top-0.5 right-0.5 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-full w-3 h-3 flex items-center justify-center text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                       >
                         ✕
                       </button>
@@ -240,7 +274,7 @@ export const ReportPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-2">
             <TreeReportForm
               latitude={selectedLocation?.lat}
               longitude={selectedLocation?.lng}

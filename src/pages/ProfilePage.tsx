@@ -808,15 +808,15 @@ export const ProfilePage: React.FC = () => {
 
         {/* Settings */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <Settings className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+          <div className="p-2 sm:p-3">
+            <div className="flex items-center space-x-2 mb-2">
+              <Settings className="w-4 h-4 text-green-600" />
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                 Ustawienia konta
               </h3>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-1">
               <GlassButton
                 onClick={() => {
                   triggerLightHaptic();
@@ -824,10 +824,10 @@ export const ProfilePage: React.FC = () => {
                 }}
                 variant="secondary"
                 size="xs"
-                className="w-full text-left"
+                className="w-full text-left py-1"
                 icon={Key}
               >
-                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                <span className="text-gray-700 dark:text-gray-300 text-xs">
                   Zmień hasło
                 </span>
               </GlassButton>
@@ -839,10 +839,10 @@ export const ProfilePage: React.FC = () => {
                 }}
                 variant="secondary"
                 size="xs"
-                className="w-full text-left"
+                className="w-full text-left py-1"
                 icon={Shield}
               >
-                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                <span className="text-gray-700 dark:text-gray-300 text-xs">
                   Panel administratora
                 </span>
               </GlassButton>
@@ -851,10 +851,10 @@ export const ProfilePage: React.FC = () => {
                 onClick={handleLogout}
                 variant="danger"
                 size="xs"
-                className="w-full text-left"
+                className="w-full text-left py-1"
                 icon={LogOut}
               >
-                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                <span className="text-gray-700 dark:text-gray-300 text-xs">
                   Wyloguj się
                 </span>
               </GlassButton>

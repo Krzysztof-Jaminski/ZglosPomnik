@@ -82,31 +82,31 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
   longitude
 }) => {
   return (
-    <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border border-blue-200/50 dark:border-blue-400/30 rounded-xl p-4 sm:p-6 shadow-xl w-full">
-      <div className="space-y-4 sm:space-y-5">
+    <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full">
+      <div className="space-y-2 sm:space-y-3">
         {/* Species selection */}
-        <div className="space-y-2 sm:space-y-3">
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1 sm:space-y-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
             Gatunek drzewa
           </label>
           
           {/* Search input */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
             <input
               type="text"
               value={speciesQuery}
               onChange={(e) => setSpeciesQuery(e.target.value)}
               onFocus={handleSpeciesInputFocus}
               placeholder="Polska lub łacińska nazwa"
-              className="w-full pl-10 pr-12 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full pl-8 pr-10 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
             <button
               type="button"
               onClick={() => setShowSpeciesPanel(!showSpeciesPanel)}
-              className="no-focus absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="no-focus absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
-              {showSpeciesPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showSpeciesPanel ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
           </div>
 
@@ -119,50 +119,50 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
                 exit={{ opacity: 0, height: 0 }}
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 overflow-hidden"
               >
-                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-base font-medium text-gray-900 dark:text-white">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                       Gatunki
                     </h3>
-                    <span className="text-base text-gray-500">
+                    <span className="text-sm text-gray-500">
                       {filteredSpecies.length} gatunków
                     </span>
                   </div>
                 </div>
 
-                <div className="max-h-[32rem] sm:max-h-[40rem] overflow-y-auto p-3 sm:p-6">
+                <div className="max-h-[20rem] sm:max-h-[24rem] overflow-y-auto p-2 sm:p-3">
                   {isLoadingSpecies ? (
-                    <div className="flex items-center justify-center py-4 sm:py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-600"></div>
-                      <span className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-600 dark:text-gray-300">Ładowanie gatunków...</span>
+                    <div className="flex items-center justify-center py-2 sm:py-4">
+                      <div className="animate-spin rounded-full h-4 w-4 sm:h-6 sm:w-6 border-b-2 border-green-600"></div>
+                      <span className="ml-2 sm:ml-3 text-sm sm:text-base text-gray-600 dark:text-gray-300">Ładowanie gatunków...</span>
                     </div>
                   ) : (
-                    <div className="space-y-2 sm:space-y-3">
+                    <div className="space-y-1 sm:space-y-2">
                       {filteredSpecies.map((species) => (
                         <div
                           key={species.id}
-                          className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer overflow-hidden border border-gray-200 dark:border-gray-700"
+                          className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer overflow-hidden border border-gray-200 dark:border-gray-700"
                         >
                           {/* Species card for selection */}
                           <div
                             onClick={() => handleSpeciesSelect(species)}
-                            className="p-4 sm:p-6"
+                            className="p-2 sm:p-3"
                           >
                             {/* Header with name and family */}
-                            <div className="mb-4">
-                              <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">
+                            <div className="mb-2">
+                              <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">
                                 {species.polishName}
                               </h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-1">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 italic mb-1">
                                 {species.latinName}
                               </p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-xs text-gray-500">
                                 Rodzina: {species.family}
                               </p>
                             </div>
 
                             {/* Images Grid - up to 4 images */}
-                            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8 mb-4">
+                            <div className="grid grid-cols-2 gap-1 sm:gap-2 mb-2">
                               {species.images.slice(0, 4).map((image, index) => {
                                 const typeLabels = {
                                   'Tree': 'Całościowe',
@@ -172,18 +172,18 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
                                   'Flower': 'Kwiaty'
                                 };
                                 return (
-                                  <div key={index} className="relative group aspect-square sm:aspect-[4/3] lg:aspect-square">
+                                  <div key={index} className="relative group aspect-square">
                                     <img
                                       src={image.imageUrl}
                                       alt={image.altText || `${species.polishName} - ${typeLabels[image.type] || 'Zdjęcie'}`}
-                                      className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                      className="w-full h-full object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setEnlargedImage(image.imageUrl);
                                       }}
                                       crossOrigin={image.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
                                     />
-                                    <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                    <div className="absolute bottom-0.5 left-0.5 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
                                       {typeLabels[image.type] || 'Zdjęcie'}
                                     </div>
                                   </div>
@@ -192,14 +192,14 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
                               
                               {/* Fill empty slots if less than 4 images */}
                               {Array.from({ length: Math.max(0, 4 - species.images.length) }).map((_, index) => (
-                                <div key={`empty-${index}`} className="aspect-square sm:aspect-[4/3] lg:aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                <div key={`empty-${index}`} className="aspect-square bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
                                   <span className="text-xs text-gray-500">Brak zdjęcia</span>
                                 </div>
                               ))}
                             </div>
 
                             {/* More Information Button */}
-                            <div className="mt-3">
+                            <div className="mt-2">
                               <GlassButton
                                 onClick={async () => {
                                   try {
@@ -236,7 +236,7 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
                                   }
                                 }}
                                 variant="primary"
-                                size="sm"
+                                size="xs"
                                 className="w-full"
                               >
                                 Więcej informacji
@@ -255,15 +255,15 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
 
         {/* Selected species display */}
         {selectedSpecies && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 sm:p-3 mb-2 sm:mb-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <div>
-                  <h3 className="text-base font-semibold text-blue-600 dark:text-blue-400">
+                  <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                     {selectedSpecies.polishName}
                   </h3>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 font-mono italic">
+                  <p className="text-xs text-blue-700 dark:text-blue-300 font-mono italic">
                     {selectedSpecies.latinName}
                   </p>
                 </div>
@@ -281,7 +281,7 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
 
         {/* Tree name */}
         <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Nazwa/Imię drzewa
           </label>
           <input
@@ -289,14 +289,14 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
             value={treeName}
             onChange={(e) => setTreeName(e.target.value)}
             placeholder="np. Dąb Bartek"
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
           />
         </div>
 
         {/* Tree measurements */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
           <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Pierśnica (cm)
             </label>
             <input
@@ -306,11 +306,11 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
               placeholder="np. 120"
               min="0"
               step="1"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
           <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Wysokość drzewa (m)
             </label>
             <input
@@ -320,14 +320,14 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
               placeholder="np. 25"
               min="0"
               step="0.1"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
         </div>
 
         {/* Address */}
         <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Adres drzewa <span className="text-gray-500">(opcjonalny)</span>
           </label>
           <input
@@ -335,7 +335,7 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
             value={plotNumber}
             onChange={(e) => setPlotNumber(e.target.value)}
             placeholder="np. ul. Słowackiego 15, 30-001 Kraków"
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
           />
         </div>
 
