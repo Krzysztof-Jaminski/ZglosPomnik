@@ -132,20 +132,20 @@ export const TreePost: React.FC<TreePostProps> = ({
         
       </div>
 
-      {/* Tree name */}
-      {parsedDescription?.treeName && (
-        <div className="mb-4 sm:mb-6">
-          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Nazwa drzewa:
-          </p>
-          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-            {parsedDescription.treeName}
-          </p>
-        </div>
-      )}
-
       {/* Content */}
       <div className="mb-4 sm:mb-6">
+
+        {/* Tree name */}
+        {parsedDescription?.treeName && (
+          <div className="mb-4 sm:mb-6">
+            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nazwa drzewa:
+            </p>
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
+              {parsedDescription.treeName}
+            </p>
+          </div>
+        )}
 
         {/* User description */}
         {parsedDescription?.userDescription && (
