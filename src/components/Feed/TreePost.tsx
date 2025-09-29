@@ -221,19 +221,19 @@ export const TreePost: React.FC<TreePostProps> = ({
                   let iconClass = '';
                   
                   if (isHealthPositive) {
-                    colorClass = 'bg-green-100/80 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+                    colorClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
                     iconClass = '●';
                   } else if (isHealthNegative) {
-                    colorClass = 'bg-red-100/80 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+                    colorClass = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
                     iconClass = '▲';
                   } else if (isHealthNeutral) {
-                    colorClass = 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+                    colorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
                     iconClass = '◆';
                   } else if (isSoil) {
-                    colorClass = 'bg-amber-100/80 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+                    colorClass = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
                     iconClass = '◈';
                   } else if (isEnvironment) {
-                    colorClass = 'bg-purple-100/80 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
+                    colorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
                     iconClass = '◐';
                   }
                   

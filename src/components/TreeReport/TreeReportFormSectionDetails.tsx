@@ -141,6 +141,24 @@ export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetails
                       if (detailedHealth.includes(condition)) {
                         setDetailedHealth(prev => prev.filter(item => item !== condition));
                       } else {
+                        // Check if this is a soil condition and limit to 3
+                        const soilConditions = [
+                          'Gleba gliniasta', 'Gleba piaszczysta', 'Gleba próchniczna',
+                          'Gleba kwaśna', 'Gleba zasadowa', 'Gleba wilgotna', 'Gleba sucha'
+                        ];
+                        if (soilConditions.includes(condition)) {
+                          const currentSoilCount = detailedHealth.filter(h => soilConditions.includes(h)).length;
+                          if (currentSoilCount >= 3) {
+                            // Remove the first selected soil condition
+                            const firstSoilIndex = detailedHealth.findIndex(h => soilConditions.includes(h));
+                            if (firstSoilIndex !== -1) {
+                              const newHealth = [...detailedHealth];
+                              newHealth.splice(firstSoilIndex, 1);
+                              setDetailedHealth([...newHealth, condition]);
+                              return;
+                            }
+                          }
+                        }
                         setDetailedHealth(prev => [...prev, condition]);
                       }
                     }}
