@@ -26,6 +26,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
       case 'approved': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
       case 'rejected': return 'text-red-600 bg-red-50 dark:bg-red-900/20';
       case 'pending': return 'text-amber-600 bg-amber-50 dark:bg-amber-900/20';
+      case 'nieznany': return 'text-gray-600 bg-gray-50 dark:bg-gray-700';
       default: return 'text-gray-600 bg-gray-50 dark:bg-gray-700';
     }
   };
@@ -36,6 +37,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
       case 'approved': return 'Zatwierdzony';
       case 'rejected': return 'Odrzucony';
       case 'pending': return 'Oczekuje';
+      case 'nieznany': return 'Nieznany';
       default: return 'Nieznany';
     }
   };
@@ -128,18 +130,20 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
 
         {/* Species information */}
         <div className="mb-3 sm:mb-4">
-          <div className="flex items-center gap-3 text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3">
-            <span>
+          <div className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3">
+            <div className="mb-1">
               <span className="font-medium">Gatunek:</span> {tree.species}
-            </span>
-            <span className="italic text-gray-600 dark:text-gray-400">
+            </div>
+            <div className="italic text-gray-600 dark:text-gray-400">
               {tree.speciesLatin}{!tree.speciesLatin.endsWith('L.') ? ' L.' : ''}
-            </span>
+            </div>
           </div>
         </div>
 
         {/* Health Status - only show if there are health conditions */}
-        {parsedDescription?.detailedHealth && parsedDescription.detailedHealth.length > 0 && parsedDescription.detailedHealth.some(condition => condition && condition.trim() !== '') && (
+        {parsedDescription?.detailedHealth && 
+         parsedDescription.detailedHealth.length > 0 && 
+         parsedDescription.detailedHealth.some(condition => condition && condition.trim() !== '') && (
           <div className="mb-3 sm:mb-4">
             <div className="flex flex-wrap gap-1 mb-3">
               {parsedDescription.detailedHealth
@@ -152,33 +156,26 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
                   const isSoil = condition.startsWith('Gleba');
                   const isEnvironment = ['Ekspozycja słoneczna', 'Cień częściowy', 'Cień głęboki', 'Wiatr', 'Zanieczyszczenia', 'Bliskość dróg', 'Bliskość budynków', 'Drenaż dobry', 'Drenaż słaby', 'Wilgotność wysoka', 'Wilgotność niska'].includes(condition);
                   
-                  let colorClass = 'bg-gray-100/80 text-gray-700 dark:bg-gray-600/80 dark:text-gray-300'; // neutral
-                  let iconClass = '';
+                  let colorClass = 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300';
                   
                   if (isHealthPositive) {
                     colorClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-                    iconClass = '●';
                   } else if (isHealthNegative) {
                     colorClass = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-                    iconClass = '▲';
                   } else if (isHealthNeutral) {
                     colorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-                    iconClass = '◆';
                   } else if (isSoil) {
                     colorClass = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
-                    iconClass = '◈';
                   } else if (isEnvironment) {
                     colorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-                    iconClass = '◐';
                   }
                   
                   return (
                     <span
                       key={index}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg font-medium border border-white/20 backdrop-blur-sm ${colorClass}`}
+                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md font-medium border border-white/20 backdrop-blur-sm ${colorClass}`}
                     >
-                      <span className="text-sm opacity-80">{iconClass}</span>
-                      <span className="truncate max-w-[120px]">{condition}</span>
+                      <span className="whitespace-nowrap">{condition}</span>
                     </span>
                   );
                 })}
@@ -222,16 +219,18 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
           </p>
         </div>
 
-        {/* Status and Details */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 sm:space-x-3 mb-3 sm:mb-5">
-          <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(tree.status)}`}>
-            {getStatusText(tree.status)}
-          </span>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <Calendar className="w-4 h-4" />
-            <span>{new Date(tree.submissionDate).toLocaleDateString('pl-PL')}</span>
+        {/* Status and Details - only show if status is valid and not "nieznany" */}
+        {tree.status && tree.status !== 'nieznany' && tree.status !== 'default' && tree.status !== 'undefined' && tree.status !== 'null' && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 sm:space-x-3 mb-3 sm:mb-5">
+            <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(tree.status)}`}>
+              {getStatusText(tree.status)}
+            </span>
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <Calendar className="w-4 h-4" />
+              <span>{new Date(tree.submissionDate).toLocaleDateString('pl-PL')}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Reporter */}
         <div className="flex items-center space-x-2 mb-3 sm:mb-5">
