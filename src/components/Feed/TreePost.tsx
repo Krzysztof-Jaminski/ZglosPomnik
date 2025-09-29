@@ -137,39 +137,42 @@ export const TreePost: React.FC<TreePostProps> = ({
 
         {/* Tree name */}
         {parsedDescription?.treeName && (
-          <div className="mb-4 sm:mb-6">
-            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <div className="mb-3 sm:mb-4">
+            <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nazwa drzewa:
             </p>
-            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               {parsedDescription.treeName}
             </p>
           </div>
         )}
 
-        {/* User description */}
-        {parsedDescription?.userDescription && (
-          <div className="mb-4 sm:mb-6">
-            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Opis:
-            </p>
-            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-              {parsedDescription.userDescription}
-            </p>
-          </div>
-        )}
+        {/* Description and Stories in two columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+          {/* User description */}
+          {parsedDescription?.userDescription && (
+            <div>
+              <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Opis:
+              </p>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                {parsedDescription.userDescription}
+              </p>
+            </div>
+          )}
 
-        {/* Stories section */}
-        {parsedDescription?.stories && (
-          <div className="mb-4 sm:mb-6">
-            <h5 className="text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Historie i legendy:
-            </h5>
-            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-              {parsedDescription.stories}
-            </p>
-          </div>
-        )}
+          {/* Stories section */}
+          {parsedDescription?.stories && (
+            <div>
+              <h5 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Historie i legendy:
+              </h5>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                {parsedDescription.stories}
+              </p>
+            </div>
+          )}
+        </div>
 
 
         {/* Fallback for old format descriptions */}
@@ -209,22 +212,22 @@ export const TreePost: React.FC<TreePostProps> = ({
           </div>
         )}
 
-        {/* Species information */}
-        <div className="mb-4 sm:mb-6">
-          <div className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3">
-            <div className="mb-1">
-              <span className="font-medium">Gatunek:</span> {post.species}
+      {/* Species information */}
+      <div className="mb-3 sm:mb-4">
+        <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 mb-2">
+          <div className="mb-1">
+            <span className="font-medium">Gatunek:</span> {post.species}
         </div>
-            <div className="italic text-gray-600 dark:text-gray-400">
-              {post.speciesLatin}{!post.speciesLatin.endsWith('L.') ? ' L.' : ''}
+          <div className="italic text-gray-600 dark:text-gray-400">
+            {post.speciesLatin}{!post.speciesLatin.endsWith('L.') ? ' L.' : ''}
                   </div>
                 </div>
               </div>
 
         {/* Health Status - only show if there are health conditions */}
         {parsedDescription?.detailedHealth && parsedDescription.detailedHealth.length > 0 && parsedDescription.detailedHealth.some(condition => condition && condition.trim() !== '') && (
-          <div className="mb-4 sm:mb-6">
-            <div className="flex flex-wrap gap-1 mb-3">
+          <div className="mb-3 sm:mb-4">
+            <div className="flex flex-wrap gap-1 mb-2">
               {parsedDescription.detailedHealth
                 .filter(condition => condition && condition.trim() !== '')
                 .map((condition, index) => {
@@ -252,19 +255,51 @@ export const TreePost: React.FC<TreePostProps> = ({
                   return (
                     <span
                       key={index}
-                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md font-medium border border-white/20 backdrop-blur-sm ${colorClass}`}
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md font-medium border border-white/20 backdrop-blur-sm ${colorClass}`}
                     >
-                      <span className="whitespace-nowrap">{condition}</span>
+                      <span className="whitespace-nowrap text-xs">{condition}</span>
                     </span>
                   );
                 })}
             </div>
         </div>
       )}
-                      
 
+      {/* Tree Details */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Obwód:
+          </p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            {post.circumference} cm
+          </p>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Wysokość:
+          </p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            {post.height} m
+          </p>
+        </div>
+      </div>
 
-
+      {/* Location */}
+      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+        <div className="flex items-center space-x-2">
+          <MapPin className="w-3 h-3 text-gray-500" />
+          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+            Lokalizacja:
+          </p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            {post.address || 'Brak adresu'}
+          </p>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-5">
+          Lat: {post.latitude?.toFixed(6)}, Lng: {post.longitude?.toFixed(6)}
+        </p>
+      </div>
 
       {/* Delete Post Confirmation Modal */}
       <DeleteConfirmationModal
