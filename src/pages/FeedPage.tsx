@@ -119,11 +119,6 @@ export const FeedPage: React.FC = () => {
         const treeElement = document.getElementById(`tree-post-${scrollToTreeId}`);
         if (treeElement) {
           treeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Add highlight effect
-          treeElement.classList.add('ring-4', 'ring-green-500', 'ring-opacity-50');
-          setTimeout(() => {
-            treeElement.classList.remove('ring-4', 'ring-green-500', 'ring-opacity-50');
-          }, 3000);
         }
       }, 500);
     }
