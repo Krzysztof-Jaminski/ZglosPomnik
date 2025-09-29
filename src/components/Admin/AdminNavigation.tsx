@@ -1,14 +1,13 @@
 import React from 'react';
-import { BarChart3, TreePine, Users, Leaf, MessageSquare } from 'lucide-react';
+import { BarChart3, TreePine, Users, Leaf } from 'lucide-react';
 
 interface AdminNavigationProps {
-  activeTab: 'stats' | 'trees' | 'users' | 'species' | 'comments';
-  onTabChange: (tab: 'stats' | 'trees' | 'users' | 'species' | 'comments') => void;
+  activeTab: 'stats' | 'trees' | 'users' | 'species';
+  onTabChange: (tab: 'stats' | 'trees' | 'users' | 'species') => void;
   counts: {
     trees: number;
     users: number;
     species: number;
-    comments: number;
   };
 }
 
@@ -41,12 +40,6 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
       label: 'Gatunki',
       icon: Leaf,
       count: counts.species
-    },
-    {
-      id: 'comments' as const,
-      label: 'Komentarze',
-      icon: MessageSquare,
-      count: counts.comments
     }
   ];
 

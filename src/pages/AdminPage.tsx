@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, AlertCircle } from 'lucide-react';
-import { Tree, Species, Comment } from '../types';
+import { Tree, Species } from '../types';
 import { adminService, AdminUser, AdminStats, SpeciesFormData } from '../services/adminService';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
@@ -9,20 +9,18 @@ import { AdminStats as AdminStatsComponent } from '../components/Admin/AdminStat
 import { AdminTrees } from '../components/Admin/AdminTrees';
 import { AdminUsers } from '../components/Admin/AdminUsers';
 import { AdminSpecies } from '../components/Admin/AdminSpecies';
-import { AdminComments } from '../components/Admin/AdminComments';
 import { AdminModals } from '../components/Admin/AdminModals';
 
 export const AdminPage: React.FC = () => {
   const [trees, setTrees] = useState<Tree[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [species, setSpecies] = useState<Species[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [activeTab, setActiveTab] = useState<'stats' | 'trees' | 'users' | 'species' | 'comments'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'trees' | 'users' | 'species'>('stats');
   const [isLoading, setIsLoading] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
-  const [deleteAction, setDeleteAction] = useState<{ type: 'post' | 'comment' | 'user' | 'species', id: string, postId?: string } | null>(null);
+  const [deleteAction, setDeleteAction] = useState<{ type: 'post' | 'user' | 'species', id: string, postId?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpeciesModal, setShowSpeciesModal] = useState(false);
   const [editingSpecies, setEditingSpecies] = useState<Species | null>(null);
@@ -57,7 +55,7 @@ export const AdminPage: React.FC = () => {
           adminService.getAllUsers()
         ]);
         
-        // Use mock data for species and comments
+        // Use mock data for species
         const speciesData: Species[] = [
           {
             id: '1',
@@ -81,35 +79,15 @@ export const AdminPage: React.FC = () => {
           }
         ];
         
-        const commentsData: Comment[] = [
-          {
-            id: '1',
-            treeSubmissionId: '1',
-            treePolishName: 'Dąb szypułkowy',
-            userId: '1',
-            userData: {
-              userName: 'Test User',
-              avatar: ''
-            },
-            content: 'To jest testowy komentarz',
-            datePosted: new Date().toISOString(),
-            isLegend: false,
-            votes: { like: 0, dislike: 0 },
-            userVote: null
-          }
-        ];
-        
         setTrees(treesData);
         setUsers(usersData);
         setSpecies(speciesData);
-        setComments(commentsData);
         
         // Calculate stats from real data
-        const totalComments = treesData.reduce((sum, tree) => sum + (tree.commentCount || 0), 0);
         const statsData = {
           totalUsers: usersData.length,
           totalTrees: treesData.length,
-          totalComments: totalComments,
+          totalComments: 0, // No comments anymore
           pendingTrees: treesData.filter(tree => tree.status === 'pending').length,
           activeUsers: usersData.filter(user => user.status === 'active').length
         };
@@ -122,7 +100,6 @@ export const AdminPage: React.FC = () => {
         setTrees([]);
         setUsers([]);
         setSpecies([]);
-        setComments([]);
         setStats(null);
       } finally {
         setIsLoading(false);
@@ -147,10 +124,6 @@ export const AdminPage: React.FC = () => {
     setShowPasswordModal(true);
   };
 
-  const handleDeleteComment = (commentId: string) => {
-    setDeleteAction({ type: 'comment', id: commentId });
-    setShowPasswordModal(true);
-  };
 
   const handleEditSpecies = (species: Species) => {
     setEditingSpecies(species);
@@ -208,10 +181,6 @@ export const AdminPage: React.FC = () => {
           await adminService.deleteSpecies(deleteAction.id);
           setSpecies(prev => prev.filter(species => species.id !== deleteAction.id));
           alert('Gatunek został usunięty!');
-        } else if (deleteAction?.type === 'comment') {
-          await adminService.deleteComment(deleteAction.id);
-          setComments(prev => prev.filter(comment => comment.id !== deleteAction.id));
-          alert('Komentarz został usunięty!');
         }
         setShowPasswordModal(false);
         setDeletePassword('');
@@ -324,8 +293,7 @@ export const AdminPage: React.FC = () => {
           counts={{
             trees: trees.length,
             users: users.length,
-            species: species.length,
-            comments: comments.length
+            species: species.length
           }}
         />
 
@@ -351,9 +319,6 @@ export const AdminPage: React.FC = () => {
           />
         )}
 
-        {activeTab === 'comments' && (
-          <AdminComments comments={comments} onDeleteComment={handleDeleteComment} />
-        )}
 
         {/* Modals */}
         <AdminModals

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zglospomnik-v4';
+const CACHE_NAME = 'zglospomnik-v5-' + Date.now();
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -7,7 +7,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing v4...');
+  console.log('Service Worker: Installing v5...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
@@ -16,15 +16,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating v4...');
+  console.log('Service Worker: Activating v5...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+          console.log('Deleting ALL caches:', cacheName);
+          return caches.delete(cacheName);
         })
       );
     }).then(() => self.clients.claim()) // Take control immediately

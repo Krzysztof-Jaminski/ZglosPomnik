@@ -79,7 +79,6 @@ export const AdminTrees: React.FC<AdminTreesProps> = ({ trees, onDeleteTree }) =
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4 text-gray-500 text-sm">
-                    <span>Komentarze: {tree.commentCount || 0}</span>
                     <span>Polubienia: {tree.votes?.like || 0}</span>
                   </div>
                   <GlassButton 
@@ -87,7 +86,7 @@ export const AdminTrees: React.FC<AdminTreesProps> = ({ trees, onDeleteTree }) =
                     variant="danger"
                     icon={Trash2}
                     onClick={() => onDeleteTree(tree.id)}
-                    title="Usuń drzewo i wszystkie komentarze"
+                    title="Usuń drzewo"
                   >
                     <span className="text-xs">Usuń</span>
                   </GlassButton>

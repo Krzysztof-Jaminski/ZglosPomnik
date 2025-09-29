@@ -27,7 +27,6 @@ export interface Tree {
     like: number;
     dislike: number;
   };
-  commentCount: number;
 }
 
 export interface Species {
@@ -89,24 +88,6 @@ export interface User {
   };
 }
 
-export interface Comment {
-  id: string;
-  treeSubmissionId: string;
-  treePolishName: string;
-  userId: string; // ID of the user who created the comment
-  userData: {
-    userName: string;
-    avatar: string;
-  };
-  content: string;
-  datePosted: string;
-  isLegend: boolean;
-  votes: {
-    like: number;
-    dislike: number;
-  };
-  userVote?: 'like' | 'dislike' | null;
-}
 
 export interface ApiTreeSubmission {
   speciesId: string;
@@ -125,11 +106,7 @@ export interface ApiTreeSubmission {
 }
 
 export interface TreePost extends Tree {
-  likes: number;
-  dislikes: number;
   userVote?: 'like' | 'dislike' | null;
-  comments: Comment[];
-  legendComment?: Comment;
 }
 
 export interface Municipality {

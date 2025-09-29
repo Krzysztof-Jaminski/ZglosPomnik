@@ -1,26 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { TreeReportForm } from '../components/TreeReport/TreeReportForm';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GlassButton } from '../components/UI/GlassButton';
+
+
+interface SavedFormData {
+  latitude?: number;
+  longitude?: number;
+  [key: string]: any;
+}
 
 export const ReportPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Get location from navigation state, localStorage, or use current location
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(() => {
+  // State management
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Initialize location from navigation state or localStorage
+  const initializeLocation = useCallback((): { lat: number; lng: number } | null => {
     // First try navigation state
     if (location.state?.latitude && location.state?.longitude) {
-      return { lat: location.state.latitude, lng: location.state.longitude };
+      return { 
+        lat: location.state.latitude, 
+        lng: location.state.longitude 
+      };
     }
     
     // Then try localStorage
     const savedData = localStorage.getItem('treeReportFormData');
     if (savedData) {
       try {
-        const formData = JSON.parse(savedData);
+        const formData: SavedFormData = JSON.parse(savedData);
         if (formData.latitude && formData.longitude) {
-          return { lat: formData.latitude, lng: formData.longitude };
+          return { 
+            lat: formData.latitude, 
+            lng: formData.longitude 
+          };
         }
       } catch (error) {
         console.error('Error loading saved location:', error);
@@ -28,24 +46,25 @@ export const ReportPage: React.FC = () => {
     }
     
     return null;
-  });
-  
+  }, [location.state]);
 
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
-
-  // Auto-get current location if no location provided
+  // Initialize location on mount
   React.useEffect(() => {
-    if (!selectedLocation && !location.state?.latitude) {
+    const initialLocation = initializeLocation();
+    if (initialLocation) {
+      setSelectedLocation(initialLocation);
+    } else {
       getCurrentLocation();
     }
-  }, []);
+  }, [initializeLocation]);
 
   // Save location to localStorage when it changes
   React.useEffect(() => {
-    if (selectedLocation) {
+    if (!selectedLocation) return;
+
+    const saveLocationToStorage = () => {
       const savedData = localStorage.getItem('treeReportFormData');
-      let formData = {};
+      let formData: SavedFormData = {};
       
       if (savedData) {
         try {
@@ -55,24 +74,42 @@ export const ReportPage: React.FC = () => {
         }
       }
       
-      formData = {
+      const updatedFormData = {
         ...formData,
         latitude: selectedLocation.lat,
         longitude: selectedLocation.lng
       };
       
-      localStorage.setItem('treeReportFormData', JSON.stringify(formData));
-    }
+      localStorage.setItem('treeReportFormData', JSON.stringify(updatedFormData));
+    };
+
+    saveLocationToStorage();
   }, [selectedLocation]);
 
-  const getCurrentLocation = () => {
+  // Geolocation error messages
+  const geolocationErrorMessages = useMemo(() => ({
+    PERMISSION_DENIED: 'Dostęp do lokalizacji został odrzucony. Możesz włączyć lokalizację w ustawieniach przeglądarki lub wybrać lokalizację na mapie.',
+    POSITION_UNAVAILABLE: 'Lokalizacja jest niedostępna. Spróbuj ponownie lub wybierz lokalizację na mapie.',
+    TIMEOUT: 'Przekroczono czas oczekiwania na lokalizację. Spróbuj ponownie lub wybierz lokalizację na mapie.',
+    UNKNOWN: 'Nie udało się pobrać lokalizacji.'
+  }), []);
+
+  const getCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
       console.error('Geolocation is not supported by this browser.');
+      setLocationError(geolocationErrorMessages.UNKNOWN);
       return;
     }
 
     setIsGettingLocation(true);
     setLocationError(null);
+
+    const geolocationOptions: PositionOptions = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    };
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setSelectedLocation({
@@ -82,35 +119,27 @@ export const ReportPage: React.FC = () => {
         setIsGettingLocation(false);
       },
       (error) => {
-        let errorMessage = 'Nie udało się pobrać lokalizacji.';
-        
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Dostęp do lokalizacji został odrzucony. Możesz włączyć lokalizację w ustawieniach przeglądarki lub wybrać lokalizację na mapie.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Lokalizacja jest niedostępna. Spróbuj ponownie lub wybierz lokalizację na mapie.';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Przekroczono czas oczekiwania na lokalizację. Spróbuj ponownie lub wybierz lokalizację na mapie.';
-            break;
-        }
+        const errorMessage = geolocationErrorMessages[error.code as unknown as keyof typeof geolocationErrorMessages] || 
+                           geolocationErrorMessages.UNKNOWN;
         
         setLocationError(errorMessage);
         setIsGettingLocation(false);
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
-      }
+      geolocationOptions
     );
-  };
+  }, [geolocationErrorMessages]);
 
-
-  const handleSubmitSuccess = () => {
+  const handleSubmitSuccess = useCallback(() => {
     navigate('/map');
-  };
+  }, [navigate]);
+
+  const handleLocationButtonClick = useCallback(() => {
+    getCurrentLocation();
+  }, [getCurrentLocation]);
+
+  const handleMapSelectionClick = useCallback(() => {
+    navigate('/map');
+  }, [navigate]);
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-6 sm:py-8 overflow-y-auto">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -138,7 +167,7 @@ export const ReportPage: React.FC = () => {
         <div className="space-y-2 sm:space-y-3">
           <div className="space-y-2">
             <GlassButton
-              onClick={getCurrentLocation}
+              onClick={handleLocationButtonClick}
               disabled={isGettingLocation}
               className="w-full"
               size="xs"
@@ -149,7 +178,7 @@ export const ReportPage: React.FC = () => {
               </span>
             </GlassButton>
             <GlassButton
-              onClick={() => navigate('/map')}
+              onClick={handleMapSelectionClick}
               className="w-full"
               size="xs"
               variant="secondary"

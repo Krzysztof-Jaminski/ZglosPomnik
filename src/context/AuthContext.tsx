@@ -66,8 +66,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             key === 'applicationFormData' ||
             key === 'treeReportFormData' ||
             key === 'user_data' ||
-            key === 'comments_cache' ||
-            key === 'comments_last_sync' ||
             key === 'zglospomnik-data' ||
             key === 'theme') {
           keysToRemove.push(key);

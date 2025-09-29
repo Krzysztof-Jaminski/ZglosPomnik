@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Leaf, MapPin, X, Calendar, User, ArrowRight, ZoomIn } from 'lucide-react';
+import { TreePine, MapPin, X, Calendar, User, ArrowRight, ZoomIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { Tree } from '../../types';
+import { parseTreeDescription } from '../../utils/descriptionParser';
 
 interface TreeInfoPopupProps {
   tree: Tree;
@@ -16,6 +17,9 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
   onGoToFeed
 }) => {
   const [showImageModal, setShowImageModal] = useState(false);
+  
+  // Parse description using the same logic as TreeReportForm
+  const parsedDescription = tree.description ? parseTreeDescription(tree.description) : null;
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Monument': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
@@ -53,9 +57,9 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
       >
         <div className="flex justify-between items-center mb-4 sm:mb-6">
           <div className="flex items-center space-x-3 sm:space-x-4">
-            <Leaf className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" />
+             <TreePine className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" />
             <h3 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
-              {tree.species}
+              {parsedDescription?.treeName || 'Drzewo'}
             </h3>
           </div>
           <button
@@ -66,18 +70,52 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
           </button>
         </div>
 
-        {/* Species Latin */}
-        <div className="mb-3 sm:mb-4">
-          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Nazwa łacińska:
-          </p>
-          <p className="text-sm sm:text-base italic text-gray-600 dark:text-gray-400">
-            {tree.speciesLatin}
-          </p>
-        </div>
 
-        {/* Description */}
-        {tree.description && (
+        {/* User description */}
+        {parsedDescription?.userDescription && (
+          <div className="mb-3 sm:mb-4">
+            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Opis:
+            </p>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              {parsedDescription.userDescription}
+            </p>
+          </div>
+        )}
+
+        {/* Stories section */}
+        {parsedDescription?.stories && (
+          <div className="mb-3 sm:mb-4">
+            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Historie i legendy:
+            </p>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              {parsedDescription.stories}
+            </p>
+          </div>
+        )}
+
+        {/* Detailed health conditions */}
+        {parsedDescription?.detailedHealth && parsedDescription.detailedHealth.length > 0 && (
+          <div className="mb-3 sm:mb-4">
+            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Stany zdrowia drzewa:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {parsedDescription.detailedHealth.map((condition, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs rounded-full"
+                >
+                  {condition}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fallback for old format descriptions */}
+        {parsedDescription && !parsedDescription.hasStructuredFormat && tree.description && (
           <div className="mb-3 sm:mb-4">
             <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
               Opis:
@@ -101,6 +139,26 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
             />
           </div>
         )}
+
+        {/* Species information */}
+        <div className="mb-3 sm:mb-4">
+          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Gatunek:
+          </p>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            {tree.species}
+          </p>
+        </div>
+
+        {/* Species Latin */}
+        <div className="mb-3 sm:mb-4">
+          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Nazwa łacińska:
+          </p>
+          <p className="text-sm sm:text-base italic text-gray-600 dark:text-gray-400">
+            {tree.speciesLatin}{!tree.speciesLatin.endsWith('L.') ? ' L.' : ''}
+          </p>
+        </div>
 
         {/* Tree Details */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">

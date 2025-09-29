@@ -136,10 +136,5 @@ export const api = {
     return authService.getCurrentUserData();
   },
 
-  // Comments
-  async getComments() {
-    // TODO: Implement real API call
-    return [];
-  },
 
 };

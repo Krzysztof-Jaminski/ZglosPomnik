@@ -9,7 +9,7 @@ interface AdminModalsProps {
   setDeletePassword: (password: string) => void;
   confirmDelete: () => void;
   cancelDelete: () => void;
-  deleteAction: { type: 'post' | 'comment' | 'user' | 'species', id: string, postId?: string } | null;
+  deleteAction: { type: 'post' | 'user' | 'species', id: string, postId?: string } | null;
   
   showSpeciesModal: boolean;
   editingSpecies: Species | null;

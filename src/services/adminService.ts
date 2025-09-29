@@ -1,5 +1,5 @@
 // Serwis administratora - używa prawdziwych API
-import { Tree, Species, Comment, User } from '../types';
+import { Tree, Species, User } from '../types';
 import { applicationsService } from './applicationsService';
 import { treesService } from './treesService';
 
@@ -116,65 +116,6 @@ class AdminService {
     }
   }
 
-  // Pobierz wszystkie komentarze (prawdziwe API)
-  async getAllComments(): Promise<Comment[]> {
-    try {
-      console.log('API Call: getAllComments (admin)');
-      const token = localStorage.getItem('auth_token');
-      
-      const response = await fetch(`${this.baseUrl}/Comments`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const comments = await response.json();
-      return comments.map((comment: any) => ({
-        id: comment.id,
-        treeSubmissionId: comment.treeSubmissionId,
-        treePolishName: comment.treePolishName || 'Nieznane drzewo',
-        userId: comment.userId,
-        userData: {
-          userName: comment.userData?.userName || comment.userName || 'Nieznany użytkownik',
-          avatar: comment.userData?.avatar || comment.avatar || ''
-        },
-        content: comment.content,
-        datePosted: comment.datePosted || comment.createdAt,
-        isLegend: comment.isLegend || false,
-        votes: {
-          like: comment.votes?.like || 0,
-          dislike: comment.votes?.dislike || 0
-        },
-        userVote: comment.userVote || null
-      }));
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-      // Return mock data when API fails
-      return [
-        {
-          id: '1',
-          treeSubmissionId: '1',
-          treePolishName: 'Dąb szypułkowy',
-          userId: '1',
-          userData: {
-            userName: 'Jan Kowalski',
-            avatar: ''
-          },
-          content: 'To jest testowy komentarz',
-          datePosted: new Date().toISOString(),
-          isLegend: false,
-          votes: { like: 3, dislike: 0 },
-          userVote: null
-        }
-      ];
-    }
-  }
 
   // Pobierz wszystkie gatunki (prawdziwe API)
   async getAllSpecies(): Promise<Species[]> {
@@ -354,25 +295,6 @@ class AdminService {
     }
   }
 
-  // Usuń komentarz
-  async deleteComment(commentId: string): Promise<void> {
-    try {
-      console.log(`API Call: deleteComment ${commentId} (admin)`);
-      const response = await fetch(`${this.baseUrl}/Comments/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Error deleting comment:', error);
-      throw error;
-    }
-  }
 
   // Usuń drzewo (używa istniejącego API)
   async deleteTree(treeId: string): Promise<void> {
@@ -448,7 +370,7 @@ class AdminService {
         this.getAllUsers()
       ]);
       
-      const totalComments = trees.reduce((sum, tree) => sum + (tree.commentCount || 0), 0);
+      const totalComments = 0; // No comments anymore
       
       return {
         totalUsers: users.length,

@@ -2,11 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TreePost } from '../components/Feed/TreePost';
 import { TreePost as TreePostType } from '../types';
 import { treesService } from '../services/treesService';
-import { commentsService } from '../services/commentsService';
 import { api } from '../services/api';
-import { GlassButton } from '../components/UI/GlassButton';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { Search } from 'lucide-react';
 
 export const FeedPage: React.FC = () => {
@@ -16,11 +13,9 @@ export const FeedPage: React.FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortBy, setSortBy] = useState<'recent' | 'popular'>('recent');
   const [filterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
   
   const POSTS_PER_PAGE = 5; // Display 5 posts at a time
 
@@ -41,12 +36,7 @@ export const FeedPage: React.FC = () => {
 
       // Convert trees to posts format
       const allPostsData: TreePostType[] = sortedTrees.map(tree => ({
-        ...tree,
-        likes: tree.votes?.like || 0,
-        dislikes: tree.votes?.dislike || 0,
-        userVote: null, // Will be set by API if user has voted
-        comments: [], // Comments will be loaded on demand
-        commentCount: tree.commentCount || 0
+        ...tree
       }));
 
       setAllPosts(allPostsData);
@@ -62,12 +52,7 @@ export const FeedPage: React.FC = () => {
       // Fallback to mock data if API fails
       const mockTrees = await api.getTrees();
       const allPostsData: TreePostType[] = mockTrees.map(tree => ({
-        ...tree,
-        likes: tree.votes?.like || 0,
-        dislikes: tree.votes?.dislike || 0,
-        userVote: null,
-        comments: [],
-        commentCount: tree.commentCount || 0
+        ...tree
       }));
 
       setAllPosts(allPostsData);
@@ -144,137 +129,6 @@ export const FeedPage: React.FC = () => {
     }
   }, [displayedPosts, location.state]);
 
-  // Handle tree voting
-  const handleLike = async (postId: string) => {
-    try {
-      const post = displayedPosts.find(p => p.id === postId);
-      if (!post) return;
-
-      const wasLiked = post.userVote === 'like';
-      const wasDisliked = post.userVote === 'dislike';
-
-      if (isAuthenticated) {
-        let updatedVotes;
-        if (wasLiked) {
-          // Remove existing like
-          updatedVotes = await treesService.removeVoteFromTree(postId);
-        } else {
-          // Add like (or change from dislike to like)
-          updatedVotes = await treesService.voteOnTree(postId, 'like');
-        }
-
-        // Update local state with API response
-        setDisplayedPosts(prevPosts =>
-          prevPosts.map(p => {
-            if (p.id === postId) {
-              return {
-                ...p,
-                likes: updatedVotes.like,
-                dislikes: updatedVotes.dislike,
-                userVote: wasLiked ? null : 'like'
-              };
-            }
-            return p;
-          })
-        );
-      } else {
-        // Fallback to local state update for non-authenticated users
-        setDisplayedPosts(prevPosts =>
-          prevPosts.map(p => {
-            if (p.id === postId) {
-              return {
-                ...p,
-                likes: wasLiked ? p.likes - 1 : p.likes + 1,
-                dislikes: wasDisliked ? p.dislikes - 1 : p.dislikes,
-                userVote: wasLiked ? null : 'like'
-              };
-            }
-            return p;
-          })
-        );
-      }
-    } catch (error) {
-      console.error('Error liking post:', error);
-    }
-  };
-
-  const handleDislike = async (postId: string) => {
-    try {
-      const post = displayedPosts.find(p => p.id === postId);
-      if (!post) return;
-
-      const wasLiked = post.userVote === 'like';
-      const wasDisliked = post.userVote === 'dislike';
-
-      if (isAuthenticated) {
-        let updatedVotes;
-        if (wasDisliked) {
-          // Remove existing dislike
-          updatedVotes = await treesService.removeVoteFromTree(postId);
-        } else {
-          // Add dislike (or change from like to dislike)
-          updatedVotes = await treesService.voteOnTree(postId, 'dislike');
-        }
-
-        // Update local state with API response
-        setDisplayedPosts(prevPosts =>
-          prevPosts.map(p => {
-            if (p.id === postId) {
-              return {
-                ...p,
-                likes: updatedVotes.like,
-                dislikes: updatedVotes.dislike,
-                userVote: wasDisliked ? null : 'dislike'
-              };
-            }
-            return p;
-          })
-        );
-      } else {
-        // Fallback to local state update for non-authenticated users
-        setDisplayedPosts(prevPosts =>
-          prevPosts.map(p => {
-            if (p.id === postId) {
-              return {
-                ...p,
-                likes: wasLiked ? p.likes - 1 : p.likes,
-                dislikes: wasDisliked ? p.dislikes - 1 : p.dislikes + 1,
-                userVote: wasDisliked ? null : 'dislike'
-              };
-            }
-            return p;
-          })
-        );
-      }
-    } catch (error) {
-      console.error('Error disliking post:', error);
-    }
-  };
-
-  // Handle comment creation
-  const handleComment = async (postId: string, commentText: string, userId?: string) => {
-    try {
-      if (isAuthenticated) {
-        const newComment = await commentsService.addTreeComment(postId, commentText, userId);
-        
-        // Update local state
-        setDisplayedPosts(prevPosts =>
-          prevPosts.map(post => {
-            if (post.id === postId) {
-              return {
-                ...post,
-                comments: [newComment, ...post.comments],
-                commentCount: post.commentCount + 1
-              };
-            }
-            return post;
-          })
-        );
-      }
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    }
-  };
 
   // Handle post deletion
   const handleDeletePost = (postId: string) => {
@@ -302,9 +156,7 @@ export const FeedPage: React.FC = () => {
     .filter(post => filterStatus === 'all' || post.status === filterStatus)
     .filter(post => searchPosts([post], searchQuery).length > 0)
     .sort((a, b) => {
-      if (sortBy === 'popular') {
-        return (b.likes - b.dislikes) - (a.likes - a.dislikes);
-      }
+      // Always sort by date since we removed likes/dislikes
       return new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime();
     });
 
@@ -321,27 +173,6 @@ export const FeedPage: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-2">
-            <GlassButton
-              onClick={() => setSortBy('recent')}
-              variant={sortBy === 'recent' ? 'primary' : 'secondary'}
-              size="sm"
-            >
-              Najnowsze
-            </GlassButton>
-            <GlassButton
-              onClick={() => setSortBy('popular')}
-              variant={sortBy === 'popular' ? 'primary' : 'secondary'}
-              size="sm"
-            >
-              Popularne
-            </GlassButton>
-          </div>
-        </div>
-
         {/* Search */}
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <div className="flex gap-3">
@@ -379,9 +210,6 @@ export const FeedPage: React.FC = () => {
             >
               <TreePost
                 post={post}
-                onLike={handleLike}
-                onDislike={handleDislike}
-                onComment={handleComment}
                 onDelete={handleDeletePost}
               />
             </div>
@@ -431,7 +259,6 @@ export const FeedPage: React.FC = () => {
             </div>
           </div>
         )}
-        </div>
       </div>
     </div>
   );

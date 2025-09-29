@@ -47,7 +47,11 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           maps: ['@googlemaps/js-api-loader'],
           ui: ['framer-motion', '@headlessui/react', 'lucide-react']
-        }
+        },
+        // Add timestamp to filenames for cache busting
+        entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+        chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+        assetFileNames: `assets/[name]-[hash]-${Date.now()}.[ext]`
       }
     }
   }

@@ -1,268 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { MessageCircle, Share2, ThumbsUp, ThumbsDown, Trash2, X } from 'lucide-react';
-import { TreePost as TreePostType, Comment } from '../../types';
+import React, { useState } from 'react';
+import { Share2, Trash2, X, MapPin } from 'lucide-react';
+import { TreePost as TreePostType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GlassButton } from '../UI/GlassButton';
 import { DeleteConfirmationModal } from '../UI/DeleteConfirmationModal';
-import { commentsService } from '../../services/commentsService';
 import { treesService } from '../../services/treesService';
-import { useAuth } from '../../context/AuthContext';
-import { useCommentState, useUIState } from '../../hooks/useLocalState';
+import { parseTreeDescription } from '../../utils/descriptionParser';
 
 interface TreePostProps {
   post: TreePostType;
-  onLike: (postId: string) => void;
-  onDislike: (postId: string) => void;
-  onComment: (postId: string, comment: string, userId?: string) => void;
   onDelete?: (postId: string) => void;
-  getComment?: (postId: string) => string;
-  setComment?: (postId: string, comment: string) => void;
 }
 
 export const TreePost: React.FC<TreePostProps> = ({
   post,
-  onLike,
-  onDislike,
-  onComment,
-  onDelete,
-  getComment,
-  setComment
+  onDelete
 }) => {
-  // Używamy hooków do zarządzania lokalnym stanem
-  const [newComment, setNewComment, { clearValue: clearComment }] = useCommentState(post.id);
-  const [showComments, setShowComments] = useUIState('feed', `showComments_${post.id}`, false);
-  
-  // Jeśli mamy funkcje z props, używaj ich zamiast lokalnego stanu
-  const commentValue = getComment ? getComment(post.id) : newComment;
-  const updateComment = setComment ? (value: string) => setComment(post.id, value) : setNewComment;
-  
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
-  const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
-  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
-  const { user } = useAuth();
 
-  // Load comments only when showComments is true
-  useEffect(() => {
-    if (showComments && !commentsLoaded) {
-      loadComments();
-    }
-  }, [showComments, commentsLoaded]);
+  // Parse description using the same logic as TreeReportForm
+  const parsedDescription = post.description ? parseTreeDescription(post.description) : null;
 
-  const loadComments = async () => {
-    setIsLoadingComments(true);
-    try {
-      // Load comments for this specific tree using API
-      const commentsData = await commentsService.getTreeCommentsFromAPI(post.id);
-      console.log(`Loaded comments for tree ${post.id}:`, commentsData);
-      
-      // Remove duplicates based on comment ID
-      const uniqueComments = commentsData.filter((comment, index, self) => 
-        index === self.findIndex(c => c.id === comment.id)
-      );
-      
-      setComments(uniqueComments);
-      setCommentsLoaded(true);
-    } catch (error) {
-      console.error('Error loading comments from API:', error);
-      // Fallback to localStorage
-      const commentsData = commentsService.getTreeComments(post.id);
-      console.log(`Fallback comments for tree ${post.id}:`, commentsData);
-      
-      // Remove duplicates based on comment ID
-      const uniqueComments = commentsData.filter((comment, index, self) => 
-        index === self.findIndex(c => c.id === comment.id)
-      );
-      
-      setComments(uniqueComments);
-      setCommentsLoaded(true);
-    } finally {
-      setIsLoadingComments(false);
-    }
-  };
-
-  // Find the most popular comment and check if it should be marked as legend
-  // Don't sort comments automatically - they will be sorted only on page refresh
-  const mostPopularComment = comments.length > 0 ? comments.reduce((prev, current) => 
-    (prev.votes.like > current.votes.like) ? prev : current
-  ) : null;
-  const secondMostPopularComment = comments.length > 1 ? comments
-    .filter(comment => comment.id !== mostPopularComment?.id)
-    .reduce((prev, current) => 
-      (prev.votes.like > current.votes.like) ? prev : current
-    ) : null;
-  
-  // Check if the most popular comment should be marked as legend
-  const shouldShowLegend = mostPopularComment && 
-    mostPopularComment.votes.like > 0 && 
-    (!secondMostPopularComment || 
-     (mostPopularComment.votes.like - secondMostPopularComment.votes.like) >= 3);
-
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentValue.trim()) return;
-
-    setIsSubmittingComment(true);
-    try {
-      // Pass userId to the comment creation
-      if (user?.id) {
-        await onComment(post.id, commentValue, user.id);
-      } else {
-        await onComment(post.id, commentValue);
-      }
-      clearComment(); // Clear the comment input using the hook's clear function
-      // Reload comments after adding new one
-      await loadComments();
-    } catch (error) {
-      console.error('Error submitting comment:', error);
-    } finally {
-      setIsSubmittingComment(false);
-    }
-  };
-
-  const handleCommentVote = async (commentId: string, vote: 'like' | 'dislike') => {
-    try {
-      const comment = comments.find(c => c.id === commentId);
-      if (!comment) return;
-
-      const wasLiked = comment.userVote === 'like';
-      const wasDisliked = comment.userVote === 'dislike';
-
-      // Update local state immediately for better UX
-      setComments(prevComments =>
-        prevComments.map(c =>
-          c.id === commentId
-            ? {
-                ...c,
-                votes: {
-                  like: vote === 'like' && !wasLiked ? c.votes.like + 1 : 
-                        vote === 'like' && wasLiked ? c.votes.like - 1 : c.votes.like,
-                  dislike: vote === 'dislike' && !wasDisliked ? c.votes.dislike + 1 : 
-                           vote === 'dislike' && wasDisliked ? c.votes.dislike - 1 : c.votes.dislike
-                },
-                userVote: (vote === 'like' && wasLiked) || (vote === 'dislike' && wasDisliked) 
-                  ? null 
-                  : vote
-              }
-            : c
-        )
-      );
-
-      // Call API in background
-      try {
-        let updatedVotes;
-        if (vote === 'like' && wasLiked) {
-          // Remove existing like
-          updatedVotes = await commentsService.removeVoteFromComment(commentId);
-        } else if (vote === 'dislike' && wasDisliked) {
-          // Remove existing dislike
-          updatedVotes = await commentsService.removeVoteFromComment(commentId);
-        } else {
-          // Add vote (or change from one type to another)
-          const voteType = vote === 'like' ? 'Like' : 'Dislike';
-          updatedVotes = await commentsService.voteComment(commentId, voteType);
-        }
-
-        // Update with API response
-        setComments(prevComments =>
-          prevComments.map(c =>
-            c.id === commentId
-              ? { 
-                  ...c, 
-                  votes: updatedVotes,
-                  userVote: (vote === 'like' && wasLiked) || (vote === 'dislike' && wasDisliked) 
-                    ? null 
-                    : vote
-                }
-              : c
-          )
-        );
-      } catch (error) {
-        console.error('Error voting on comment:', error);
-        // Revert local changes on error
-        setComments(prevComments =>
-          prevComments.map(c =>
-            c.id === commentId
-              ? {
-                  ...c,
-                  votes: {
-                    like: vote === 'like' && !wasLiked ? c.votes.like - 1 : 
-                          vote === 'like' && wasLiked ? c.votes.like + 1 : c.votes.like,
-                    dislike: vote === 'dislike' && !wasDisliked ? c.votes.dislike - 1 : 
-                             vote === 'dislike' && wasDisliked ? c.votes.dislike + 1 : c.votes.dislike
-                  },
-                  userVote: wasLiked ? 'like' : wasDisliked ? 'dislike' : null
-                }
-              : c
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error voting on comment:', error);
-    }
-  };
-
-  const handleDeleteCommentClick = (commentId: string) => {
-    // TODO: TEMPORARY - Always try to delete, let API handle permission validation
-    // TODO: In the future, this should be: user && comment?.userId && comment.userId === user.id
-    setCommentToDelete(commentId);
-    setShowDeleteCommentModal(true);
-  };
-
-  const handleDeleteComment = async () => {
-    if (!commentToDelete) return;
-    
-    const comment = comments.find(c => c.id === commentToDelete);
-    // TODO: TEMPORARY - Always try to delete, let API handle permission validation
-    const hasPermission = true; // Always try to delete for now
-    
-    console.log('Attempting to delete comment:', {
-      hasPermission,
-      user: user?.id,
-      userName: user?.name,
-      userFullData: user,
-      commentUserName: comment?.userData?.userName,
-      commentUserId: comment?.userId, // This might be null/undefined for now
-      commentId: commentToDelete,
-      comment: comment
-    });
-    
-    try {
-      // Remove from local state immediately
-      setComments(prevComments => prevComments.filter(c => c.id !== commentToDelete));
-      
-      // Call API in background
-      try {
-        await commentsService.deleteComment(commentToDelete);
-        console.log(`Comment ${commentToDelete} deleted successfully`);
-        setShowDeleteCommentModal(false);
-        setCommentToDelete(null);
-      } catch (error: any) {
-        console.error('Error deleting comment:', error);
-        
-        // Handle specific error cases
-        if (error.message?.includes('403')) {
-          console.log('403 Error - No permission to delete this comment');
-        } else if (error.message?.includes('404') || error.message?.includes('Comment not found')) {
-          console.log('404 Error - Comment not found:', error.message);
-        } else if (error.message?.includes('401')) {
-          console.log('401 Error - Session expired');
-        } else {
-          console.log('Other error:', error.message);
-        }
-        
-        // Revert local changes on error
-        await loadComments();
-      }
-    } catch (error) {
-      console.error('Error deleting comment:', error);
-    }
-  };
 
   // Handle tree post deletion
   const handleDeletePost = async () => {
@@ -273,9 +32,6 @@ export const TreePost: React.FC<TreePostProps> = ({
     const hasPermission = true; // Always try to delete for now
     console.log('Attempting to delete post:', {
       hasPermission,
-      user: user?.id,
-      userName: user?.name,
-      userFullData: user,
       postUserName: post.userData.userName,
       postUserId: post.userData.userId, // This is null/undefined for now
       postId: post.id,
@@ -357,8 +113,6 @@ export const TreePost: React.FC<TreePostProps> = ({
               onClick={() => {
                 console.log('Delete post clicked:', {
                   hasPermission: canDeletePost,
-                  user: user?.id,
-                  userName: user?.name,
                   postUserName: post.userData.userName,
                   postUserId: post.userData.userId, // This is null/undefined for now
                   postId: post.id
@@ -376,228 +130,103 @@ export const TreePost: React.FC<TreePostProps> = ({
 
       {/* Content */}
       <div className="mb-4 sm:mb-6">
-        <h3 className="font-medium text-gray-900 dark:text-white text-lg sm:text-xl lg:text-2xl mb-2 sm:mb-3">
-          {post.species}
-        </h3>
-        <p className="text-sm sm:text-base italic text-gray-500 dark:text-gray-400 mb-2 sm:mb-3">
-          {post.speciesLatin}
-        </p>
-        {post.description && (
-          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
+
+        {/* User description */}
+        {parsedDescription?.userDescription && (
+          <div className="mb-4 sm:mb-6">
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
+              {parsedDescription.userDescription}
+            </p>
+          </div>
+        )}
+
+        {/* Stories section */}
+        {parsedDescription?.stories && (
+          <div className="mb-4 sm:mb-6">
+            <h5 className="text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Historie i legendy:
+            </h5>
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
+              {parsedDescription.stories}
+            </p>
+          </div>
+        )}
+
+        {/* Detailed health conditions */}
+        {parsedDescription?.detailedHealth && parsedDescription.detailedHealth.length > 0 && (
+          <div className="mb-4 sm:mb-6">
+            <h5 className="text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Stany zdrowia drzewa:
+            </h5>
+            <div className="flex flex-wrap gap-2">
+              {parsedDescription.detailedHealth.map((condition, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs rounded-full"
+                >
+                  {condition}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fallback for old format descriptions */}
+        {parsedDescription && !parsedDescription.hasStructuredFormat && post.description && (
+          <div className="mb-4 sm:mb-6">
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
             {post.description}
           </p>
+          </div>
         )}
       </div>
 
       {/* Photos */}
         {post.imageUrls && post.imageUrls.length > 0 && (
           <div className="mb-4 sm:mb-6">
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {post.imageUrls.map((image, index) => (
+              <div key={index} className="relative">
                 <img
-                  key={index}
                   src={image}
                   crossOrigin={image.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
                   referrerPolicy="no-referrer"
                   alt={`Tree photo ${index + 1}`}
-                  className="rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ maxHeight: '80vh', maxWidth: '100%', objectFit: 'contain' }}
+                  className="w-full h-48 sm:h-56 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-md"
                   onClick={() => setEnlargedImage(image)}
                 />
+                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 rounded-lg transition-all duration-300 flex items-center justify-center">
+                  <div className="bg-white/80 dark:bg-gray-800/80 rounded-full p-2 opacity-0 hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      {index + 1}/{post.imageUrls.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
               ))}
             </div>
           </div>
         )}
 
-
-
-      {/* Actions */}
-      <div className="flex items-center justify-between space-x-2 sm:space-x-4">
-        <div className="flex items-center space-x-2">
-           <button
-             onClick={() => onLike(post.id)}
-             className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all ${
-               post.userVote === 'like' 
-                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                 : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-             }`}
-           >
-             <ThumbsUp className="w-6 h-6" />
-             <span className="text-sm font-medium">{post.likes}</span>
-           </button>
-          
-           <button
-             onClick={() => onDislike(post.id)}
-             className={`danger flex items-center space-x-1 px-3 py-2 rounded-lg transition-all ${
-               post.userVote === 'dislike' 
-                 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-                 : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-             }`}
-           >
-             <ThumbsDown className="w-6 h-6" />
-             <span className="text-sm font-medium">{post.dislikes}</span>
-           </button>
-          
-           <button
-             onClick={() => setShowComments(!showComments)}
-             className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 min-w-[120px] transition-colors"
-           >
-             <MessageCircle className="w-5 h-5" />
-             <span className="text-sm font-medium">
-               {showComments ? 'Ukryj' : 'Komentarze'}
-               {post.commentCount > 0 && ` (${post.commentCount})`}
-             </span>
-           </button>
-        </div>
+        {/* Species information */}
+        <div className="mb-4 sm:mb-6">
+          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Gatunek:
+          </p>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-2">
+            {post.species}
+          </p>
+          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Nazwa łacińska:
+          </p>
+          <p className="text-sm sm:text-base italic text-gray-600 dark:text-gray-400">
+            {post.speciesLatin}{!post.speciesLatin.endsWith('L.') ? ' L.' : ''}
+          </p>
       </div>
 
-      {/* Comments Section */}
-      {showComments && (
-        <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-            {/* Comment Form */}
-            <form onSubmit={handleSubmitComment} className="mb-4">
-              <div className="flex space-x-4">
-                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 dark:text-green-400 font-semibold text-base">Ty</span>
-                </div>
-                <div className="flex-1">
-                  <textarea
-                    value={commentValue}
-                    onChange={(e) => updateComment(e.target.value)}
-                    placeholder="Napisz komentarz..."
-                    rows={3}
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
-                  />
-                  <div className="flex justify-end mt-3">
-                    <GlassButton
-                      type="submit"
-                      disabled={!commentValue.trim() || isSubmittingComment}
-                      variant="primary"
-                      size="sm"
-                    >
-                      {isSubmittingComment ? 'Wysyłanie...' : 'Komentuj'}
-                    </GlassButton>
-                  </div>
-                </div>
-              </div>
-            </form>
 
-            {/* Comments List */}
-            <div className="space-y-4">
-              {isLoadingComments ? (
-                <div className="text-center py-4">
-                  <div className="text-gray-500 dark:text-gray-400">Ładowanie komentarzy...</div>
-                </div>
-              ) : comments.length === 0 ? (
-                <div className="text-center py-4">
-                  <div className="text-gray-500 dark:text-gray-400">Brak komentarzy</div>
-                </div>
-              ) : (
-                comments.map((comment) => {
-                  const isMostPopular = comment.id === mostPopularComment?.id && shouldShowLegend;
-                  return (
-                <div key={comment.id} className={`flex space-x-4 ${isMostPopular ? 'bg-green-50 dark:bg-green-900/20 rounded-lg' : ''}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
-                    isMostPopular 
-                      ? 'bg-green-100 dark:bg-green-900/30' 
-                      : 'bg-gray-100 dark:bg-gray-700'
-                  }`}>
-                    {comment.userData.avatar ? (
-                      <img 
-                        src={comment.userData.avatar} 
-                        alt={comment.userData.userName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className={`font-semibold text-base ${
-                        isMostPopular 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`}>
-                        {comment.userData.userName.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <span className={`font-medium text-base ${
-                        isMostPopular 
-                          ? 'text-green-800 dark:text-green-200' 
-                          : 'text-gray-900 dark:text-white'
-                      }`}>
-                        {comment.userData.userName}
-                      </span>
-                      <span className={`text-base ${
-                        isMostPopular 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-gray-500'
-                      }`}>
-                        {new Date(comment.datePosted).toLocaleDateString('pl-PL')}
-                      </span>
-                      {isMostPopular && (
-                        <span className="px-2 py-1 bg-green-200 text-green-800 dark:bg-green-800/30 dark:text-green-300 text-xs rounded-full">
-                          Legenda
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-base mb-3 ${
-                      isMostPopular 
-                        ? 'text-green-700 dark:text-green-300' 
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}>
-                      {comment.content}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <button
-                          onClick={() => handleCommentVote(comment.id, 'like')}
-                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                            comment.userVote === 'like' 
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                              : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          <ThumbsUp className="w-5 h-5" />
-                          <span className="text-sm font-medium min-w-[20px] text-center">{comment.votes.like}</span>
-                        </button>
-                        
-                        <button
-                          onClick={() => handleCommentVote(comment.id, 'dislike')}
-                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                            comment.userVote === 'dislike' 
-                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-                              : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          <ThumbsDown className="w-5 h-5" />
-                          <span className="text-sm font-medium min-w-[20px] text-center">{comment.votes.dislike}</span>
-                        </button>
-                      </div>
-                      
-                      {/* Delete button - show for everyone, validation happens on click */}
-                      {/* TODO: TEMPORARY - Show delete button for everyone, validation happens on click */}
-                      {/* TODO: In the future, this should be: user && comment.userId === user.id */}
-                      {user && (
-                        <button
-                          onClick={() => {
-                            // TODO: TEMPORARY - Always try to delete, let API handle permission validation
-                            handleDeleteCommentClick(comment.id);
-                          }}
-                          className="p-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                          title="Usuń komentarz"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                  );
-                })
-              )}
-            </div>
-        </div>
-      )}
+
+
 
       {/* Delete Post Confirmation Modal */}
       <DeleteConfirmationModal
@@ -611,20 +240,6 @@ export const TreePost: React.FC<TreePostProps> = ({
         isLoading={isDeleting}
       />
 
-      {/* Delete Comment Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={showDeleteCommentModal}
-        onClose={() => {
-          setShowDeleteCommentModal(false);
-          setCommentToDelete(null);
-        }}
-        onConfirm={handleDeleteComment}
-        title="Usuń komentarz"
-        message="Czy na pewno chcesz usunąć ten komentarz? Ta akcja jest nieodwracalna."
-        confirmText="Usuń komentarz"
-        cancelText="Anuluj"
-        isLoading={false}
-      />
 
       {/* Enlarged Image Modal */}
       <AnimatePresence>

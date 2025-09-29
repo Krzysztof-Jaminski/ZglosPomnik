@@ -114,17 +114,6 @@ export function useLocalState<T>(
   return [storedValue, setValue, { clearValue, resetValue }] as const;
 }
 
-/**
- * Hook do zarządzania stanem komentarza z automatycznym zapisywaniem
- * @param postId - ID posta
- * @param initialValue - Wartość początkowa komentarza
- */
-export function useCommentState(postId: string, initialValue: string = '') {
-  return useLocalState(`comment_${postId}`, initialValue, {
-    persist: true,
-    clearOnInit: false
-  });
-}
 
 /**
  * Hook do zarządzania stanem wyszukiwania z automatycznym zapisywaniem
@@ -198,8 +187,7 @@ export function useClearUserState() {
             key.startsWith('feed_selected_') ||
             key.startsWith('form_') ||
             key.startsWith('encyclopedia_ui_') ||
-            key.startsWith('feed_ui_') ||
-            key.startsWith('page_comments_')) {
+            key.startsWith('feed_ui_')) {
           keysToRemove.push(key);
         }
       }
@@ -269,49 +257,3 @@ export function useFormStateWithValidation<T extends Record<string, any>>(
 }
 
 
-/**
- * Hook do zarządzania komentarzami dla wszystkich postów na stronie
- * @param pageKey - Klucz strony
- */
-export function usePageCommentsState(pageKey: string) {
-  const [commentsState, setCommentsState] = useLocalState<Record<string, string>>(
-    `page_comments_${pageKey}`, 
-    {}, 
-    {
-      persist: true,
-      clearOnInit: false
-    }
-  );
-
-  const setComment = useCallback((postId: string, comment: string) => {
-    setCommentsState(prev => ({
-      ...prev,
-      [postId]: comment
-    }));
-  }, [setCommentsState]);
-
-  const getComment = useCallback((postId: string) => {
-    const comment = commentsState[postId] || '';
-    return comment;
-  }, [commentsState]);
-
-  const clearComment = useCallback((postId: string) => {
-    setCommentsState(prev => {
-      const newState = { ...prev };
-      delete newState[postId];
-      return newState;
-    });
-  }, [setCommentsState]);
-
-  const clearAllComments = useCallback(() => {
-    setCommentsState({});
-  }, [pageKey, setCommentsState]);
-
-  return {
-    commentsState,
-    setComment,
-    getComment,
-    clearComment,
-    clearAllComments
-  };
-}

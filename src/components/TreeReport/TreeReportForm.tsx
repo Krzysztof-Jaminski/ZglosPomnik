@@ -8,6 +8,7 @@ import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { GlassButton } from '../UI/GlassButton';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { createTreeDescription } from '../../utils/descriptionParser';
 
 
 interface TreeReportFormProps {
@@ -34,8 +35,11 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const [height, setHeight] = useState<string>('');
   const [plotNumber, setPlotNumber] = useState<string>('');
   const [condition, setCondition] = useState<string>('dobry');
+  const [detailedHealth, setDetailedHealth] = useState<string[]>([]);
   const [isAlive, setIsAlive] = useState<boolean>(true);
   const [estimatedAge, setEstimatedAge] = useState<string>('');
+  const [treeName, setTreeName] = useState<string>('');
+  const [treeStories, setTreeStories] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -45,7 +49,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isOnline = useOnlineStatus();
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
   // Load form data from localStorage on mount
@@ -59,8 +63,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         setHeight(formData.height || '');
         setPlotNumber(formData.plotNumber || '');
         setCondition(formData.condition || 'dobry');
+        setDetailedHealth(formData.detailedHealth || []);
         // isAlive nie jest przywracane z localStorage - zostaje domyślne
         setEstimatedAge(formData.estimatedAge || '');
+        setTreeStories(formData.treeStories || '');
         setNotes(formData.notes || '');
         
         // Restore photos from base64
@@ -158,7 +164,9 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           height,
           plotNumber,
           condition,
+          detailedHealth,
           estimatedAge,
+          treeStories,
           notes,
           photos: photoBase64s,
           latitude,
@@ -171,7 +179,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     };
     
     saveFormData();
-  }, [speciesQuery, pierśnica, height, plotNumber, condition, estimatedAge, notes, photos, latitude, longitude]);
+  }, [speciesQuery, pierśnica, height, plotNumber, condition, detailedHealth, estimatedAge, treeStories, notes, photos, latitude, longitude]);
 
   // Convert File to base64 for localStorage
   const fileToBase64 = (file: File): Promise<string> => {
@@ -256,6 +264,9 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           return;
         }
 
+        // Create description using the same logic as display components
+        const combinedDescription = createTreeDescription(treeName, notes, treeStories, detailedHealth);
+
         // Transform data to match API specification
         const apiTreeData: ApiTreeSubmission = {
           speciesId: selectedSpecies.id.toUpperCase(), // Convert to uppercase for backend
@@ -269,13 +280,13 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           condition: condition,
           isAlive: isAlive,
           estimatedAge: estimatedAge ? parseInt(estimatedAge) : 0,
-          description: notes,
+          description: combinedDescription,
           isMonument: false // Default to false, can be changed later
         };
 
         // Submit to API with photos
         
-        const result = await treesService.submitTreeReport(apiTreeData, photos);
+        await treesService.submitTreeReport(apiTreeData, photos);
         
         setSubmitSuccess(true);
         
@@ -286,6 +297,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         setSelectedSpecies(null);
         setSpeciesQuery('');
         setNotes('');
+        setTreeStories('');
         setPhotos([]);
         setPierśnica('');
         setHeight('');
@@ -486,8 +498,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
                                       height,
                                       plotNumber,
                                       condition,
+                                      detailedHealth,
                                       isAlive,
                                       estimatedAge,
+                                      treeStories,
                                       notes,
                                       photos: photoBase64s,
                                       latitude,
@@ -582,6 +596,20 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             </p>
           </div>
         )}
+
+        {/* Tree name */}
+        <div className="space-y-2 sm:space-y-3">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
+            Nazwa/Imię drzewa
+          </label>
+          <input
+            type="text"
+            value={treeName}
+            onChange={(e) => setTreeName(e.target.value)}
+            placeholder="Dąb Bartek"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+          />
+        </div>
 
         {/* Photos */}
         <div>
@@ -686,13 +714,13 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </div>
           <div>
             <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Numer działki <span className="text-gray-500">(opcjonalny)</span>
+              Adres drzewa <span className="text-gray-500">(opcjonalny)</span>
             </label>
             <input
               type="text"
               value={plotNumber}
               onChange={(e) => setPlotNumber(e.target.value)}
-              placeholder="np. 123/4"
+              placeholder="np. ul. Słowackiego 15, 30-001 Kraków"
               className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
             />
           </div>
@@ -744,6 +772,44 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           </div>
         </div>
 
+        {/* Detailed health conditions */}
+        <div className="space-y-2 sm:space-y-3">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
+            Dodatkowe stany zdrowia drzewa
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+            {[
+              'Posusz',
+              'Złamania',
+              'Ubytki w pniu',
+              'Choroby grzybowe',
+              'Szkodniki',
+              'Uszkodzenia mechaniczne',
+              'Zgnilizna',
+              'Pęknięcia',
+              'Odbarwienia',
+              'Narośla',
+              'Inne uszkodzenia'
+            ].map((healthCondition) => (
+              <label key={healthCondition} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={detailedHealth.includes(healthCondition)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setDetailedHealth(prev => [...prev, healthCondition]);
+                    } else {
+                      setDetailedHealth(prev => prev.filter(item => item !== healthCondition));
+                    }
+                  }}
+                  className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{healthCondition}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
         {/* Notes */}
         <div>
           <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -760,6 +826,25 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             placeholder="Opisz stan drzewa, potrzebne działania, szczególne cechy..."
             rows={5}
             className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[120px]"
+          />
+        </div>
+
+        {/* Tree Stories and Legends */}
+        <div>
+          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Historie i legendy drzewa <span className="text-gray-500">(opcjonalne)</span>
+          </label>
+          <textarea
+            value={treeStories}
+            onChange={(e) => {
+              setTreeStories(e.target.value);
+              // Auto-resize
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
+            placeholder="Podziel się historiami, legendami lub ciekawostkami związanymi z tym drzewem..."
+            rows={4}
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[100px]"
           />
         </div>
 

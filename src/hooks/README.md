@@ -11,12 +11,6 @@ Podstawowy hook do zarządzania stanem z localStorage.
 const [value, setValue, { clearValue, resetValue }] = useLocalState('myKey', 'initialValue');
 ```
 
-### `useCommentState(postId, initialValue)`
-Hook specjalnie dla komentarzy - zapisuje stan komentarza dla konkretnego posta.
-
-```typescript
-const [comment, setComment, { clearValue: clearComment }] = useCommentState('post123', '');
-```
 
 ### `useSearchState(pageKey, initialValue)`
 Hook dla zapisywania stanu wyszukiwania na różnych stronach.
@@ -104,7 +98,6 @@ System automatycznie czyści lokalny stan użytkownika przy:
 ## Struktura Kluczy w localStorage
 
 ```
-comment_{postId} - komentarze dla konkretnego posta
 search_{pageKey} - wyszukiwanie na konkretnej stronie
 {pageKey}_selected_{itemKey} - wybrane elementy
 {pageKey}_ui_{uiKey} - stany UI
@@ -113,19 +106,6 @@ form_{formKey} - dane formularzy
 
 ## Przykłady Użycia
 
-### Zapisywanie komentarza
-```typescript
-const [comment, setComment, { clearValue: clearComment }] = useCommentState(post.id);
-
-// Użytkownik pisze komentarz
-setComment('To jest mój komentarz...');
-
-// Przechodzi na inną zakładkę - komentarz zostaje zapisany
-// Wraca na zakładkę - komentarz jest przywrócony
-
-// Po wysłaniu komentarza
-clearComment(); // Czyści pole komentarza
-```
 
 ### Zapisywanie wyszukiwania
 ```typescript
