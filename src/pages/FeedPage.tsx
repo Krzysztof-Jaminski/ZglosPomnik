@@ -202,7 +202,7 @@ export const FeedPage: React.FC = () => {
 
       {/* Posts */}
       <div className="flex-1 overflow-y-auto py-4">
-        <div className="space-y-8 sm:space-y-12 w-full sm:px-4 lg:px-6">
+        <div className="space-y-8 sm:space-y-12 w-full px-6 sm:px-8">
           {filteredAndSortedPosts.map((post) => (
             <div
               key={post.id}
