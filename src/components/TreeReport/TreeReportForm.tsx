@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { X, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Species, ApiTreeSubmission } from '../../types';
 import { speciesService } from '../../services/speciesService';
@@ -9,6 +9,9 @@ import { GlassButton } from '../UI/GlassButton';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createTreeDescription } from '../../utils/descriptionParser';
+import { TreeReportFormSectionSpecies } from './TreeReportFormSectionSpecies';
+import { TreeReportFormSectionDetails } from './TreeReportFormSectionDetails';
+import { TreeReportFormSectionNotes } from './TreeReportFormSectionNotes';
 
 
 interface TreeReportFormProps {
@@ -16,13 +19,17 @@ interface TreeReportFormProps {
   longitude?: number;
   onSubmit?: () => void;
   onCancel?: () => void;
+  photos?: File[];
+  setPhotos?: (photos: File[]) => void;
 }
 
 export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   latitude,
   longitude,
   onSubmit,
-  onCancel
+  onCancel,
+  photos: externalPhotos,
+  setPhotos: setExternalPhotos
 }) => {
   const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
   const [speciesQuery, setSpeciesQuery] = useState('');
@@ -30,24 +37,39 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
   const [showSpeciesPanel, setShowSpeciesPanel] = useState(false);
   const [notes, setNotes] = useState('');
-  const [photos, setPhotos] = useState<File[]>([]);
+  const [photos, setPhotos] = useState<File[]>(externalPhotos || []);
+
+  // Synchronize photos with external state
+  React.useEffect(() => {
+    if (externalPhotos) {
+      setPhotos(externalPhotos);
+    }
+  }, [externalPhotos]);
+
+  // Update external photos when internal photos change
+  const handlePhotosChange = (newPhotos: File[]) => {
+    setPhotos(newPhotos);
+    if (setExternalPhotos) {
+      setExternalPhotos(newPhotos);
+    }
+  };
   const [pierśnica, setPierśnica] = useState<string>('');
   const [height, setHeight] = useState<string>('');
   const [plotNumber, setPlotNumber] = useState<string>('');
   const [condition, setCondition] = useState<string>('dobry');
   const [detailedHealth, setDetailedHealth] = useState<string[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState({
+    health: false,
+    soil: false,
+    environment: false
+  });
   const [isAlive, setIsAlive] = useState<boolean>(true);
   const [estimatedAge, setEstimatedAge] = useState<string>('');
   const [treeName, setTreeName] = useState<string>('');
   const [treeStories, setTreeStories] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
-  
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const isOnline = useOnlineStatus();
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -59,6 +81,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       try {
         const formData = JSON.parse(savedData);
         setSpeciesQuery(formData.speciesQuery || '');
+        setSelectedSpecies(formData.selectedSpecies || null);
+        setTreeName(formData.treeName || '');
         setPierśnica(formData.pierśnica || '');
         setHeight(formData.height || '');
         setPlotNumber(formData.plotNumber || '');
@@ -74,7 +98,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           const restoredPhotos = formData.photos.map((base64: string, index: number) => 
             base64ToFile(base64, `photo_${index}.jpg`)
           );
-          setPhotos(restoredPhotos);
+          handlePhotosChange(restoredPhotos);
         }
       } catch (error) {
         console.error('Error loading saved form data:', error);
@@ -160,6 +184,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         
         const formData = {
           speciesQuery,
+          selectedSpecies,
+          treeName,
           pierśnica,
           height,
           plotNumber,
@@ -179,7 +205,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     };
     
     saveFormData();
-  }, [speciesQuery, pierśnica, height, plotNumber, condition, detailedHealth, estimatedAge, treeStories, notes, photos, latitude, longitude]);
+  }, [speciesQuery, selectedSpecies, treeName, pierśnica, height, plotNumber, condition, detailedHealth, estimatedAge, treeStories, notes, photos, latitude, longitude]);
 
   // Convert File to base64 for localStorage
   const fileToBase64 = (file: File): Promise<string> => {
@@ -215,33 +241,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   };
 
 
-  const handlePhotoAdd = async (files: FileList | null) => {
-    if (files) {
-      const newPhotos = Array.from(files).slice(0, 5 - photos.length);
-      
-      // Walidacja plików
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      
-      for (const file of newPhotos) {
-        if (!allowedTypes.includes(file.type)) {
-          alert(`Plik ${file.name} nie jest prawidłowym obrazem. Dozwolone formaty: JPG, PNG, JPEG`);
-          return;
-        }
-        
-        if (file.size > maxSize) {
-          alert(`Plik ${file.name} jest za duży. Maksymalny rozmiar: 5MB`);
-          return;
-        }
-      }
-      
-      setPhotos(prev => [...prev, ...newPhotos]);
-    }
-  };
-
-  const removePhoto = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,27 +287,26 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         
         await treesService.submitTreeReport(apiTreeData, photos);
         
-        setSubmitSuccess(true);
-        
         // Clear localStorage after successful submission
         localStorage.removeItem('treeReportFormData');
         
         // Reset form
         setSelectedSpecies(null);
         setSpeciesQuery('');
+        setTreeName('');
         setNotes('');
         setTreeStories('');
-        setPhotos([]);
+        handlePhotosChange([]);
         setPierśnica('');
         setHeight('');
         setPlotNumber('');
         setCondition('dobry');
         setIsAlive(true);
         setEstimatedAge('');
+        setDetailedHealth([]);
         
         // Navigate to map after 4 seconds
         setTimeout(() => {
-          setSubmitSuccess(false);
           onSubmit?.();
         }, 4000);
       } else {
@@ -341,7 +339,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 sm:p-8 w-full mx-auto"
+      className="w-full"
     >
       <div className="flex justify-between items-center mb-6">
         {onCancel && (
@@ -367,486 +365,66 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       )}
 
 
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-        {/* Species selection */}
-        <div className="space-y-2 sm:space-y-3">
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
-            Gatunek drzewa
-          </label>
-          
-          {/* Search input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              value={speciesQuery}
-              onChange={(e) => setSpeciesQuery(e.target.value)}
-              onFocus={handleSpeciesInputFocus}
-              placeholder="Polska lub łacińska nazwa"
-              className="w-full pl-10 pr-12 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-            />
-            <button
-              type="button"
-              onClick={() => setShowSpeciesPanel(!showSpeciesPanel)}
-              className="no-focus absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              {showSpeciesPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        {/* Sekcja 1: Gatunek drzewa do Pierśnicy */}
+        <TreeReportFormSectionSpecies
+          speciesQuery={speciesQuery}
+          setSpeciesQuery={setSpeciesQuery}
+          showSpeciesPanel={showSpeciesPanel}
+          setShowSpeciesPanel={setShowSpeciesPanel}
+          handleSpeciesInputFocus={handleSpeciesInputFocus}
+          filteredSpecies={filteredSpecies}
+          isLoadingSpecies={isLoadingSpecies}
+          handleSpeciesSelect={handleSpeciesSelect}
+          selectedSpecies={selectedSpecies}
+          setEnlargedImage={setEnlargedImage}
+          photos={photos}
+          setPhotos={handlePhotosChange}
+          fileToBase64={fileToBase64}
+          navigate={navigate}
+          treeName={treeName}
+          setTreeName={setTreeName}
+          pierśnica={pierśnica}
+          setPierśnica={setPierśnica}
+          height={height}
+          setHeight={setHeight}
+          plotNumber={plotNumber}
+          setPlotNumber={setPlotNumber}
+          condition={condition}
+          setCondition={setCondition}
+          detailedHealth={detailedHealth}
+          setDetailedHealth={setDetailedHealth}
+          isAlive={isAlive}
+          setIsAlive={setIsAlive}
+          estimatedAge={estimatedAge}
+          setEstimatedAge={setEstimatedAge}
+          treeStories={treeStories}
+          setTreeStories={setTreeStories}
+          notes={notes}
+          setNotes={setNotes}
+          latitude={latitude}
+          longitude={longitude}
+        />
 
-          {/* Expandable species panel */}
-          <AnimatePresence>
-            {showSpeciesPanel && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 overflow-hidden"
-              >
-                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-medium text-gray-900 dark:text-white">
-                      Gatunki
-                    </h3>
-                    <span className="text-base text-gray-500">
-                      {filteredSpecies.length} gatunków
-                    </span>
-                  </div>
-                </div>
+        {/* Sekcja 2: Od pierśnicy do dodatkowych informacji */}
+        <TreeReportFormSectionDetails
+          isAlive={isAlive}
+          setIsAlive={setIsAlive}
+          estimatedAge={estimatedAge}
+          setEstimatedAge={setEstimatedAge}
+          detailedHealth={detailedHealth}
+          setDetailedHealth={setDetailedHealth}
+          expandedCategories={expandedCategories}
+          setExpandedCategories={setExpandedCategories}
+        />
 
-                <div className="max-h-[32rem] sm:max-h-[40rem] overflow-y-auto p-3 sm:p-6">
-                  {isLoadingSpecies ? (
-                    <div className="flex items-center justify-center py-4 sm:py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-600"></div>
-                      <span className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-600 dark:text-gray-300">Ładowanie gatunków...</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 sm:space-y-3">
-                      {filteredSpecies.map((species) => (
-                        <div
-                          key={species.id}
-                          className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer overflow-hidden border border-gray-200 dark:border-gray-700"
-                        >
-                          {/* Species card for selection */}
-                          <div
-                            onClick={() => handleSpeciesSelect(species)}
-                            className="p-4 sm:p-6"
-                          >
-                            {/* Header with name and family */}
-                            <div className="mb-4">
-                              <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">
-                                {species.polishName}
-                              </h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-1">
-                                {species.latinName}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                Rodzina: {species.family}
-                              </p>
-                            </div>
-
-                            {/* Images Grid - up to 4 images */}
-                            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8 mb-4">
-                              {species.images.slice(0, 4).map((image, index) => {
-                                const typeLabels = {
-                                  'Tree': 'Całościowe',
-                                  'Leaf': 'Liście', 
-                                  'Bark': 'Kora',
-                                  'Fruit': 'Owoce',
-                                  'Flower': 'Kwiaty'
-                                };
-                                return (
-                                  <div key={index} className="relative group aspect-square sm:aspect-[4/3] lg:aspect-square">
-                                    <img
-                                      src={image.imageUrl}
-                                      alt={image.altText || `${species.polishName} - ${typeLabels[image.type] || 'Zdjęcie'}`}
-                                      className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEnlargedImage(image.imageUrl);
-                                      }}
-                                      crossOrigin={image.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
-                                    />
-                                    <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                                      {typeLabels[image.type] || 'Zdjęcie'}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                              
-                              {/* Fill empty slots if less than 4 images */}
-                              {Array.from({ length: Math.max(0, 4 - species.images.length) }).map((_, index) => (
-                                <div key={`empty-${index}`} className="aspect-square sm:aspect-[4/3] lg:aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                                  <span className="text-xs text-gray-500">Brak zdjęcia</span>
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* More Information Button */}
-                            <div className="mt-3">
-                              <GlassButton
-                                onClick={async () => {
-                                  try {
-                                    // Convert photos to base64 and save
-                                    const photoBase64s = await Promise.all(
-                                      photos.map(file => fileToBase64(file))
-                                    );
-                                    
-                                    const formData = {
-                                      speciesQuery,
-                                      pierśnica,
-                                      height,
-                                      plotNumber,
-                                      condition,
-                                      detailedHealth,
-                                      isAlive,
-                                      estimatedAge,
-                                      treeStories,
-                                      notes,
-                                      photos: photoBase64s,
-                                      latitude,
-                                      longitude
-                                    };
-                                    localStorage.setItem('treeReportFormData', JSON.stringify(formData));
-                                    // Navigate to encyclopedia using React Router with state
-                                    navigate('/encyclopedia', { 
-                                      state: { 
-                                        selectedSpecies: species.id,
-                                        returnTo: 'report'
-                                      }
-                                    });
-                                  } catch (error) {
-                                    console.error('Error saving form data:', error);
-                                  }
-                                }}
-                                variant="primary"
-                                size="sm"
-                                className="w-full"
-                              >
-                                Więcej informacji
-                              </GlassButton>
-                            </div>
-                          </div>
-
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {!isLoadingSpecies && filteredSpecies.length === 0 && (
-                    <div className="text-center py-4 sm:py-8">
-                      <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-                        Nie znaleziono gatunków spełniających kryteria wyszukiwania
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Selected species display */}
-          {selectedSpecies && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-6"
-            >
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <img
-                  src={selectedSpecies.images[0]?.imageUrl || '/logo.png'}
-                  alt={selectedSpecies.images[0]?.altText || selectedSpecies.polishName}
-                  className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
-                  crossOrigin={selectedSpecies.images[0]?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
-                />
-                <div className="flex-1">
-                  <h4 className="text-base sm:text-lg font-medium text-green-900 dark:text-green-300">
-                    {selectedSpecies.polishName}
-                  </h4>
-                  <p className="text-sm sm:text-base text-green-700 dark:text-green-400 italic">
-                    {selectedSpecies.latinName}
-                  </p>
-                  <p className="text-sm text-green-600 dark:text-green-500">
-                    Rodzina: {selectedSpecies.family}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedSpecies(null);
-                    setSpeciesQuery('');
-                  }}
-                  className="p-1 hover:bg-green-100 dark:hover:bg-green-800 rounded-lg transition-colors"
-                >
-                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Location display */}
-        {latitude && longitude && (
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4">
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-              Lokalizacja
-            </label>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 font-mono">
-              {latitude.toFixed(6)}, {longitude.toFixed(6)}
-            </p>
-          </div>
-        )}
-
-        {/* Tree name */}
-        <div className="space-y-2 sm:space-y-3">
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
-            Nazwa/Imię drzewa
-          </label>
-          <input
-            type="text"
-            value={treeName}
-            onChange={(e) => setTreeName(e.target.value)}
-            placeholder="Dąb Bartek"
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-          />
-        </div>
-
-        {/* Photos */}
-        <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Zdjęcia drzewa
-          </label>
-          <div className="flex flex-wrap gap-2 sm:gap-3 mb-2 sm:mb-3">
-            {photos.map((photo, index) => (
-              <motion.div
-                key={index}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="relative"
-              >
-                <img
-                  src={URL.createObjectURL(photo)}
-                  alt={`Tree photo ${index + 1}`}
-                  className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePhoto(index)}
-                  className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors"
-                >
-                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                </button>
-              </motion.div>
-            ))}
-          </div>
-          
-          {photos.length < 5 && (
-            <div className="flex space-x-2 sm:space-x-3">
-              <GlassButton
-                type="button"
-                onClick={() => cameraInputRef.current?.click()}
-                variant="secondary"
-                size="xs"
-                className="flex-1"
-              >
-                Zrób zdjęcie
-              </GlassButton>
-              <GlassButton
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                variant="secondary"
-                size="xs"
-                className="flex-1"
-              >
-                Wybierz z galerii
-              </GlassButton>
-            </div>
-          )}
-          
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            multiple
-            onChange={(e) => handlePhotoAdd(e.target.files)}
-            className="hidden"
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => handlePhotoAdd(e.target.files)}
-            className="hidden"
-          />
-        </div>
-
-        {/* Tree measurements */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Pierśnica (cm)
-            </label>
-            <input
-              type="number"
-              value={pierśnica}
-              onChange={(e) => setPierśnica(e.target.value)}
-              placeholder="np. 120"
-              min="0"
-              step="1"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Wysokość drzewa (m)
-            </label>
-            <input
-              type="number"
-              value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              placeholder="np. 15"
-              min="0"
-              step="1"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Adres drzewa <span className="text-gray-500">(opcjonalny)</span>
-            </label>
-            <input
-              type="text"
-              value={plotNumber}
-              onChange={(e) => setPlotNumber(e.target.value)}
-              placeholder="np. ul. Słowackiego 15, 30-001 Kraków"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Tree condition and status */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Stan drzewa
-            </label>
-            <input
-              type="text"
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-              placeholder="np. dobry, średni, słaby"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Czy drzewo żyje?
-            </label>
-            <input
-              type="text"
-              defaultValue={isAlive ? 'tak' : 'nie'}
-              onBlur={(e) => {
-                const value = e.target.value.toLowerCase();
-                // Wszystko co nie jest "nie" = "tak"
-                setIsAlive(value !== 'nie');
-              }}
-              placeholder="tak / nie"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Szacowany wiek (lata)
-            </label>
-            <input
-              type="number"
-              value={estimatedAge}
-              onChange={(e) => setEstimatedAge(e.target.value)}
-              placeholder="np. 50"
-              min="0"
-              step="1"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Detailed health conditions */}
-        <div className="space-y-2 sm:space-y-3">
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
-            Dodatkowe stany zdrowia drzewa
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-            {[
-              'Posusz',
-              'Złamania',
-              'Ubytki w pniu',
-              'Choroby grzybowe',
-              'Szkodniki',
-              'Uszkodzenia mechaniczne',
-              'Zgnilizna',
-              'Pęknięcia',
-              'Odbarwienia',
-              'Narośla',
-              'Inne uszkodzenia'
-            ].map((healthCondition) => (
-              <label key={healthCondition} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={detailedHealth.includes(healthCondition)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setDetailedHealth(prev => [...prev, healthCondition]);
-                    } else {
-                      setDetailedHealth(prev => prev.filter(item => item !== healthCondition));
-                    }
-                  }}
-                  className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{healthCondition}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Uwagi i opis stanu drzewa
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => {
-              setNotes(e.target.value);
-              // Auto-resize
-              e.target.style.height = 'auto';
-              e.target.style.height = e.target.scrollHeight + 'px';
-            }}
-            placeholder="Opisz stan drzewa, potrzebne działania, szczególne cechy..."
-            rows={5}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[120px]"
-          />
-        </div>
-
-        {/* Tree Stories and Legends */}
-        <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Historie i legendy drzewa <span className="text-gray-500">(opcjonalne)</span>
-          </label>
-          <textarea
-            value={treeStories}
-            onChange={(e) => {
-              setTreeStories(e.target.value);
-              // Auto-resize
-              e.target.style.height = 'auto';
-              e.target.style.height = e.target.scrollHeight + 'px';
-            }}
-            placeholder="Podziel się historiami, legendami lub ciekawostkami związanymi z tym drzewem..."
-            rows={4}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[100px]"
-          />
-        </div>
+        {/* Sekcja 3: Reszta do historii i legend */}
+        <TreeReportFormSectionNotes
+          notes={notes}
+          setNotes={setNotes}
+          treeStories={treeStories}
+          setTreeStories={setTreeStories}
+        />
 
         {/* Submit button */}
         <div className="flex space-x-2 sm:space-x-3">
@@ -855,65 +433,30 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               type="button"
               onClick={onCancel}
               variant="secondary"
-              size="md"
-              className="flex-1"
+              className="flex-1 sm:flex-none"
             >
               Anuluj
             </GlassButton>
           )}
           <GlassButton
             type="submit"
-            disabled={
-              !selectedSpecies || 
-              !latitude || 
-              !longitude || 
-              !pierśnica.trim() || 
-              !height.trim() || 
-              !condition.trim() || 
-              !estimatedAge.trim() || 
-              !notes.trim() || 
-              isSubmitting
-            }
-            className="flex-1"
-            size="sm"
             variant="primary"
+            disabled={isSubmitting || !selectedSpecies || photos.length === 0 || !treeName.trim()}
+            className="flex-1 sm:flex-none"
           >
-            {isSubmitting ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span className="text-sm">Wysyłanie...</span>
-              </div>
-            ) : (
-              <span className="text-sm">Wyślij</span>
-            )}
+            {isSubmitting ? 'Zapisywanie...' : 'Zgłoś drzewo'}
           </GlassButton>
         </div>
       </form>
 
-      {/* Success/Error Messages */}
-      {submitSuccess && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-5 mt-4 sm:mt-6 text-base sm:text-lg"
-        >
-          <p className="text-green-800 dark:text-green-200">
-            ✅ Zgłoszenie zostało pomyślnie wysłane do bazy danych!<br/>
-            <span className="text-sm">Za chwilę zostaniesz przekierowany na mapę...</span>
-          </p>
-        </motion.div>
-      )}
-
-
-      {/* Enlarged Image Modal */}
+      {/* Enlarged image modal */}
       <AnimatePresence>
         {enlargedImage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
             onClick={() => setEnlargedImage(null)}
           >
             <motion.div

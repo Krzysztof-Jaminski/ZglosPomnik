@@ -95,24 +95,6 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
           </div>
         )}
 
-        {/* Detailed health conditions */}
-        {parsedDescription?.detailedHealth && parsedDescription.detailedHealth.length > 0 && (
-          <div className="mb-3 sm:mb-4">
-            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Stany zdrowia drzewa:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {parsedDescription.detailedHealth.map((condition, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs rounded-full"
-                >
-                  {condition}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Fallback for old format descriptions */}
         {parsedDescription && !parsedDescription.hasStructuredFormat && tree.description && (
@@ -126,39 +108,83 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
           </div>
         )}
 
-        {/* Photo */}
-        {tree.imageUrls && tree.imageUrls.length > 0 && (
-          <div className="mb-3 sm:mb-4 relative">
-            <img
-              src={tree.imageUrls?.[0] || ''}
-              alt="Tree photo"
-              className="w-full h-32 sm:h-42 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => setShowImageModal(true)}
-              crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        )}
+        {/* Photo and Health Status */}
+        <div className="mb-3 sm:mb-4">
+          {/* Photo */}
+          {tree.imageUrls && tree.imageUrls.length > 0 && (
+            <div className="mb-3 relative">
+              <img
+                src={tree.imageUrls?.[0] || ''}
+                alt="Tree photo"
+                className="w-full h-40 sm:h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => setShowImageModal(true)}
+                crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          )}
+
+        </div>
 
         {/* Species information */}
         <div className="mb-3 sm:mb-4">
-          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Gatunek:
-          </p>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            {tree.species}
-          </p>
+          <div className="flex items-center gap-3 text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3">
+            <span>
+              <span className="font-medium">Gatunek:</span> {tree.species}
+            </span>
+            <span className="italic text-gray-600 dark:text-gray-400">
+              {tree.speciesLatin}{!tree.speciesLatin.endsWith('L.') ? ' L.' : ''}
+            </span>
+          </div>
         </div>
 
-        {/* Species Latin */}
-        <div className="mb-3 sm:mb-4">
-          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Nazwa łacińska:
-          </p>
-          <p className="text-sm sm:text-base italic text-gray-600 dark:text-gray-400">
-            {tree.speciesLatin}{!tree.speciesLatin.endsWith('L.') ? ' L.' : ''}
-          </p>
-        </div>
+        {/* Health Status - only show if there are health conditions */}
+        {parsedDescription?.detailedHealth && parsedDescription.detailedHealth.length > 0 && parsedDescription.detailedHealth.some(condition => condition && condition.trim() !== '') && (
+          <div className="mb-3 sm:mb-4">
+            <div className="flex flex-wrap gap-1 mb-3">
+              {parsedDescription.detailedHealth
+                .filter(condition => condition && condition.trim() !== '')
+                .map((condition, index) => {
+                  // Categorize conditions by type
+                  const isHealthPositive = ['Dobry stan', 'Zdrowy', 'Silny'].includes(condition);
+                  const isHealthNeutral = ['Ubytki w pniu', 'Narośla', 'Odbarwienia', 'Złamania'].includes(condition);
+                  const isHealthNegative = ['Posusz', 'Choroby grzybowe', 'Szkodniki', 'Uszkodzenia mechaniczne', 'Zgnilizna', 'Pęknięcia'].includes(condition);
+                  const isSoil = condition.startsWith('Gleba');
+                  const isEnvironment = ['Ekspozycja słoneczna', 'Cień częściowy', 'Cień głęboki', 'Wiatr', 'Zanieczyszczenia', 'Bliskość dróg', 'Bliskość budynków', 'Drenaż dobry', 'Drenaż słaby', 'Wilgotność wysoka', 'Wilgotność niska'].includes(condition);
+                  
+                  let colorClass = 'bg-gray-100/80 text-gray-700 dark:bg-gray-600/80 dark:text-gray-300'; // neutral
+                  let iconClass = '';
+                  
+                  if (isHealthPositive) {
+                    colorClass = 'bg-green-100/80 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+                    iconClass = '●';
+                  } else if (isHealthNegative) {
+                    colorClass = 'bg-red-100/80 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+                    iconClass = '▲';
+                  } else if (isHealthNeutral) {
+                    colorClass = 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+                    iconClass = '◆';
+                  } else if (isSoil) {
+                    colorClass = 'bg-amber-100/80 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+                    iconClass = '◈';
+                  } else if (isEnvironment) {
+                    colorClass = 'bg-purple-100/80 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
+                    iconClass = '◐';
+                  }
+                  
+                  return (
+                    <span
+                      key={index}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg font-medium border border-white/20 backdrop-blur-sm ${colorClass}`}
+                    >
+                      <span className="text-sm opacity-80">{iconClass}</span>
+                      <span className="truncate max-w-[120px]">{condition}</span>
+                    </span>
+                  );
+                })}
+            </div>
+          </div>
+        )}
 
         {/* Tree Details */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">

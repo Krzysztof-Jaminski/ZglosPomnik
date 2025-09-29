@@ -42,8 +42,7 @@ export const api = {
         votes: {
           like: 5,
           dislike: 0
-        },
-        commentCount: 0
+        }
       }
     ];
   },
