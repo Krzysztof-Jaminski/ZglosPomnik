@@ -196,8 +196,8 @@ export const TreePost: React.FC<TreePostProps> = ({
                     className="w-full h-32 sm:h-36 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
                   onClick={() => setEnlargedImage(image)}
                 />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all duration-300 flex items-center justify-center">
-                    <div className="bg-white/90 dark:bg-gray-800/90 rounded-full px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all duration-300 flex items-center justify-center pointer-events-none">
+                    <div className="bg-white/90 dark:bg-gray-800/90 rounded-full px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto">
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                         {index + 1}/{post.imageUrls.length}
                       </span>
