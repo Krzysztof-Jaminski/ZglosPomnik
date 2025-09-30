@@ -64,6 +64,7 @@ export const ApplicationsPage: React.FC = () => {
   });
   const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingApplication, setIsCreatingApplication] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [showAllTrees, setShowAllTrees] = useState(false);
@@ -246,7 +247,7 @@ export const ApplicationsPage: React.FC = () => {
     if (!selectedTemplate || !selectedTree) return;
     
     try {
-      setIsLoading(true);
+      setIsCreatingApplication(true);
       console.log('Creating application with:');
       console.log('Selected tree:', selectedTree);
       console.log('Selected template:', selectedTemplate);
@@ -272,7 +273,7 @@ export const ApplicationsPage: React.FC = () => {
       }
       alert(`Błąd podczas tworzenia wniosku: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
     } finally {
-      setIsLoading(false);
+      setIsCreatingApplication(false);
     }
   };
 
@@ -283,16 +284,16 @@ export const ApplicationsPage: React.FC = () => {
       setIsSubmitting(true);
       await applicationsService.submitApplication(currentApplication.id, { formData });
       
-      // Generate PDF - use static link instead of generating PDF
-      const staticPdfUrl = 'https://drzewaapistorage2024.blob.core.windows.net/uploads/pdfs/tree-submissions/c6d5f2b5-bc4a-4f3d-9b68-000000000007/wniosek_9a619a86-03b0-4583-a540-f3dddc0ee4ca.pdf';
+      // Generate PDF using real endpoint
+      const pdfResponse = await applicationsService.generatePdf(currentApplication.id);
       
-      // Try to open PDF in new tab
-      const newWindow = window.open(staticPdfUrl, '_blank');
+      // Open PDF in new tab
+      const newWindow = window.open(pdfResponse.pdfUrl, '_blank');
       
       // If window.open doesn't work (may be blocked), try alternative method
       if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
         // Fallback: use location.href
-        window.location.href = staticPdfUrl;
+        window.location.href = pdfResponse.pdfUrl;
       }
       
       // Clear saved data after successful submission
@@ -439,13 +440,13 @@ export const ApplicationsPage: React.FC = () => {
               <div className="w-full">
                 <GlassButton
                   onClick={handleCreateApplication}
-                  disabled={isLoading || !selectedTree || !selectedCommune || !selectedTemplate}
+                  disabled={isCreatingApplication || !selectedTree || !selectedCommune || !selectedTemplate}
                   variant={selectedTree && selectedCommune && selectedTemplate ? "primary" : "secondary"}
                   size="sm"
-                  icon={isLoading ? Loader2 : Plus}
+                  icon={isCreatingApplication ? Loader2 : Plus}
                   className={`w-full text-sm ${!selectedTree || !selectedCommune || !selectedTemplate ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {isLoading ? 'Tworzenie wniosku...' : 'Utwórz wniosek'}
+                  {isCreatingApplication ? 'Tworzenie wniosku...' : 'Utwórz wniosek'}
                 </GlassButton>
               </div>
             )}
@@ -463,8 +464,11 @@ export const ApplicationsPage: React.FC = () => {
                     schema={formSchema}
                     onSubmit={handleFormSubmit}
                     onBack={() => {
+                      // Only hide the form, keep the selections
                       setCurrentApplication(null);
                       setFormSchema(null);
+                      // Don't reset selectedTree, selectedCommune, selectedTemplate
+                      // The form will be recreated when user clicks "Utwórz wniosek" again
                     }}
                     isSubmitting={isSubmitting}
                     selectedTree={selectedTree}

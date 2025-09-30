@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FormField, FormSchema, Tree, Commune, ApplicationTemplate } from '../../types';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
-import { ArrowLeft, CheckCircle, AlertCircle, Bot, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Bot, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface DynamicFormProps {
@@ -431,21 +431,6 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
     const labelClasses = `block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ${
       field.isRequired ? 'after:content-["*"] after:text-red-500 after:ml-1' : ''
     }`;
-    
-    const getValidationInfo = () => {
-      if (field.name === 'user_phone') {
-        return 'Format: 9-15 cyfr, może zawierać +, spacje, myślniki, nawiasy';
-      }
-      if (field.name === 'user_postal_code') {
-        return 'Format: XX-XXX (np. 30-001)';
-      }
-      if (field.validation) {
-        return `Min: ${field.validation.minLength || 0} znaków, Max: ${field.validation.maxLength || '∞'}`;
-      }
-      return field.isRequired ? 'Pole wymagane' : 'Pole opcjonalne';
-    };
-    
-    const validationInfo = getValidationInfo();
 
     return (
       <motion.div
@@ -464,12 +449,6 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             {field.helpText}
           </p>
         )}
-        
-        <div className="mb-1">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {validationInfo}
-          </span>
-        </div>
 
         {field.type === 'TextArea' ? (
           <textarea
@@ -522,7 +501,6 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
 
         {error && (
           <div className="flex items-center space-x-1 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded border border-red-200 dark:border-red-800">
-            <AlertCircle className="w-4 h-4" />
             <span className="text-xs font-medium">{error}</span>
           </div>
         )}
@@ -541,116 +519,115 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto"
-    >
-      <div className="text-center mb-4">
-        <h2 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">
-          {schema.templateName}
-        </h2>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-          Wypełnij wszystkie wymagane pola formularza
-        </p>
-        
-        {/* Auto-fill button */}
-        <div className="flex justify-center">
-          <GlassButton
-            type="button"
-            onClick={handleAutoFill}
-            disabled={isAutoFilling}
-            variant="secondary"
-            size="xs"
-            icon={isAutoFilling ? Loader2 : Bot}
-            className="text-xs"
-          >
-            {isAutoFilling ? 'Wypełnianie...' : 'Wypełnij Automatycznie'}
-          </GlassButton>
+    <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
+      <div className="w-full px-3 sm:px-4">
+        {/* Header with back button and title */}
+        <div className="mb-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onBack}
+              className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              title="Powrót"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div>
+              <h1 className="text-sm font-bold text-gray-900 dark:text-white">
+                {schema.templateName}
+              </h1>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Wypełnij wszystkie wymagane pola formularza
+              </p>
+            </div>
+            
+            {/* Auto-fill button - large square on the right */}
+            <div className="ml-auto">
+              <button
+                onClick={handleAutoFill}
+                disabled={isAutoFilling}
+                className="flex items-center justify-center p-4 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Wypełnij automatycznie"
+              >
+                {isAutoFilling ? (
+                  <Loader2 className="w-10 h-10 animate-spin" />
+                ) : (
+                  <Bot className="w-10 h-10" />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
+
+        <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
+          {/* Contact Data Section */}
+          {groupedFields.contact.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
+                <span className="mr-1">📞</span>
+                Dane kontaktowe
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+                {groupedFields.contact.map(renderField)}
+              </div>
+            </div>
+          )}
+
+          {/* Plot Data Section */}
+          {groupedFields.plot.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                Dane działki
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+                {groupedFields.plot.map(renderField)}
+              </div>
+            </div>
+          )}
+
+          {/* Study Data Section */}
+          {groupedFields.study.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                Dane opracowania
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+                {groupedFields.study.map(renderField)}
+              </div>
+            </div>
+          )}
+
+          {/* Other fields */}
+          {sortedFields.filter(field => 
+            !field.name.startsWith('user_') && 
+            !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
+            !field.name.startsWith('study_')
+          ).length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+                {sortedFields.filter(field => 
+                  !field.name.startsWith('user_') && 
+                  !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
+                  !field.name.startsWith('study_')
+                ).map(renderField)}
+              </div>
+            </div>
+          )}
+
+          {/* Submit Button - Full width at bottom */}
+          <div className="w-full pt-2">
+            <GlassButton
+              type="submit"
+              disabled={!isFormValid || isSubmitting}
+              variant="primary"
+              size="sm"
+              icon={isSubmitting ? Loader2 : FileText}
+              className={`w-full text-sm ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isSubmitting ? 'Generowanie PDF...' : 'Wygeneruj wniosek'}
+            </GlassButton>
+          </div>
+        </form>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
-        {/* Contact Data Section */}
-        {groupedFields.contact.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
-              <span className="mr-1">📞</span>
-              Dane kontaktowe
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-              {groupedFields.contact.map(renderField)}
-            </div>
-          </div>
-        )}
-
-        {/* Plot Data Section */}
-        {groupedFields.plot.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
-              Dane działki
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-              {groupedFields.plot.map(renderField)}
-            </div>
-          </div>
-        )}
-
-        {/* Study Data Section */}
-        {groupedFields.study.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
-              Dane opracowania
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-              {groupedFields.study.map(renderField)}
-            </div>
-          </div>
-        )}
-
-        {/* Other fields */}
-        {sortedFields.filter(field => 
-          !field.name.startsWith('user_') && 
-          !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
-          !field.name.startsWith('study_')
-        ).length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
-              {sortedFields.filter(field => 
-                !field.name.startsWith('user_') && 
-                !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
-                !field.name.startsWith('study_')
-              ).map(renderField)}
-            </div>
-          </div>
-        )}
-
-        {/* Submit Button */}
-        <div className="flex justify-between items-center pt-2">
-          <GlassButton
-            type="button"
-            onClick={onBack}
-            variant="secondary"
-            size="xs"
-            icon={ArrowLeft}
-            className="text-xs"
-          >
-            Wstecz
-          </GlassButton>
-          
-          <GlassButton
-            type="submit"
-            disabled={!isFormValid || isSubmitting}
-            variant="primary"
-            size="xs"
-            icon={isSubmitting ? undefined : CheckCircle}
-            className={`text-xs ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isSubmitting ? 'Generowanie...' : 'Wygeneruj wniosek'}
-          </GlassButton>
-        </div>
-      </form>
-    </motion.div>
+    </div>
   );
 };
-
