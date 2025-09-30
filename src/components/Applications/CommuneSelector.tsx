@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { Search, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search } from 'lucide-react';
 import { Commune } from '../../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CommuneSelectorProps {
   communes: Commune[];
@@ -15,9 +15,10 @@ export const CommuneSelector: React.FC<CommuneSelectorProps> = ({
   onCommuneSelect
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCommunes, setExpandedCommunes] = useState(true);
 
-  // Filter communes based on search query
-  const filteredCommunes = useMemo(() => {
+  // Simple filter function
+  const getFilteredCommunes = () => {
     if (!searchQuery.trim()) return communes;
     
     const query = searchQuery.toLowerCase();
@@ -26,69 +27,94 @@ export const CommuneSelector: React.FC<CommuneSelectorProps> = ({
       commune.city.toLowerCase().includes(query) ||
       commune.address.toLowerCase().includes(query)
     );
-  }, [communes, searchQuery]);
+  };
+
+  const filteredCommunes = getFilteredCommunes();
 
   return (
-    <div className="space-y-4">
-      {/* Search Filter */}
+    <div className="space-y-2">
+      {/* Search Filter - Always visible */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
         <input
           type="text"
           placeholder="Szukaj po nazwie gminy lub mieście..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full pl-8 pr-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
         />
       </div>
 
-      {/* Communes List - Limited Height with Scroll */}
-      <div className="max-h-[75vh] overflow-y-auto space-y-2 pr-2 py-2">
-        {filteredCommunes.map(commune => (
-          <motion.div
-            key={commune.id}
-            whileHover={{ scale: 1.002 }}
-            onClick={() => onCommuneSelect(commune)}
-            className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 ${
-              selectedCommune?.id === commune.id ? 'bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
-                  {commune.name}
-                  {!commune.isActive && (
-                    <span className="ml-2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
-                      Niedostępna
-                    </span>
-                  )}
-                </h3>
-                <div className="space-y-0.5 text-xs text-gray-600 dark:text-gray-400">
-                  <p className="truncate">Email: {commune.email}</p>
-                  <p className="truncate">Telefon: {commune.phone}</p>
-                  <p className="truncate">Adres: {commune.address}, {commune.city}</p>
-                </div>
-              </div>
-              <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                selectedCommune?.id === commune.id 
-                  ? 'bg-green-600 border-green-600' 
-                  : 'border-gray-300'
-              }`}>
-                {selectedCommune?.id === commune.id && (
-                  <CheckCircle className="w-4 h-4 text-white" />
-                )}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-        
-        {filteredCommunes.length === 0 && searchQuery && (
-          <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-            <p>Nie znaleziono gmin pasujących do wyszukiwania</p>
+      {/* Communes List */}
+      <div className="bg-gradient-to-r from-blue-50/20 to-blue-100/10 dark:from-blue-900/20 dark:to-blue-800/10 border border-blue-200/30 dark:border-blue-700/30 rounded-lg p-2">
+        <button
+          type="button"
+          onClick={() => setExpandedCommunes(!expandedCommunes)}
+          className="no-focus flex items-center justify-between w-full text-left p-1 rounded-lg"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              Wybierz gminę
+            </span>
+            <span className="text-xs text-gray-500 bg-white/50 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+              {filteredCommunes.length}
+            </span>
           </div>
-        )}
+          <span className="text-sm text-gray-400 font-bold">
+            {expandedCommunes ? '−' : '+'}
+          </span>
+        </button>
+        
+        <AnimatePresence>
+          {expandedCommunes && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 space-y-1"
+            >
+              {filteredCommunes.slice(0, 10).map(commune => (
+                <button
+                  key={commune.id}
+                  type="button"
+                  onClick={() => onCommuneSelect(commune)}
+                  className={`no-focus p-1.5 rounded text-xs text-left transition-all w-full ${
+                    selectedCommune?.id === commune.id
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
+                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">
+                        {commune.name}
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400 truncate">
+                        {commune.city} • {commune.email}
+                      </div>
+                    </div>
+                    <div className="ml-2 flex-shrink-0">
+                      <div className={`w-3 h-3 rounded-full ${
+                        selectedCommune?.id === commune.id 
+                          ? 'bg-blue-600' 
+                          : 'border-2 border-gray-300'
+                      }`}>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              
+              {filteredCommunes.length === 0 && searchQuery && (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  <p className="text-xs">Nie znaleziono gmin pasujących do wyszukiwania</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
-

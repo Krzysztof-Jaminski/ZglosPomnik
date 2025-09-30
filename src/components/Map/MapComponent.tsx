@@ -17,6 +17,7 @@ interface MapComponentProps {
 
 export interface MapComponentRef {
   clearClickMarker: () => void;
+  centerOnLocation: (lat: number, lng: number) => void;
 }
 
 export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onGoToFeed, onTreeSelect }, ref) => {
@@ -45,6 +46,12 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       if (currentClickMarker) {
         currentClickMarker.setMap(null);
         setCurrentClickMarker(null);
+      }
+    },
+    centerOnLocation: (lat: number, lng: number) => {
+      if (map) {
+        map.setCenter({ lat, lng });
+        map.setZoom(16); // Zoom in to show the new tree
       }
     }
   }));

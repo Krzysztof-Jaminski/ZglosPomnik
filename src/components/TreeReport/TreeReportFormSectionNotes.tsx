@@ -14,7 +14,7 @@ export const TreeReportFormSectionNotes: React.FC<TreeReportFormSectionNotesProp
   setTreeStories
 }) => {
   return (
-    <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full">
+    <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full">
       <div className="space-y-2 sm:space-y-3">
         {/* Notes */}
         <div>

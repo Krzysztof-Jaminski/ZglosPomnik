@@ -160,7 +160,7 @@ export const FeedPage: React.FC = () => {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300 text-lg">Ładowanie feed'a...</p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">Ładowanie feed'a...</p>
         </div>
       </div>
     );
@@ -222,7 +222,7 @@ export const FeedPage: React.FC = () => {
 
         {filteredAndSortedPosts.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400 text-lg">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
               {searchQuery ? 'Brak wyników wyszukiwania' : 'Brak zgłoszeń spełniających kryteria'}
             </p>
           </div>

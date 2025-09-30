@@ -444,7 +444,7 @@ export const ProfilePage: React.FC = () => {
       <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Nie jesteś zalogowany
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -468,7 +468,7 @@ export const ProfilePage: React.FC = () => {
       <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Ładowanie profilu...
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
@@ -489,11 +489,11 @@ export const ProfilePage: React.FC = () => {
         >
           <div className="flex items-center space-x-3 mb-2">
             <User className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-            <h1 className="text-lg sm:text-2xl font-bold text-green-900 dark:text-white">
+            <h1 className="text-lg sm:text-xl font-bold text-green-900 dark:text-white">
               Profil użytkownika
             </h1>
           </div>
-          <p className="text-base sm:text-lg text-green-800 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-green-800 dark:text-gray-400">
             Zarządzaj swoim kontem i ustawieniami
           </p>
         </motion.div>
@@ -515,10 +515,10 @@ export const ProfilePage: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900 dark:text-white text-lg">
+                  <h2 className="font-semibold text-gray-900 dark:text-white text-base">
                     {userData.name}
                   </h2>
-                  <p className="text-gray-600 dark:text-gray-400 text-base">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
                     Członek od {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
                   </p>
                 </div>
@@ -533,7 +533,7 @@ export const ProfilePage: React.FC = () => {
                 size="sm"
                 icon={isEditing ? X : Edit}
               >
-                <span className="text-base">
+                <span className="text-sm">
                   {isEditing ? 'Anuluj' : 'Edytuj'}
                 </span>
               </GlassButton>
@@ -549,7 +549,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
                     Imię i nazwisko
                   </label>
                   <input
@@ -561,7 +561,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
                     Email
                   </label>
                   <input
@@ -573,7 +573,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
                     Avatar
                   </label>
                   <div className="space-y-3">
@@ -609,7 +609,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
                     Telefon
                   </label>
                   <input
@@ -621,7 +621,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
+                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
                     Adres
                   </label>
                   <input
@@ -634,7 +634,7 @@ export const ProfilePage: React.FC = () => {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
+                    <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
                       Miasto
                     </label>
                     <input
@@ -646,7 +646,7 @@ export const ProfilePage: React.FC = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-gray-700 dark:text-gray-300 mb-2 text-base">
+                    <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
                       Kod pocztowy
                     </label>
                     <input
@@ -675,7 +675,7 @@ export const ProfilePage: React.FC = () => {
                     icon={Save}
                     disabled={isSaving}
                   >
-                    <span className="text-base">
+                    <span className="text-sm">
                       {isSaving ? (isUploadingAvatar ? 'Przesyłanie avatara...' : 'Zapisywanie...') : 'Zapisz'}
                     </span>
                   </GlassButton>
@@ -997,7 +997,7 @@ export const ProfilePage: React.FC = () => {
                   icon={Save}
                   disabled={isChangingPassword}
                 >
-                  <span className="text-base">
+                  <span className="text-sm">
                     {isChangingPassword ? 'Zmienianie...' : 'Zapisz'}
                   </span>
                 </GlassButton>

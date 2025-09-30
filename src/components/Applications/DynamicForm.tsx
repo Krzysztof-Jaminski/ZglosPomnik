@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FormField, FormSchema, Tree, Commune, ApplicationTemplate } from '../../types';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
-import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle, Bot, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface DynamicFormProps {
@@ -422,13 +422,13 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
     const value = formData[field.name] || '';
     const error = errors[field.name];
 
-    const baseInputClasses = `w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors ${
+    const baseInputClasses = `w-full px-2 py-1.5 text-xs sm:text-sm border rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-700 dark:text-white transition-colors ${
       error 
         ? 'border-red-500 dark:border-red-500' 
         : 'border-gray-300 dark:border-gray-600'
     }`;
 
-    const labelClasses = `block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ${
+    const labelClasses = `block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ${
       field.isRequired ? 'after:content-["*"] after:text-red-500 after:ml-1' : ''
     }`;
     
@@ -546,40 +546,39 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
       animate={{ opacity: 1, y: 0 }}
       className="max-w-4xl mx-auto"
     >
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="text-center mb-4">
+        <h2 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">
           {schema.templateName}
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
           Wypełnij wszystkie wymagane pola formularza
         </p>
         
         {/* Auto-fill button */}
         <div className="flex justify-center">
-          <button
+          <GlassButton
             type="button"
             onClick={handleAutoFill}
             disabled={isAutoFilling}
-            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-              isAutoFilling
-                ? 'bg-green-400 dark:bg-green-500 text-white cursor-wait'
-                : 'bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white hover:shadow-lg transform hover:scale-105'
-            }`}
+            variant="secondary"
+            size="xs"
+            icon={isAutoFilling ? Loader2 : Bot}
+            className="text-xs"
           >
             {isAutoFilling ? 'Wypełnianie...' : 'Wypełnij Automatycznie'}
-          </button>
+          </GlassButton>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
         {/* Contact Data Section */}
         {groupedFields.contact.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-              <span className="mr-2">📞</span>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
+              <span className="mr-1">📞</span>
               Dane kontaktowe
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
               {groupedFields.contact.map(renderField)}
             </div>
           </div>
@@ -587,11 +586,11 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
 
         {/* Plot Data Section */}
         {groupedFields.plot.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
               Dane działki
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
               {groupedFields.plot.map(renderField)}
             </div>
           </div>
@@ -599,11 +598,11 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
 
         {/* Study Data Section */}
         {groupedFields.study.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
               Dane opracowania
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
               {groupedFields.study.map(renderField)}
             </div>
           </div>
@@ -615,8 +614,8 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
           !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
           !field.name.startsWith('study_')
         ).length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
               {sortedFields.filter(field => 
                 !field.name.startsWith('user_') && 
                 !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
@@ -627,13 +626,14 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
         )}
 
         {/* Submit Button */}
-        <div className="flex justify-between items-center pt-4">
+        <div className="flex justify-between items-center pt-2">
           <GlassButton
             type="button"
             onClick={onBack}
             variant="secondary"
-            size="sm"
+            size="xs"
             icon={ArrowLeft}
+            className="text-xs"
           >
             Wstecz
           </GlassButton>
@@ -642,11 +642,11 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             type="submit"
             disabled={!isFormValid || isSubmitting}
             variant="primary"
-            size="sm"
+            size="xs"
             icon={isSubmitting ? undefined : CheckCircle}
-            className={!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}
+            className={`text-xs ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {isSubmitting ? 'Wysyłanie...' : 'Wyślij wniosek'}
+            {isSubmitting ? 'Generowanie...' : 'Wygeneruj wniosek'}
           </GlassButton>
         </div>
       </form>

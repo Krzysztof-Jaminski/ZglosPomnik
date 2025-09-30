@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { Search, FileText, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search } from 'lucide-react';
 import { ApplicationTemplate } from '../../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TemplateSelectorProps {
   templates: ApplicationTemplate[];
@@ -15,9 +15,10 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   onTemplateSelect
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedTemplates, setExpandedTemplates] = useState(true);
 
-  // Filter templates based on search query
-  const filteredTemplates = useMemo(() => {
+  // Simple filter function
+  const getFilteredTemplates = () => {
     if (!searchQuery.trim()) return templates;
     
     const query = searchQuery.toLowerCase();
@@ -26,68 +27,91 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       template.description.toLowerCase().includes(query) ||
       template.template.toLowerCase().includes(query)
     );
-  }, [templates, searchQuery]);
+  };
+
+  const filteredTemplates = getFilteredTemplates();
 
   return (
-    <div className="space-y-4">
-      {/* Search Filter */}
+    <div className="space-y-2">
+      {/* Search Filter - Always visible */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
         <input
           type="text"
           placeholder="Szukaj po nazwie szablonu..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full pl-8 pr-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
         />
       </div>
 
-      {/* Templates List - Limited Height with Scroll */}
-      <div className="max-h-[75vh] overflow-y-auto space-y-2 pr-2 py-2">
-        {filteredTemplates.map(template => (
-          <motion.div
-            key={template.id}
-            whileHover={{ scale: 1.005 }}
-            onClick={() => onTemplateSelect(template)}
-            className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 ${
-              selectedTemplate?.id === template.id ? 'bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
-            }`}
-          >
-            <div className="flex items-start space-x-3">
-              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FileText className="w-5 h-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
-                  {template.name}
-                </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
-                  {template.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    {template.requiredFields?.length || 0} pól wymaganych
-                  </span>
-                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                    selectedTemplate?.id === template.id 
-                      ? 'bg-green-600 border-green-600' 
-                      : 'border-gray-300'
-                  }`}>
-                    {selectedTemplate?.id === template.id && (
-                      <CheckCircle className="w-4 h-4 text-white" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-        
-        {filteredTemplates.length === 0 && searchQuery && (
-          <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-            <p>Nie znaleziono szablonów pasujących do wyszukiwania</p>
+      {/* Templates List */}
+      <div className="bg-gradient-to-r from-orange-50/20 to-orange-100/10 dark:from-orange-900/20 dark:to-orange-800/10 border border-orange-200/30 dark:border-orange-700/30 rounded-lg p-2">
+        <button
+          type="button"
+          onClick={() => setExpandedTemplates(!expandedTemplates)}
+          className="no-focus flex items-center justify-between w-full text-left p-1 rounded-lg"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              Wybierz szablon wniosku
+            </span>
+            <span className="text-xs text-gray-500 bg-white/50 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+              {filteredTemplates.length}
+            </span>
           </div>
-        )}
+          <span className="text-sm text-gray-400 font-bold">
+            {expandedTemplates ? '−' : '+'}
+          </span>
+        </button>
+        
+        <AnimatePresence>
+          {expandedTemplates && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 space-y-1"
+            >
+              {filteredTemplates.slice(0, 10).map(template => (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => onTemplateSelect(template)}
+                  className={`no-focus p-1.5 rounded text-xs text-left transition-all w-full ${
+                    selectedTemplate?.id === template.id
+                      ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border border-orange-200 dark:border-orange-700'
+                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{template.name}</div>
+                      <div className="text-gray-500 dark:text-gray-400 truncate">
+                        {template.description}
+                      </div>
+                    </div>
+                    <div className="ml-2 flex-shrink-0">
+                      <div className={`w-3 h-3 rounded-full ${
+                        selectedTemplate?.id === template.id 
+                          ? 'bg-orange-600' 
+                          : 'border-2 border-gray-300'
+                      }`}>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              
+              {filteredTemplates.length === 0 && searchQuery && (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  <p className="text-xs">Nie znaleziono szablonów pasujących do wyszukiwania</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

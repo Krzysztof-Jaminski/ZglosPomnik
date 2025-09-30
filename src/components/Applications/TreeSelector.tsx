@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { Search, MapPin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search } from 'lucide-react';
 import { Tree } from '../../types';
 import { GlassButton } from '../UI/GlassButton';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { parseTreeDescription } from '../../utils/descriptionParser';
 
 interface TreeSelectorProps {
   trees: Tree[];
@@ -24,139 +25,138 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
   onTreeClick
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedTrees, setExpandedTrees] = useState(true);
 
-  // Filter trees based on search query
-  const filteredTrees = useMemo(() => {
+  // Simple filter function
+  const getFilteredTrees = () => {
     if (!searchQuery.trim()) return trees;
     
     const query = searchQuery.toLowerCase();
-    return trees.filter(tree => 
-      tree.species.toLowerCase().includes(query) ||
-      tree.speciesLatin.toLowerCase().includes(query) ||
-      tree.description.toLowerCase().includes(query)
-    );
-  }, [trees, searchQuery]);
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Monument':
-        return <div className="w-2 h-2 bg-green-500 rounded-full" title="Pomnik przyrody" />;
-      case 'pending':
-        return <div className="w-2 h-2 bg-yellow-500 rounded-full" title="Oczekuje na weryfikację" />;
-      case 'rejected':
-        return <div className="w-2 h-2 bg-red-500 rounded-full" title="Odrzucone" />;
-      default:
-        return <div className="w-2 h-2 bg-gray-400 rounded-full" title="Nieznany status" />;
-    }
+    return trees.filter(tree => {
+      const parsedDescription = parseTreeDescription(tree.description);
+      const treeName = parsedDescription.treeName || tree.species;
+      
+      return treeName.toLowerCase().includes(query) ||
+             tree.species.toLowerCase().includes(query) ||
+             tree.location.address.toLowerCase().includes(query);
+    });
   };
 
-  if (trees.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl p-6 mb-4 shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Nie zgłosiłeś jeszcze żadnych drzew
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Aby utworzyć wniosek, musisz najpierw zgłosić drzewo w aplikacji lub wybrać z już istniejących.
-          </p>
-          <div className="space-y-2">
-            <GlassButton
-              onClick={onLoadMore}
-              disabled={isLoading}
-              variant="primary"
-              size="sm"
-            >
-              {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
-            </GlassButton>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const filteredTrees = getFilteredTrees();
+
 
   return (
-    <div className="space-y-4">
-      {/* Search Filter */}
+    <div className="space-y-2">
+      {/* Search Filter - Always visible */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
         <input
           type="text"
-          placeholder="Szukaj po nazwie lub gatunku..."
+          placeholder="Szukaj po nazwie drzewa, lokalizacji lub opisie..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full pl-8 pr-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
         />
       </div>
 
-      {/* Trees List - Limited Height with Scroll */}
-      <div className="max-h-[75vh] overflow-y-auto space-y-2 pr-2 py-2">
-        {filteredTrees.map(tree => (
-          <motion.div
-            key={tree.id}
-            whileHover={{ scale: 1.005 }}
-            whileTap={{ scale: 0.995 }}
-            onClick={() => onTreeClick?.(tree)}
-            className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg cursor-pointer transition-all p-3 ${
-              selectedTree?.id === tree.id ? 'bg-green-50/50 dark:bg-green-900/20' : 'hover:shadow-xl hover:bg-white/90 dark:hover:bg-gray-800/90'
-            }`}
-          >
-            <div className="flex items-start space-x-3">
-              {tree.imageUrls && tree.imageUrls.length > 0 && (
-                <img
-                  src={tree.imageUrls?.[0] || ''}
-                  alt={tree.species}
-                  className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                  crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
-                  referrerPolicy="no-referrer"
-                />
-              )}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
-                  {tree.species}
-                </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 italic mb-1 truncate">
-                  {tree.speciesLatin}
-                </p>
-                <p className="text-xs text-gray-700 dark:text-gray-300 mb-2 line-clamp-2">
-                  {tree.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                    <span className="text-xs text-gray-500 truncate">
-                      {tree.location.lat.toFixed(4)}, {tree.location.lng.toFixed(4)}
-                    </span>
-                  </div>
-                  {getStatusIcon(tree.status)}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-        
-        {filteredTrees.length === 0 && searchQuery && (
-          <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-            <p>Nie znaleziono drzew pasujących do wyszukiwania</p>
+      {/* Trees List */}
+      <div className="bg-gradient-to-r from-green-50/20 to-green-100/10 dark:from-green-900/20 dark:to-green-800/10 border border-green-200/30 dark:border-green-700/30 rounded-lg p-2">
+        <button
+          type="button"
+          onClick={() => setExpandedTrees(!expandedTrees)}
+          className="no-focus flex items-center justify-between w-full text-left p-1 rounded-lg"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              Wybierz drzewo
+            </span>
+            <span className="text-xs text-gray-500 bg-white/50 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+              {filteredTrees.length}
+            </span>
           </div>
-        )}
+          <span className="text-sm text-gray-400 font-bold">
+            {expandedTrees ? '−' : '+'}
+          </span>
+        </button>
+        
+        <AnimatePresence>
+          {expandedTrees && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 space-y-1"
+            >
+              {trees.length === 0 ? (
+                <div className="text-center py-4">
+                  <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 shadow-lg">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                      Nie zgłosiłeś jeszcze żadnych drzew
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                      Aby utworzyć wniosek, musisz najpierw zgłosić drzewo w aplikacji lub wybrać z już istniejących.
+                    </p>
+                    <GlassButton
+                      onClick={onLoadMore}
+                      disabled={isLoading}
+                      variant="primary"
+                      size="xs"
+                      className="text-xs"
+                    >
+                      {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
+                    </GlassButton>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {filteredTrees.slice(0, 10).map(tree => {
+                    const parsedDescription = parseTreeDescription(tree.description);
+                    const treeName = parsedDescription.treeName || tree.species;
+                    
+                    return (
+                      <button
+                        key={tree.id}
+                        type="button"
+                        onClick={() => onTreeClick?.(tree)}
+                        className={`no-focus p-1.5 rounded text-xs text-left transition-all w-full ${
+                          selectedTree?.id === tree.id
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-700'
+                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{treeName}</div>
+                            <div className="text-gray-500 dark:text-gray-400 truncate">
+                              {tree.species} • {tree.location.lat.toFixed(4)}, {tree.location.lng.toFixed(4)}
+                            </div>
+                          </div>
+                          <div className="ml-2 flex-shrink-0">
+                            <div className={`w-3 h-3 rounded-full ${
+                              selectedTree?.id === tree.id 
+                                ? 'bg-green-600' 
+                                : 'border-2 border-gray-300'
+                            }`}>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  
+                  {filteredTrees.length === 0 && searchQuery && (
+                    <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                      <p className="text-xs">Nie znaleziono drzew pasujących do wyszukiwania</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Load More Button */}
-      {!showAllTrees && (
-        <div className="text-center">
-          <GlassButton
-            onClick={onLoadMore}
-            disabled={isLoading}
-            variant="secondary"
-            size="sm"
-            className="px-6 py-2"
-          >
-            {isLoading ? 'Ładowanie...' : 'Pokaż więcej drzew'}
-          </GlassButton>
-        </div>
-      )}
     </div>
   );
 };
-

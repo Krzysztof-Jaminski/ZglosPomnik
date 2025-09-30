@@ -45,7 +45,7 @@ export const Header: React.FC = () => {
             <button
               onClick={cycleTheme}
               title={`Current theme: ${theme}`}
-              className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
             >
               <ThemeIcon className="w-5 h-5" />
               <span className="sr-only">Toggle theme</span>
@@ -53,7 +53,7 @@ export const Header: React.FC = () => {
             <Link to="/profile" className="focus:outline-none">
               <button
                 title="Profil użytkownika"
-                className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
               >
                 <User className="w-5 h-5" />
                 <span className="sr-only">Profil</span>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, TreePine } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Species, ApiTreeSubmission } from '../../types';
 import { speciesService } from '../../services/speciesService';
@@ -17,7 +17,7 @@ import { TreeReportFormSectionNotes } from './TreeReportFormSectionNotes';
 interface TreeReportFormProps {
   latitude?: number;
   longitude?: number;
-  onSubmit?: () => void;
+  onSubmit?: (location?: { lat: number; lng: number }) => void;
   onCancel?: () => void;
   photos?: File[];
   setPhotos?: (photos: File[]) => void;
@@ -41,7 +41,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
 
   // Synchronize photos with external state
   React.useEffect(() => {
-    if (externalPhotos) {
+    console.log('TreeReportForm: externalPhotos changed:', externalPhotos?.length || 0, 'photos');
+    if (externalPhotos !== undefined) {
       setPhotos(externalPhotos);
     }
   }, [externalPhotos]);
@@ -105,6 +106,45 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
       }
     }
   }, []);
+
+  // Auto-save form data to localStorage whenever it changes
+  React.useEffect(() => {
+    const saveFormData = async () => {
+      try {
+        // Convert photos to base64 for storage
+        const photoBase64s = await Promise.all(
+          photos.map(file => fileToBase64(file))
+        );
+        
+        const formData = {
+          speciesQuery,
+          selectedSpecies,
+          treeName,
+          pierśnica,
+          height,
+          plotNumber,
+          condition,
+          detailedHealth,
+          isAlive,
+          estimatedAge,
+          treeStories,
+          notes,
+          photos: photoBase64s,
+          latitude,
+          longitude
+        };
+        
+        localStorage.setItem('treeReportFormData', JSON.stringify(formData));
+      } catch (error) {
+        console.error('Error saving form data:', error);
+      }
+    };
+
+    // Only save if we have some data (not on initial empty state)
+    if (speciesQuery || treeName || pierśnica || height || plotNumber || notes || treeStories || photos.length > 0) {
+      saveFormData();
+    }
+  }, [speciesQuery, selectedSpecies, treeName, pierśnica, height, plotNumber, condition, detailedHealth, isAlive, estimatedAge, treeStories, notes, photos, latitude, longitude]);
 
   // Load all species when component mounts
   React.useEffect(() => {
@@ -305,9 +345,9 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         setEstimatedAge('');
         setDetailedHealth([]);
         
-        // Navigate to map after 4 seconds
+        // Navigate to map after 4 seconds with tree location
         setTimeout(() => {
-          onSubmit?.();
+          onSubmit?.(apiTreeData.location);
         }, 4000);
       } else {
         // Offline mode - show message that internet is required
@@ -356,7 +396,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 text-sm sm:text-base"
+          className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 text-sm sm:text-base"
         >
           <p className="text-green-800 dark:text-green-200">
             Tryb offline - zgłoszenie zostanie zsynchronizowane po powrocie internetu
@@ -441,8 +481,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           <GlassButton
             type="submit"
             variant="primary"
+            size="sm"
             disabled={isSubmitting || !selectedSpecies || photos.length === 0 || !treeName.trim()}
-            className="flex-1 sm:flex-none"
+            className="flex-1 sm:flex-none text-sm"
+            icon={TreePine}
           >
             {isSubmitting ? 'Zapisywanie...' : 'Zgłoś drzewo'}
           </GlassButton>

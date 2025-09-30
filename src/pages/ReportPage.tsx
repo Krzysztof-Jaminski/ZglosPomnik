@@ -20,6 +20,7 @@ export const ReportPage: React.FC = () => {
 
   // Synchronize photos with form
   const handlePhotosChange = (newPhotos: File[]) => {
+    console.log('ReportPage: handlePhotosChange called with', newPhotos.length, 'photos');
     setPhotos(newPhotos);
   };
 
@@ -49,24 +50,23 @@ export const ReportPage: React.FC = () => {
 
   const selectFromGallery = async () => {
     try {
-      const image = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: false,
-        resultType: CameraResultType.Uri,
-        source: CameraSource.Photos
-      });
-
-      if (image.webPath) {
-        // Convert URI to File
-        const response = await fetch(image.webPath);
-        const blob = await response.blob();
-        const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        
-        const newPhotos = [...photos, file].slice(0, 5); // Max 5 photos
-        handlePhotosChange(newPhotos);
-      }
+      // Use HTML file input for multiple selection
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
+      
+      input.onchange = async (e) => {
+        const files = Array.from((e.target as HTMLInputElement).files || []);
+        if (files.length > 0) {
+          const newPhotos = [...photos, ...files].slice(0, 5); // Max 5 photos total
+          handlePhotosChange(newPhotos);
+        }
+      };
+      
+      input.click();
     } catch (error) {
-      console.error('Error selecting photo:', error);
+      console.error('Error selecting photos:', error);
     }
   };
 
@@ -99,7 +99,7 @@ export const ReportPage: React.FC = () => {
     return null;
   }, [location.state]);
 
-  // Initialize location on mount
+  // Initialize location and photos on mount
   React.useEffect(() => {
     const initialLocation = initializeLocation();
     if (initialLocation) {
@@ -107,13 +107,42 @@ export const ReportPage: React.FC = () => {
     } else {
       getCurrentLocation();
     }
+
+    // Load photos from localStorage
+    const savedData = localStorage.getItem('treeReportFormData');
+    if (savedData) {
+      try {
+        const formData: SavedFormData = JSON.parse(savedData);
+        if (formData.photos && Array.isArray(formData.photos)) {
+          const restoredPhotos = formData.photos.map((base64: string, index: number) => {
+            const arr = base64.split(',');
+            const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new File([u8arr], `photo_${index}.jpg`, { type: mime });
+          });
+          setPhotos(restoredPhotos);
+        }
+      } catch (error) {
+        console.error('Error loading saved photos:', error);
+      }
+    }
   }, [initializeLocation]);
 
-  // Save location to localStorage when it changes
+  // Save location from navigation state to localStorage
   React.useEffect(() => {
-    if (!selectedLocation) return;
-
-    const saveLocationToStorage = () => {
+    if (location.state?.latitude && location.state?.longitude) {
+      const newLocation = {
+        lat: location.state.latitude,
+        lng: location.state.longitude
+      };
+      setSelectedLocation(newLocation);
+      
+      // Save to localStorage immediately
       const savedData = localStorage.getItem('treeReportFormData');
       let formData: SavedFormData = {};
       
@@ -127,15 +156,58 @@ export const ReportPage: React.FC = () => {
       
       const updatedFormData = {
         ...formData,
-        latitude: selectedLocation.lat,
-        longitude: selectedLocation.lng
+        latitude: newLocation.lat,
+        longitude: newLocation.lng
       };
       
       localStorage.setItem('treeReportFormData', JSON.stringify(updatedFormData));
+    }
+  }, [location.state]);
+
+  // Save location and photos to localStorage when they change
+  React.useEffect(() => {
+    const saveToStorage = async () => {
+      try {
+        const savedData = localStorage.getItem('treeReportFormData');
+        let formData: SavedFormData = {};
+        
+        if (savedData) {
+          try {
+            formData = JSON.parse(savedData);
+          } catch (error) {
+            console.error('Error parsing saved form data:', error);
+          }
+        }
+        
+        // Convert photos to base64 for storage
+        const photoBase64s = await Promise.all(
+          photos.map(file => {
+            return new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.readAsDataURL(file);
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = error => reject(error);
+            });
+          })
+        );
+        
+        const updatedFormData = {
+          ...formData,
+          latitude: selectedLocation?.lat,
+          longitude: selectedLocation?.lng,
+          photos: photoBase64s
+        };
+        
+        localStorage.setItem('treeReportFormData', JSON.stringify(updatedFormData));
+      } catch (error) {
+        console.error('Error saving to localStorage:', error);
+      }
     };
 
-    saveLocationToStorage();
-  }, [selectedLocation]);
+    if (selectedLocation || photos.length > 0) {
+      saveToStorage();
+    }
+  }, [selectedLocation, photos]);
 
   const getCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -168,8 +240,17 @@ export const ReportPage: React.FC = () => {
     );
   }, []);
 
-  const handleSubmitSuccess = useCallback(() => {
-    navigate('/map');
+  const handleSubmitSuccess = useCallback((location?: { lat: number; lng: number }) => {
+    if (location) {
+      navigate('/map', { 
+        state: { 
+          centerOnLocation: location,
+          showNewTree: true 
+        } 
+      });
+    } else {
+      navigate('/map');
+    }
   }, [navigate]);
 
   const handleLocationButtonClick = useCallback(() => {
@@ -192,7 +273,7 @@ export const ReportPage: React.FC = () => {
             <div className="space-y-1 sm:space-y-2">
               {/* Wyświetlanie lokalizacji */}
               {selectedLocation && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2 sm:p-3">
+                <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg p-2 sm:p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
@@ -230,7 +311,7 @@ export const ReportPage: React.FC = () => {
               </div>
 
               {/* Photos Section */}
-              <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border border-purple-200/50 dark:border-purple-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full my-1 sm:my-2">
+              <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-purple-200/50 dark:border-purple-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full my-1 sm:my-2">
                 <div className="space-y-2">
                   <div className="flex gap-1">
                     <GlassButton
@@ -247,7 +328,7 @@ export const ReportPage: React.FC = () => {
                       size="xs"
                       variant="secondary"
                     >
-                      <span className="text-xs">Wybierz z galerii</span>
+                      <span className="text-xs">Wybierz zdjęcia</span>
                     </GlassButton>
                   </div>
                   
@@ -266,7 +347,7 @@ export const ReportPage: React.FC = () => {
                               const newPhotos = photos.filter((_, i) => i !== index);
                               handlePhotosChange(newPhotos);
                             }}
-                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                            className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-blue-600 transition-colors"
                           >
                             ×
                           </button>

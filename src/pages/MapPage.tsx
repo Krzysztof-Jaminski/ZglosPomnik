@@ -1,14 +1,30 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { MapComponent, MapComponentRef } from '../components/Map/MapComponent';
 import { MapConfirmationPopup } from '../components/Map/MapConfirmationPopup';
 import { AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const MapPage: React.FC = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const mapComponentRef = useRef<MapComponentRef>(null);
+
+  // Handle centering on new tree location
+  useEffect(() => {
+    if (location.state?.centerOnLocation && mapComponentRef.current) {
+      const { lat, lng } = location.state.centerOnLocation;
+      mapComponentRef.current.centerOnLocation(lat, lng);
+      
+      // Show success message if it's a new tree
+      if (location.state.showNewTree) {
+        setTimeout(() => {
+          alert('Drzewo zostało pomyślnie dodane!');
+        }, 1000);
+      }
+    }
+  }, [location.state]);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setSelectedLocation({ lat, lng });

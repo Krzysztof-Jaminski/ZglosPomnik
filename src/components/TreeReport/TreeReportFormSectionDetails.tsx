@@ -30,7 +30,7 @@ export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetails
   setExpandedCategories
 }) => {
   return (
-    <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border border-green-200/50 dark:border-green-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full">
+    <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full">
       <div className="space-y-2 sm:space-y-3">
         {/* Tree status */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
