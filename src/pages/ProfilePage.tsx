@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Bell, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield, Eye, EyeOff, Check, X as XIcon } from 'lucide-react';
+import { User, Mail, Phone, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield, Eye, EyeOff, Check, X as XIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
@@ -17,10 +17,6 @@ export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { triggerLightHaptic, triggerMediumHaptic, triggerNotificationHaptic } = useHapticFeedback();
-  const [notifications, setNotifications] = useState({
-    push: true,
-    email: false
-  });
   const [fullUserData, setFullUserData] = useState(user);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -154,13 +150,6 @@ export const ProfilePage: React.FC = () => {
     fetchUserData();
   }, [user]);
 
-  const handleNotificationToggle = (type: 'push' | 'email') => {
-    triggerLightHaptic();
-    setNotifications(prev => ({
-      ...prev,
-      [type]: !prev[type]
-    }));
-  };
 
 
 
@@ -706,11 +695,23 @@ export const ProfilePage: React.FC = () => {
                     {additionalData.phone}
                   </span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">
-                    {additionalData.address}, {additionalData.city} {additionalData.postalCode}
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3">
+                    <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Adres: {additionalData.address}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3 ml-7">
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Miasto: {additionalData.city}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3 ml-7">
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Kod pocztowy: {additionalData.postalCode}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
@@ -754,55 +755,6 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Notifications Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <Bell className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                Powiadomienia
-              </h3>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300 text-base">
-                  Powiadomienia push
-                </span>
-                <button
-                  onClick={() => handleNotificationToggle('push')}
-                  className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                    notifications.push ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                      notifications.push ? 'translate-x-3.5' : 'translate-x-0.5'
-                    }`}
-                  />
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300 text-base">
-                  Powiadomienia email
-                </span>
-                <button
-                  onClick={() => handleNotificationToggle('email')}
-                  className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                    notifications.email ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                      notifications.email ? 'translate-x-3.5' : 'translate-x-0.5'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
 
 

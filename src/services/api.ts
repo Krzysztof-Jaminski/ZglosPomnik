@@ -110,8 +110,8 @@ export const api = {
     throw new Error('Not implemented');
   },
 
-  // Municipalities
-  async getMunicipalities() {
+  // Communes
+  async getCommunes() {
     // TODO: Implement real API call
     return [];
   },

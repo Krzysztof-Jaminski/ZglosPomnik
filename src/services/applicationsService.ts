@@ -1,4 +1,4 @@
-import { Application, ApplicationTemplate, FormSchema, ApplicationSubmission, PdfResponse, Tree, Municipality } from '../types';
+import { Application, ApplicationTemplate, FormSchema, ApplicationSubmission, PdfResponse, Tree, Commune } from '../types';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Get auth token from localStorage
@@ -82,10 +82,10 @@ export const applicationsService = {
     return response.json();
   },
 
-  // Get all municipalities (auth required)
-  async getMunicipalities(): Promise<Municipality[]> {
-    console.log('API Call: GET /api/Municipalities');
-    const response = await fetch(`${API_BASE_URL}/Municipalities`, {
+  // Get all communes (auth required)
+  async getCommunes(): Promise<Commune[]> {
+    console.log('API Call: GET /api/Communes');
+    const response = await fetch(`${API_BASE_URL}/Communes`, {
       method: 'GET',
       headers: createHeaders()
     });
@@ -95,18 +95,18 @@ export const applicationsService = {
         throw new Error('Brak autoryzacji. Zaloguj się ponownie.');
       }
       const errorText = await response.text().catch(() => response.statusText);
-      throw new Error(`Failed to fetch municipalities: ${errorText}`);
+      throw new Error(`Failed to fetch communes: ${errorText}`);
     }
     
     return response.json();
   },
 
-  // Get all municipality templates
-  async getMunicipalityTemplates(municipalityId: string): Promise<ApplicationTemplate[]> {
-    console.log(`API Call: GET /api/ApplicationTemplates/municipality/${municipalityId}`);
-    console.log('Municipality ID:', municipalityId);
+  // Get all commune templates
+  async getCommuneTemplates(communeId: string): Promise<ApplicationTemplate[]> {
+    console.log(`API Call: GET /api/ApplicationTemplates/commune/${communeId}`);
+    console.log('Commune ID:', communeId);
     
-    const response = await fetch(`${API_BASE_URL}/ApplicationTemplates/municipality/${municipalityId}`, {
+    const response = await fetch(`${API_BASE_URL}/ApplicationTemplates/commune/${communeId}`, {
       method: 'GET',
       headers: createHeaders()
     });
@@ -119,7 +119,7 @@ export const applicationsService = {
       if (response.status === 400) {
         const errorText = await response.text().catch(() => response.statusText);
         console.error('400 Bad Request details:', errorText);
-        throw new Error(`Nieprawidłowe żądanie dla gminy ${municipalityId}: ${errorText}`);
+        throw new Error(`Nieprawidłowe żądanie dla gminy ${communeId}: ${errorText}`);
       }
       
       const errorText = await response.text().catch(() => response.statusText);

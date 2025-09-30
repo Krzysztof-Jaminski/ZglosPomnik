@@ -146,39 +146,49 @@ export const EncyclopediaPage: React.FC = () => {
   // If a specific species is selected, show detailed view
   if (selectedSpecies) {
     return (
-      <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
+      <div className="h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto">
         <div className="w-full px-2 sm:px-4 lg:px-6">
+          {/* Species info in header */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="mb-4"
+            className="py-2 border-b border-gray-200 dark:border-gray-700 mb-2"
           >
-            <GlassButton
-              onClick={() => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const returnToFromUrl = urlParams.get('returnTo');
-                const returnToFromState = location.state?.returnTo;
-                
-                // Priority: location state first, then URL params
-                const returnTo = returnToFromState || returnToFromUrl;
-                
-                if (returnTo === 'report') {
-                  // Return to report page using React Router
-                  navigate('/report');
-                } else {
-                  // Return to encyclopedia list - clear selected species
-                  setSelectedSpecies(null);
-                }
-              }}
-              variant="secondary"
-              size="xs"
-              icon={ArrowLeft}
-            >
-              {(location.state?.returnTo === 'report' || new URLSearchParams(window.location.search).get('returnTo') === 'report')
-                ? 'Powrót do zgłoszenia' 
-                : 'Powrót do encyklopedii'
-              }
-            </GlassButton>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const returnToFromUrl = urlParams.get('returnTo');
+                  const returnToFromState = location.state?.returnTo;
+                  
+                  // Priority: location state first, then URL params
+                  const returnTo = returnToFromState || returnToFromUrl;
+                  
+                  if (returnTo === 'report') {
+                    // Return to report page using React Router
+                    navigate('/report');
+                  } else {
+                    // Return to encyclopedia list - clear selected species
+                    setSelectedSpecies(null);
+                  }
+                }}
+                className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                title="Powrót"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+              <h1 className="text-sm font-bold text-gray-900 dark:text-white">
+                {selectedSpecies.polishName}
+              </h1>
+              <span className="text-xs text-gray-500 dark:text-gray-400">|</span>
+              <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                {selectedSpecies.latinName}
+              </p>
+              <span className="text-xs text-gray-500 dark:text-gray-400">|</span>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                {selectedSpecies.family}
+              </p>
+            </div>
           </motion.div>
 
           <motion.div
@@ -191,7 +201,7 @@ export const EncyclopediaPage: React.FC = () => {
                 <img
                   src={(selectedSpecies.images || [])[selectedImageIndex]?.imageUrl}
                   alt={(selectedSpecies.images || [])[selectedImageIndex]?.altText || selectedSpecies.polishName}
-                  className="w-full h-96 sm:h-[40rem] md:h-[48rem] lg:h-[56rem] xl:h-[64rem] 2xl:h-[72rem] object-cover cursor-pointer"
+                  className="w-full h-64 sm:h-80 object-cover cursor-pointer"
                   onClick={() => openImageViewer(selectedImageIndex)}
                   crossOrigin={(selectedSpecies.images || [])[selectedImageIndex]?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
                 />
@@ -232,16 +242,16 @@ export const EncyclopediaPage: React.FC = () => {
 
             {/* Thumbnail gallery */}
             {(selectedSpecies.images || []).length > 1 && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-700">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                <div className="p-2 bg-gray-50 dark:bg-gray-700">
+                <h3 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Galeria zdjęć
                 </h3>
-                <div className="flex space-x-3 overflow-x-auto pb-2">
+                <div className="flex space-x-2 overflow-x-auto pb-1">
                   {(selectedSpecies.images || []).map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 transition-colors ${
+                      className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden border-2 transition-colors ${
                         index === selectedImageIndex 
                           ? 'border-green-500' 
                           : 'border-gray-300 dark:border-gray-600 hover:border-green-400'
@@ -260,34 +270,23 @@ export const EncyclopediaPage: React.FC = () => {
             )}
             
             <div className="p-4 sm:p-6">
-              <div className="mb-4 sm:mb-6">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-                  {selectedSpecies.polishName}
-                </h1>
-                <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 dark:text-gray-400 italic mb-3">
-                  {selectedSpecies.latinName}
-                </p>
-                <p className="text-base sm:text-lg text-gray-500 dark:text-gray-500">
-                  Rodzina: {selectedSpecies.family}
-                </p>
-              </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
                 <div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2">
                     Opis
                   </h3>
-                  <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
                     {selectedSpecies.description}
                   </p>
 
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2">
                     Przewodnik identyfikacji
                   </h3>
-                  <ul className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+                  <ul className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-1">
                     {(selectedSpecies.identificationGuide || []).map((guide, index) => (
                       <li key={index} className="flex items-start">
-                        <span className="text-green-600 mr-3 text-lg">•</span>
+                        <span className="text-green-600 mr-2 text-sm">•</span>
                         {guide}
                       </li>
                     ))}
@@ -295,50 +294,50 @@ export const EncyclopediaPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2">
                     Charakterystyka
                   </h3>
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-base sm:text-lg text-gray-600 dark:text-gray-400">Maksymalna wysokość:</span>
-                      <span className="text-base sm:text-lg text-gray-900 dark:text-white font-medium">
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Maksymalna wysokość:</span>
+                      <span className="text-xs sm:text-sm text-gray-900 dark:text-white font-medium">
                         {selectedSpecies.traits.maxHeight} m
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-base sm:text-lg text-gray-600 dark:text-gray-400">Żywotność:</span>
-                      <span className="text-base sm:text-lg text-gray-900 dark:text-white font-medium">
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Żywotność:</span>
+                      <span className="text-xs sm:text-sm text-gray-900 dark:text-white font-medium">
                         {selectedSpecies.traits.lifespan}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-base sm:text-lg text-gray-600 dark:text-gray-400">Rodzimy dla Polski:</span>
-                      <span className="text-base sm:text-lg text-gray-900 dark:text-white font-medium">
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Rodzimy dla Polski:</span>
+                      <span className="text-xs sm:text-sm text-gray-900 dark:text-white font-medium">
                         {selectedSpecies.traits.nativeToPoland ? 'Tak' : 'Nie'}
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-6 sm:mt-8">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2">
                       Zmiany sezonowe
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <div>
-                        <span className="text-base font-medium text-green-600 dark:text-green-400">Wiosna:</span>
-                        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.spring}</p>
+                        <span className="text-xs font-medium text-green-600 dark:text-green-400">Wiosna:</span>
+                        <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.spring}</p>
                       </div>
                       <div>
-                        <span className="text-base font-medium text-green-600 dark:text-green-400">Lato:</span>
-                        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.summer}</p>
+                        <span className="text-xs font-medium text-green-600 dark:text-green-400">Lato:</span>
+                        <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.summer}</p>
                       </div>
                       <div>
-                        <span className="text-base font-medium text-orange-600 dark:text-orange-400">Jesień:</span>
-                        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.autumn}</p>
+                        <span className="text-xs font-medium text-orange-600 dark:text-orange-400">Jesień:</span>
+                        <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.autumn}</p>
                       </div>
                       <div>
-                        <span className="text-base font-medium text-blue-600 dark:text-blue-400">Zima:</span>
-                        <p className="text-base text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.winter}</p>
+                        <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Zima:</span>
+                        <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.winter}</p>
                       </div>
                     </div>
                   </div>
@@ -400,22 +399,20 @@ export const EncyclopediaPage: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto">
       <div className="w-full px-2 sm:px-4 lg:px-6">
-
-
         {/* Search */}
-        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 mb-3 sm:mb-4">
-          <div className="flex gap-3">
+        <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex gap-2">
             {/* Search Input */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
               <input
                 type="text"
                 placeholder="Szukaj gatunku..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm"
               />
             </div>
             
@@ -423,7 +420,7 @@ export const EncyclopediaPage: React.FC = () => {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors"
+                className="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded transition-colors text-sm"
               >
                 Wyczyść
               </button>

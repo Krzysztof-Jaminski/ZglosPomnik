@@ -109,7 +109,7 @@ export interface TreePost extends Tree {
   userVote?: 'like' | 'dislike' | null;
 }
 
-export interface Municipality {
+export interface Commune {
   id: string;
   name: string;
   address: string;
@@ -124,7 +124,7 @@ export interface Municipality {
 
 export interface ApplicationTemplate {
   id: string;
-  municipalityId: string;
+  communeId: string;
   name: string;
   description: string;
   htmlTemplate: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FormField, FormSchema, Tree, Municipality, ApplicationTemplate } from '../../types';
+import { FormField, FormSchema, Tree, Commune, ApplicationTemplate } from '../../types';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
@@ -11,7 +11,7 @@ interface DynamicFormProps {
   onBack: () => void;
   isSubmitting?: boolean;
   selectedTree?: Tree | null;
-  selectedMunicipality?: Municipality | null;
+  selectedCommune?: Commune | null;
   selectedTemplate?: ApplicationTemplate | null;
 }
 
@@ -21,7 +21,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   onBack,
   isSubmitting = false,
   selectedTree = null,
-  selectedMunicipality = null,
+  selectedCommune = null,
   selectedTemplate = null
 }) => {
   const { user } = useAuth();
@@ -224,14 +224,14 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       imageUrls: selectedTree?.imageUrls || []
     };
     
-    // Prepare municipality context data
-    const municipalityContext = {
-      id: selectedMunicipality?.id || 'unknown',
-      name: selectedMunicipality?.name || 'Nieznana gmina',
-      city: selectedMunicipality?.city || 'Nieznane miasto',
-      address: selectedMunicipality?.address || 'Nieznany adres',
-      email: selectedMunicipality?.email || 'nieznany@email.com',
-      phone: selectedMunicipality?.phone || 'Nieznany telefon'
+    // Prepare commune context data
+    const communeContext = {
+      id: selectedCommune?.id || 'unknown',
+      name: selectedCommune?.name || 'Nieznana gmina',
+      city: selectedCommune?.city || 'Nieznane miasto',
+      address: selectedCommune?.address || 'Nieznany adres',
+      email: selectedCommune?.email || 'nieznany@email.com',
+      phone: selectedCommune?.phone || 'Nieznany telefon'
     };
     
     // Prepare template context data
@@ -257,7 +257,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
 KONTEKST WNIOSKU:
 - Szablon: ${templateContext.name} (${templateContext.description})
-- Gmina: ${municipalityContext.name} w ${municipalityContext.city}
+- Gmina: ${communeContext.name} w ${communeContext.city}
 
 DANE UŻYTKOWNIKA (używaj tych danych gdy to ma sens):
 - Imię: ${userContext.name}
@@ -282,11 +282,11 @@ DANE DRZEWA (używaj tych danych gdy to ma sens):
 - Liczba zdjęć: ${treeContext.imageUrls.length}
 
 DANE GMINY (używaj tych danych gdy to ma sens):
-- Nazwa: ${municipalityContext.name}
-- Miasto: ${municipalityContext.city}
-- Adres urzędu: ${municipalityContext.address}
-- Email: ${municipalityContext.email}
-- Telefon: ${municipalityContext.phone}
+- Nazwa: ${communeContext.name}
+- Miasto: ${communeContext.city}
+- Adres urzędu: ${communeContext.address}
+- Email: ${communeContext.email}
+- Telefon: ${communeContext.phone}
 
 Formularz zawiera następujące pola (WYPEŁNIJ WSZYSTKIE):
 ${fieldsInfo.map(field => 
@@ -311,8 +311,8 @@ Przykład odpowiedzi (wypełnij wszystkie pola z formularza):
   "user_city": "${userContext.city}",
   "user_postal_code": "${userContext.postalCode}",
   "plot": "Działka nr 123/4 w obrębie ${treeContext.location}",
-  "cadastral_district": "Obręb ${municipalityContext.city}-Centrum",
-  "record_keeping_unit": "Jednostka ewidencyjna ${municipalityContext.city}",
+  "cadastral_district": "Obręb ${communeContext.city}-Centrum",
+  "record_keeping_unit": "Jednostka ewidencyjna ${communeContext.city}",
   "ownership_form": "Własność prywatna",
   "land_type": "Grunt zabudowany",
   "study_name": "Opracowanie dendrologiczne dla ${treeContext.species} w ${treeContext.location}",
@@ -386,8 +386,8 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
         user_city: userContext.city,
         user_postal_code: userContext.postalCode,
         plot: `Działka nr 123/4 w obrębie ${treeContext.location}`,
-        cadastral_district: `Obręb ${municipalityContext.city}-Centrum`,
-        record_keeping_unit: `Jednostka ewidencyjna ${municipalityContext.city}`,
+        cadastral_district: `Obręb ${communeContext.city}-Centrum`,
+        record_keeping_unit: `Jednostka ewidencyjna ${communeContext.city}`,
         ownership_form: 'Własność prywatna',
         land_type: 'Grunt zabudowany',
         study_name: `Opracowanie dendrologiczne dla ${treeContext.species} w ${treeContext.location}`,

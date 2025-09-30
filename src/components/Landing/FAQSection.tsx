@@ -16,13 +16,13 @@ const FAQItem = ({ question, answer, index }: { question: string; answer: string
       <motion.button
         whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.8)' }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 text-left flex justify-between items-center text-white transition-colors duration-300"
+        className="w-full px-3 py-2 text-left flex justify-between items-center text-white transition-colors duration-300"
       >
-        <span className="font-semibold text-lg">{question}</span>
+        <span className="font-semibold text-sm">{question}</span>
         <motion.span
           animate={{ rotate: isOpen ? 45 : 0 }}
           transition={{ duration: 0.3 }}
-          className="text-green-400 text-xl font-bold"
+          className="text-green-400 text-lg font-bold"
         >
           +
         </motion.span>
@@ -36,7 +36,7 @@ const FAQItem = ({ question, answer, index }: { question: string; answer: string
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="px-6 pb-8 pt-2 text-gray-300 text-lg leading-relaxed">
+            <div className="px-3 pb-4 pt-1 text-gray-300 text-sm leading-relaxed">
               {answer}
             </div>
           </motion.div>
@@ -61,46 +61,30 @@ export const FAQSection = () => {
       answer: "Tak, możesz zgłosić drzewo anonimowo, ale zalecamy podanie swoich danych kontaktowych, aby organy odpowiedzialne mogły skontaktować się z Tobą w przypadku potrzeby dodatkowych informacji. Dane kontaktowe przyspieszają proces weryfikacji i zwiększają szanse na pozytywne rozpatrzenie wniosku."
     },
     {
-      question: "Co się dzieje po złożeniu wniosku?",
-      answer: "Po złożeniu wniosku organ odpowiedzialny (gmina, starostwo lub urząd marszałkowski) przeprowadza wizję lokalną, ocenia drzewo pod kątem kryteriów ustawowych i podejmuje decyzję o uznaniu lub odmowie uznania drzewa za pomnik przyrody. Aplikacja będzie Cię informować o każdym etapie tego procesu."
-    },
-    {
-      question: "Jakie dokumenty są potrzebne do złożenia wniosku?",
-      answer: "Potrzebne są: szczegółowy opis lokalizacji z koordynatami GPS, wysokiej jakości zdjęcia drzewa z różnych perspektyw, precyzyjne pomiary obwodu pnia na wysokości 130 cm, opis stanu zdrowotnego, uzasadnienie walorów przyrodniczych, kulturowych lub historycznych, oraz informacje o właścicielu terenu. Aplikacja poprowadzi Cię przez wszystkie wymagane elementy."
-    },
-    {
       question: "Czy aplikacja jest bezpłatna?",
-      answer: "Tak, aplikacja jest w pełni darmowa dla wszystkich użytkowników. Możesz zgłaszać pomniki przyrody, tworzyć wnioski, korzystać z encyklopedii gatunków i społeczności bez żadnych opłat. Wszystkie podstawowe funkcjonalności są dostępne za darmo. W przyszłości planujemy wprowadzić opcjonalne funkcje premium dla zaawansowanych użytkowników, ale podstawowa ochrona pomników przyrody pozostanie zawsze bezpłatna."
-    },
-    {
-      question: "Jak działa funkcja mapy satelitarnej?",
-      answer: "Aplikacja wykorzystuje mapy satelitarne do precyzyjnego określenia lokalizacji drzew. Możesz zobaczyć drzewo z lotu ptaka, co pomaga w dokładnym opisaniu jego położenia i otoczenia. To szczególnie przydatne przy zgłaszaniu drzew w terenach leśnych lub trudno dostępnych miejscach."
-    },
-    {
-      question: "Czy mogę edytować zgłoszenie po wysłaniu?",
-      answer: "Tak, możesz edytować swoje zgłoszenie do momentu rozpoczęcia jego rozpatrywania przez organ. Aplikacja automatycznie zapisuje wszystkie zmiany i informuje o statusie edycji. Po rozpoczęciu procedury urzędowej możesz tylko dodać dodatkowe informacje lub dokumenty."
+      answer: "Tak, aplikacja jest w pełni darmowa dla wszystkich użytkowników. Możesz zgłaszać pomniki przyrody, tworzyć wnioski, korzystać z encyklopedii gatunków i społeczności bez żadnych opłat. Wszystkie podstawowe funkcjonalności są dostępne za darmo."
     }
   ];
 
   return (
-    <section id="faq" className="relative z-10 py-24 bg-gray-900/40 backdrop-blur-sm">
-      <div className="max-w-4xl mx-auto px-6 sm:px-8">
+    <section id="faq" className="relative z-10 py-6 bg-gray-900/40 backdrop-blur-sm">
+      <div className="max-w-3xl mx-auto px-3 sm:px-4">
         <motion.div 
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-6"
         >
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
             Najczęściej zadawane pytania
           </h2>
-          <p className="text-lg text-gray-300">
+          <p className="text-sm text-gray-300">
             Odpowiedzi na najważniejsze pytania dotyczące ochrony pomników przyrody
           </p>
         </motion.div>
 
-        <div className="space-y-4">
+        <div className="space-y-2">
           {faqData.map((faq, index) => (
             <FAQItem key={index} question={faq.question} answer={faq.answer} index={index} />
           ))}
@@ -112,14 +96,14 @@ export const FAQSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           viewport={{ once: true }}
-          className="text-center mt-16"
+          className="text-center mt-8"
         >
           <DarkGlassButton
             onClick={() => {
               // Symulacja pobierania aplikacji
               alert('Funkcja pobierania aplikacji będzie dostępna wkrótce!');
             }}
-            className="text-lg px-8 py-4"
+            className="text-sm px-4 py-2"
           >
             Pobierz aplikację mobilną
           </DarkGlassButton>

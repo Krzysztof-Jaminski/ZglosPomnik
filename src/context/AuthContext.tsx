@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             key.startsWith('feed_ui_') ||
             key === 'applicationStep' ||
             key === 'selectedTree' ||
-            key === 'selectedMunicipality' ||
+            key === 'selectedCommune' ||
             key === 'selectedTemplate' ||
             key === 'currentApplication' ||
             key === 'applicationFormData' ||
@@ -172,6 +172,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData = await authService.getUserProfile();
       setUser(userData);
       
+      // Initialize default location in localStorage if not exists
+      const savedData = localStorage.getItem('treeReportFormData');
+      if (!savedData) {
+        const defaultFormData = {
+          latitude: 0.000000,
+          longitude: 0.000000
+        };
+        localStorage.setItem('treeReportFormData', JSON.stringify(defaultFormData));
+        console.log('Default location coordinates saved to localStorage after login');
+      }
+      
       // Verify token was saved
       const savedToken = authService.getToken();
       console.log('Token after login:', savedToken ? 'saved' : 'not saved');
@@ -192,6 +203,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Fetch user data from API
       const userDataFromAPI = await authService.getUserProfile();
       setUser(userDataFromAPI);
+      
+      // Initialize default location in localStorage if not exists
+      const savedData = localStorage.getItem('treeReportFormData');
+      if (!savedData) {
+        const defaultFormData = {
+          latitude: 0.000000,
+          longitude: 0.000000
+        };
+        localStorage.setItem('treeReportFormData', JSON.stringify(defaultFormData));
+        console.log('Default location coordinates saved to localStorage after registration');
+      }
       
       // Token is automatically saved by authService
       console.log('User data from API:', userDataFromAPI);

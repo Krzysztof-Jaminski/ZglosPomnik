@@ -43,26 +43,26 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 
   const variantClasses = {
     primary: `
-      bg-green-800/30 hover:bg-green-700/50 active:bg-blue-600/70
-      text-green-900 hover:text-green-800 active:text-blue-900
-      hover:border-l-green-500 active:border-l-blue-500
+      bg-white/80 hover:bg-white/90 active:bg-white/95
+      text-gray-800 hover:text-gray-900 active:text-gray-900
+      hover:border-l-green-500 active:border-l-green-600
       dark:bg-gray-800/50 dark:hover:bg-gray-700/60 dark:active:bg-gray-600/70
       dark:text-gray-300 dark:hover:text-white
       dark:hover:border-l-green-500
       focus:ring-0
     `,
     secondary: `
-      bg-blue-800/20 hover:bg-blue-700/40 active:bg-blue-600/60
-      text-blue-800 hover:text-blue-700 active:text-blue-800
-      hover:border-l-blue-400 active:border-l-blue-400
+      bg-white/60 hover:bg-white/70 active:bg-white/80
+      text-gray-700 hover:text-gray-800 active:text-gray-900
+      hover:border-l-blue-400 active:border-l-blue-500
       dark:bg-gray-800/30 dark:hover:bg-gray-700/50 dark:active:bg-gray-600/60
       dark:text-gray-400 dark:hover:text-gray-200
       dark:hover:border-l-green-400
       focus:ring-0
     `,
     danger: `
-      bg-red-800/20 hover:bg-red-900/40 active:bg-red-800/50
-      text-red-700 hover:text-red-600 active:text-red-800
+      bg-white/70 hover:bg-white/80 active:bg-white/90
+      text-red-600 hover:text-red-700 active:text-red-800
       hover:border-l-red-500 active:border-l-red-600
       dark:bg-gray-800/30 dark:hover:bg-red-900/40 dark:active:bg-red-800/50
       dark:text-red-400 dark:hover:text-red-300

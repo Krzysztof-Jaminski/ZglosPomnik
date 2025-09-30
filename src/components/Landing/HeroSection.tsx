@@ -55,16 +55,16 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
   ];
 
   return (
-    <section className="relative z-10 min-h-screen flex items-center py-16">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
+    <section className="relative z-10 min-h-screen flex items-center py-8">
+      <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 pt-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 items-center w-full">
           {/* Phone Mockup - Right side */}
           <div className="relative flex items-center justify-center order-2 lg:order-1">
-            <div className="relative w-96 h-[48rem]">
-              <div className="absolute inset-0 bg-black rounded-[2rem] p-1 shadow-[0_0_40px_rgba(0,0,0,0.3)] phone-gradient-border">
-                <div className="absolute inset-1 bg-black rounded-[1.5rem] overflow-hidden">
+            <div className="relative w-64 h-[32rem]">
+              <div className="absolute inset-0 bg-black rounded-[1.5rem] p-1 shadow-[0_0_20px_rgba(0,0,0,0.3)] phone-gradient-border">
+                <div className="absolute inset-1 bg-black rounded-[1rem] overflow-hidden">
                   {/* Notch */}
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-3 bg-black rounded-b-xl z-20"></div>
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-12 h-2 bg-black rounded-b-lg z-20"></div>
                   
                   {/* Screen */}
                   <div className="absolute inset-0 flex flex-col">
@@ -89,28 +89,26 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
             </div>
           </div>
 
-          {/* Mobile: Content - Above phone */}
+          {/* Mobile: Content - Center */}
           <div className="lg:hidden order-1 text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="mb-8"
+              className="mb-4"
             >
-              <h2 className="text-xl font-bold text-white dark:text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+              <h2 className="text-lg font-bold text-white dark:text-white mb-2" style={{ fontFamily: 'Exo 2, sans-serif' }}>
                 Ochrona pomników przyrody
                 <br />
                 <span className="text-white dark:text-white">nigdy nie była tak prosta</span>
               </h2>
-              <p className="text-gray-300 dark:text-gray-300 text-sm mb-4">
-                Kompleksowa platforma do ochrony pomników przyrody. Odkrywaj drzewa na interaktywnej mapie, zgłaszaj nowe lokalizacje z precyzyjnym GPS, tworz profesjonalne wnioski zgodne ze standardami gmin, korzystaj z encyklopedii gatunków i dołącz do społeczności miłośników przyrody.
+              <p className="text-gray-300 dark:text-gray-300 text-xs mb-2">
+                Platforma do ochrony pomników przyrody. Odkrywaj drzewa na mapie, zgłaszaj lokalizacje z GPS i tworz wnioski zgodne ze standardami gmin.
               </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                <span className="bg-green-400/20 text-green-400 text-xs px-3 py-1 rounded-full">Mapa interaktywna</span>
-                <span className="bg-green-400/20 text-green-400 text-xs px-3 py-1 rounded-full">GPS i lokalizacja</span>
-                <span className="bg-green-400/20 text-green-400 text-xs px-3 py-1 rounded-full">Wnioski i dokumenty</span>
-                <span className="bg-green-400/20 text-green-400 text-xs px-3 py-1 rounded-full">Encyklopedia gatunków</span>
-                <span className="bg-green-400/20 text-green-400 text-xs px-3 py-1 rounded-full">Społeczność</span>
+              <div className="flex flex-wrap gap-1 justify-center">
+                <span className="bg-green-400/20 text-green-400 text-xs px-2 py-0.5 rounded-full">Mapa interaktywna</span>
+                <span className="bg-green-400/20 text-green-400 text-xs px-2 py-0.5 rounded-full">GPS i lokalizacja</span>
+                <span className="bg-green-400/20 text-green-400 text-xs px-2 py-0.5 rounded-full">Wnioski i dokumenty</span>
               </div>
             </motion.div>
 
@@ -118,15 +116,15 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="flex justify-center mb-8"
+              className="flex justify-center mb-4"
             >
               <DarkGlassButton
                 onClick={() => {
                   onShowAuthModal('login');
                 }}
                 variant="primary"
-                size="md"
-                className="text-base px-8 py-3"
+                size="sm"
+                className="text-sm px-4 py-2"
               >
                 KONTYNUUJ
               </DarkGlassButton>
@@ -134,14 +132,14 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
           </div>
 
           {/* Desktop: Content - Left side */}
-          <div className="hidden lg:flex flex-col justify-center max-w-lg mx-auto lg:mx-0 order-1 lg:order-2 text-center">
-            <h2 className="text-2xl font-bold text-white dark:text-white mb-6" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+          <div className="hidden lg:flex flex-col justify-center max-w-md mx-auto lg:mx-0 order-1 lg:order-2 text-center">
+            <h2 className="text-xl font-bold text-white dark:text-white mb-3" style={{ fontFamily: 'Exo 2, sans-serif' }}>
               Ochrona pomników przyrody
               <br />
               <span className="text-white dark:text-white">nigdy nie była tak prosta</span>
             </h2>
-            <p className="text-lg text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
-              Kompleksowa platforma do ochrony pomników przyrody. Odkrywaj drzewa na interaktywnej mapie, zgłaszaj nowe lokalizacje z precyzyjnym GPS, tworz profesjonalne wnioski zgodne ze standardami gmin, korzystaj z encyklopedii gatunków i dołącz do społeczności miłośników przyrody. Wszystko w jednej aplikacji - od identyfikacji po ochronę.
+            <p className="text-sm text-gray-300 dark:text-gray-300 mb-3 leading-relaxed">
+              Platforma do ochrony pomników przyrody. Odkrywaj drzewa na mapie, zgłaszaj lokalizacje z GPS i tworz wnioski zgodne ze standardami gmin.
             </p>
 
             <motion.div 
@@ -160,7 +158,7 @@ export const HeroSection = ({ onShowAuthModal }: HeroSectionProps) => {
                   }}
                   variant="primary"
                   size="sm"
-                  className="text-xs sm:text-sm w-fit px-4 py-2"
+                  className="text-xs w-fit px-3 py-1.5"
                 >
                   KONTYNUUJ
                 </DarkGlassButton>

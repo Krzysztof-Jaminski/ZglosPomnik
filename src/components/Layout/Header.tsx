@@ -26,9 +26,9 @@ export const Header: React.FC = () => {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 h-10 sm:h-12 w-full">
-      <div className="w-full px-2">
+      <div className="w-full">
         <div className="flex justify-between items-center h-10 sm:h-12 w-full">
-          <div className="flex items-center space-x-2 focus:outline-none focus:ring-0 focus:ring-offset-0">
+          <div className="flex items-center space-x-2 focus:outline-none focus:ring-0 focus:ring-offset-0 pl-2">
             <Link to="/map" className="flex items-center space-x-1 focus:outline-none focus:ring-0 focus:ring-offset-0">
               <img 
                 src="/logo.png" 
@@ -41,7 +41,7 @@ export const Header: React.FC = () => {
             </Link>
           </div>
           
-          <div className="flex items-center justify-end flex-1 space-x-2">
+          <div className="flex items-center justify-end flex-1 space-x-2 pr-2">
             <button
               onClick={cycleTheme}
               title={`Current theme: ${theme}`}

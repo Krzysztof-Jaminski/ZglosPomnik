@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, ExternalLink, CheckCircle, ArrowLeft, ArrowRight, Plus, Loader2, X } from 'lucide-react';
-import { Tree, ApplicationTemplate, Municipality, Application, FormSchema } from '../types';
+import { Tree, ApplicationTemplate, Commune, Application, FormSchema } from '../types';
 import { applicationsService } from '../services/applicationsService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { DynamicForm } from '../components/Applications/DynamicForm';
 import { TemplateSelector } from '../components/Applications/TemplateSelector';
 import { TreeSelector } from '../components/Applications/TreeSelector';
-import { MunicipalitySelector } from '../components/Applications/MunicipalitySelector';
+import { CommuneSelector } from '../components/Applications/CommuneSelector';
 import { useAuth } from '../context/AuthContext';
 
-type ApplicationStep = 'overview' | 'select-tree' | 'select-municipality' | 'select-template' | 'fill-form' | 'submitted' | 'completed';
+type ApplicationStep = 'overview' | 'select-tree' | 'select-commune' | 'select-template' | 'fill-form' | 'submitted' | 'completed';
 
 
 
@@ -20,7 +20,7 @@ export const ApplicationsPage: React.FC = () => {
     // Initialize from localStorage if available
     const savedStep = localStorage.getItem('applicationStep');
     if (savedStep) {
-      const validSteps: ApplicationStep[] = ['overview', 'select-tree', 'select-municipality', 'select-template', 'fill-form', 'submitted', 'completed'];
+      const validSteps: ApplicationStep[] = ['overview', 'select-tree', 'select-commune', 'select-template', 'fill-form', 'submitted', 'completed'];
       if (validSteps.includes(savedStep as ApplicationStep)) {
         console.log('Initializing step from localStorage:', savedStep);
         return savedStep as ApplicationStep;
@@ -30,7 +30,7 @@ export const ApplicationsPage: React.FC = () => {
   });
   const [trees, setTrees] = useState<Tree[]>([]);
   const [templates, setTemplates] = useState<ApplicationTemplate[]>([]);
-  const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+  const [communes, setCommunes] = useState<Commune[]>([]);
   const [selectedTree, setSelectedTree] = useState<Tree | null>(() => {
     const savedTree = localStorage.getItem('selectedTree');
     if (savedTree) {
@@ -42,13 +42,13 @@ export const ApplicationsPage: React.FC = () => {
     }
     return null;
   });
-  const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(() => {
-    const savedMunicipality = localStorage.getItem('selectedMunicipality');
-    if (savedMunicipality) {
+  const [selectedCommune, setSelectedCommune] = useState<Commune | null>(() => {
+    const savedCommune = localStorage.getItem('selectedCommune');
+    if (savedCommune) {
       try {
-        return JSON.parse(savedMunicipality);
+        return JSON.parse(savedCommune);
       } catch (error) {
-        console.error('Error parsing saved municipality:', error);
+        console.error('Error parsing saved commune:', error);
       }
     }
     return null;
@@ -96,10 +96,10 @@ export const ApplicationsPage: React.FC = () => {
   }, [selectedTree]);
 
   useEffect(() => {
-    if (selectedMunicipality) {
-      localStorage.setItem('selectedMunicipality', JSON.stringify(selectedMunicipality));
+    if (selectedCommune) {
+      localStorage.setItem('selectedCommune', JSON.stringify(selectedCommune));
     }
-  }, [selectedMunicipality]);
+  }, [selectedCommune]);
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -120,17 +120,17 @@ export const ApplicationsPage: React.FC = () => {
       if (!isAuthenticated || isLoading) return;
 
       try {
-        // If we're on municipality step and no municipalities loaded, load them
-        if (currentStep === 'select-municipality' && municipalities.length === 0) {
-          console.log('Loading municipalities for restored step');
-          const municipalitiesData = await applicationsService.getMunicipalities();
-          setMunicipalities(municipalitiesData);
+        // If we're on commune step and no communes loaded, load them
+        if (currentStep === 'select-commune' && communes.length === 0) {
+          console.log('Loading communes for restored step');
+          const communesData = await applicationsService.getCommunes();
+          setCommunes(communesData);
         }
 
         // If we're on template step and no templates loaded, load them
-        if (currentStep === 'select-template' && templates.length === 0 && selectedMunicipality) {
+        if (currentStep === 'select-template' && templates.length === 0 && selectedCommune) {
           console.log('Loading templates for restored step');
-          const templatesData = await applicationsService.getMunicipalityTemplates(selectedMunicipality.id);
+          const templatesData = await applicationsService.getCommuneTemplates(selectedCommune.id);
           setTemplates(templatesData);
         }
 
@@ -175,7 +175,7 @@ export const ApplicationsPage: React.FC = () => {
     };
 
     loadDataForRestoredStep();
-  }, [isAuthenticated, isLoading, currentStep, municipalities.length, templates.length, selectedMunicipality, selectedTemplate, selectedTree, formSchema, currentApplication?.id]);
+  }, [isAuthenticated, isLoading, currentStep, communes.length, templates.length, selectedCommune, selectedTemplate, selectedTree, formSchema, currentApplication?.id]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -210,49 +210,49 @@ export const ApplicationsPage: React.FC = () => {
     loadData();
   }, [isAuthenticated]);
 
-  // Load municipalities when step changes to select-municipality
+  // Load communes when step changes to select-commune
   useEffect(() => {
-    if (currentStep === 'select-municipality' && municipalities.length === 0) {
-      const loadMunicipalities = async () => {
+    if (currentStep === 'select-commune' && communes.length === 0) {
+      const loadCommunes = async () => {
         try {
           setIsLoading(true);
-          const municipalitiesData = await applicationsService.getMunicipalities();
-          console.log('Total municipalities:', municipalitiesData.length);
-          setMunicipalities(municipalitiesData);
+          const communesData = await applicationsService.getCommunes();
+          console.log('Total communes:', communesData.length);
+          setCommunes(communesData);
           
-          // Auto-select municipality based on tree location (only once)
-          if (selectedTree && municipalitiesData.length > 0 && !autoSelectAttempted) {
+          // Auto-select commune based on tree location (only once)
+          if (selectedTree && communesData.length > 0 && !autoSelectAttempted) {
             const treeAddress = selectedTree.location.address.toLowerCase();
             console.log('Tree address:', treeAddress);
             
-            // Try to find municipality by city name in address
-            const matchingMunicipality = municipalitiesData.find(municipality => {
-              const municipalityCity = municipality.city.toLowerCase();
-              const municipalityName = municipality.name.toLowerCase();
+            // Try to find commune by city name in address
+            const matchingCommune = communesData.find(commune => {
+              const communeCity = commune.city.toLowerCase();
+              const communeName = commune.name.toLowerCase();
               
-              return treeAddress.includes(municipalityCity) || 
-                     treeAddress.includes(municipalityName) ||
-                     municipalityCity.includes(treeAddress.split(',')[0].trim()) ||
-                     municipalityName.includes(treeAddress.split(',')[0].trim());
+              return treeAddress.includes(communeCity) || 
+                     treeAddress.includes(communeName) ||
+                     communeCity.includes(treeAddress.split(',')[0].trim()) ||
+                     communeName.includes(treeAddress.split(',')[0].trim());
             });
             
-            if (matchingMunicipality) {
-              console.log('Auto-selected municipality:', matchingMunicipality.name);
-              setSelectedMunicipality(matchingMunicipality);
+            if (matchingCommune) {
+              console.log('Auto-selected commune:', matchingCommune.name);
+              setSelectedCommune(matchingCommune);
             } else {
-              console.log('No matching municipality found, user will need to select manually');
+              console.log('No matching commune found, user will need to select manually');
             }
             
             setAutoSelectAttempted(true);
           }
         } catch (error) {
-          console.error('Error loading municipalities:', error);
+          console.error('Error loading communes:', error);
           if (error instanceof Error && error.message.includes('autoryzacji')) {
             handleAuthError(error);
             await clearCacheAndReset();
             return;
           } else {
-            console.warn('Error loading municipalities, using fallback data');
+            console.warn('Error loading communes, using fallback data');
             // W przypadku błędu, załaduj podstawowe dane ale zachowaj krok
             await loadFallbackData(true);
           }
@@ -260,17 +260,17 @@ export const ApplicationsPage: React.FC = () => {
           setIsLoading(false);
         }
       };
-      loadMunicipalities();
+      loadCommunes();
     }
-  }, [currentStep, municipalities.length, selectedTree, autoSelectAttempted]);
+  }, [currentStep, communes.length, selectedTree, autoSelectAttempted]);
 
-  // Load templates when municipality is selected
+  // Load templates when commune is selected
   useEffect(() => {
-    if (selectedMunicipality) {
+    if (selectedCommune) {
       const loadTemplates = async () => {
         try {
           setIsLoading(true);
-          const templatesData = await applicationsService.getMunicipalityTemplates(selectedMunicipality.id);
+          const templatesData = await applicationsService.getCommuneTemplates(selectedCommune.id);
           setTemplates(templatesData);
         } catch (error) {
           console.error('Error loading templates:', error);
@@ -281,10 +281,10 @@ export const ApplicationsPage: React.FC = () => {
               await clearCacheAndReset();
               return;
             } else if (error.message.includes('404')) {
-              console.warn('No templates found for municipality:', selectedMunicipality.id);
+              console.warn('No templates found for commune:', selectedCommune.id);
               setTemplates([]);
             } else if (error.message.includes('400')) {
-              console.error('Bad request for municipality:', selectedMunicipality.id);
+              console.error('Bad request for commune:', selectedCommune.id);
               console.warn('Error loading templates, using fallback data');
               await loadFallbackData(true);
             } else {
@@ -301,10 +301,10 @@ export const ApplicationsPage: React.FC = () => {
       };
       loadTemplates();
     }
-  }, [selectedMunicipality]);
+  }, [selectedCommune]);
 
   const getStepNumber = (step: ApplicationStep): number => {
-    const steps = ['overview', 'select-tree', 'select-municipality', 'select-template', 'fill-form', 'submitted', 'completed'];
+    const steps = ['overview', 'select-tree', 'select-commune', 'select-template', 'fill-form', 'submitted', 'completed'];
     return steps.indexOf(step) + 1;
   };
 
@@ -312,18 +312,18 @@ export const ApplicationsPage: React.FC = () => {
   const handleTreeSelect = async (tree: Tree) => {
     // Pozwól na tworzenie wniosków dla dowolnego drzewa
     setSelectedTree(tree);
-    handleStepChange('select-municipality');
+    handleStepChange('select-commune');
     setAutoSelectAttempted(false); // Reset auto-select flag for new tree
     
-    // Load municipalities after tree selection (auth required)
+    // Load communes after tree selection (auth required)
     try {
       setIsLoading(true);
-      const municipalitiesData = await applicationsService.getMunicipalities();
+      const communesData = await applicationsService.getCommunes();
       // Wyświetl wszystkie gminy (dla testowania)
-      console.log('Total municipalities:', municipalitiesData.length);
-      setMunicipalities(municipalitiesData);
+      console.log('Total communes:', communesData.length);
+      setCommunes(communesData);
     } catch (error) {
-      console.error('Error loading municipalities:', error);
+      console.error('Error loading communes:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
         await clearCacheAndReset();
@@ -417,7 +417,7 @@ export const ApplicationsPage: React.FC = () => {
       // Clear saved data after successful submission
       localStorage.removeItem('applicationStep');
       localStorage.removeItem('selectedTree');
-      localStorage.removeItem('selectedMunicipality');
+      localStorage.removeItem('selectedCommune');
       localStorage.removeItem('selectedTemplate');
       localStorage.removeItem('applicationFormData');
       localStorage.removeItem('currentApplication');
@@ -476,7 +476,7 @@ export const ApplicationsPage: React.FC = () => {
       if (!preserveStep) {
         localStorage.removeItem('applicationStep');
         localStorage.removeItem('selectedTree');
-        localStorage.removeItem('selectedMunicipality');
+        localStorage.removeItem('selectedCommune');
         localStorage.removeItem('selectedTemplate');
         localStorage.removeItem('applicationFormData');
         localStorage.removeItem('currentApplication');
@@ -484,7 +484,7 @@ export const ApplicationsPage: React.FC = () => {
         // Resetuj stan tylko jeśli nie zachowujemy kroku
         handleStepChange('overview');
         setSelectedTree(null);
-        setSelectedMunicipality(null);
+        setSelectedCommune(null);
         setSelectedTemplate(null);
         setCurrentApplication(null);
         setFormSchema(null);
@@ -495,22 +495,22 @@ export const ApplicationsPage: React.FC = () => {
       
       // Załaduj podstawowe dane (gminy i szablony)
       try {
-        const municipalitiesData = await applicationsService.getMunicipalities();
-        setMunicipalities(municipalitiesData);
-        console.log('Fallback municipalities loaded:', municipalitiesData.length);
+        const communesData = await applicationsService.getCommunes();
+        setCommunes(communesData);
+        console.log('Fallback communes loaded:', communesData.length);
       } catch (error) {
-        console.error('Error loading fallback municipalities:', error);
+        console.error('Error loading fallback communes:', error);
       }
       
       try {
         // Dla fallback, spróbuj załadować szablony z pierwszej dostępnej gminy
-        if (municipalities.length > 0) {
-          const templatesData = await applicationsService.getMunicipalityTemplates(municipalities[0].id);
+        if (communes.length > 0) {
+          const templatesData = await applicationsService.getCommuneTemplates(communes[0].id);
           setTemplates(templatesData);
           console.log('Fallback templates loaded:', templatesData.length);
         } else {
           setTemplates([]);
-          console.log('No municipalities available for fallback templates');
+          console.log('No communes available for fallback templates');
         }
       } catch (error) {
         console.error('Error loading fallback templates:', error);
@@ -531,13 +531,13 @@ export const ApplicationsPage: React.FC = () => {
   const clearProgress = () => {
     localStorage.removeItem('applicationStep');
     localStorage.removeItem('selectedTree');
-    localStorage.removeItem('selectedMunicipality');
+    localStorage.removeItem('selectedCommune');
     localStorage.removeItem('selectedTemplate');
     localStorage.removeItem('applicationFormData');
     localStorage.removeItem('currentApplication');
     handleStepChange('overview');
     setSelectedTree(null);
-    setSelectedMunicipality(null);
+    setSelectedCommune(null);
     setSelectedTemplate(null);
     setCurrentApplication(null);
     setFormSchema(null);
@@ -678,7 +678,7 @@ export const ApplicationsPage: React.FC = () => {
           Wstecz
         </GlassButton>
         <GlassButton
-          onClick={() => handleStepChange('select-municipality')}
+          onClick={() => handleStepChange('select-commune')}
           disabled={!selectedTree}
           variant="primary"
           size="xs"
@@ -690,7 +690,7 @@ export const ApplicationsPage: React.FC = () => {
     </motion.div>
   );
 
-  const renderMunicipalitySelection = () => (
+  const renderCommuneSelection = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -701,18 +701,18 @@ export const ApplicationsPage: React.FC = () => {
           Wybierz gminę
         </h2>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          {selectedMunicipality 
-            ? `Automatycznie wybrana gmina: ${selectedMunicipality.name}` 
+          {selectedCommune 
+            ? `Automatycznie wybrana gmina: ${selectedCommune.name}` 
             : 'Wybierz gminę dla swojego wniosku'
           }
         </p>
       </div>
 
       <div className="flex-1">
-        <MunicipalitySelector
-          municipalities={municipalities}
-          selectedMunicipality={selectedMunicipality}
-          onMunicipalitySelect={setSelectedMunicipality}
+        <CommuneSelector
+          communes={communes}
+          selectedCommune={selectedCommune}
+          onCommuneSelect={setSelectedCommune}
         />
       </div>
 
@@ -727,7 +727,7 @@ export const ApplicationsPage: React.FC = () => {
         </GlassButton>
         <GlassButton
           onClick={() => handleStepChange('select-template')}
-          disabled={!selectedMunicipality}
+          disabled={!selectedCommune}
           variant="primary"
           size="xs"
           icon={ArrowRight}
@@ -769,7 +769,7 @@ export const ApplicationsPage: React.FC = () => {
 
       <div className="mt-3 mb-4 flex justify-between">
         <GlassButton
-          onClick={() => handleStepChange('select-municipality')}
+          onClick={() => handleStepChange('select-commune')}
           variant="secondary"
           size="xs"
           icon={ArrowLeft}
@@ -812,7 +812,7 @@ export const ApplicationsPage: React.FC = () => {
           onBack={() => handleStepChange('select-template')}
           isSubmitting={isSubmitting}
           selectedTree={selectedTree}
-          selectedMunicipality={selectedMunicipality}
+          selectedCommune={selectedCommune}
           selectedTemplate={selectedTemplate}
         />
       </div>
@@ -963,13 +963,13 @@ export const ApplicationsPage: React.FC = () => {
           </button>
         </div>
 
-        {selectedMunicipality && (
+        {selectedCommune && (
           <div className="space-y-4">
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
               <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">Krok po kroku:</h4>
               <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-200 text-sm">
                 <li>Zaloguj się na platformie ePUAP (epuap.gov.pl)</li>
-                <li>Wybierz "{selectedMunicipality.name}"</li>
+                <li>Wybierz "{selectedCommune.name}"</li>
                 <li>Znajdź usługę "Pomniki przyrody" lub "Zgłoszenia dotyczące drzew"</li>
                 <li>Wypełnij formularz online</li>
                 <li>Załącz pobrany PDF z wnioskiem</li>
@@ -980,12 +980,12 @@ export const ApplicationsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Kontakt do gminy:</h4>
-                <p className="text-gray-600 dark:text-gray-400">Email: {selectedMunicipality.email}</p>
-                <p className="text-gray-600 dark:text-gray-400">Telefon: {selectedMunicipality.phone}</p>
+                <p className="text-gray-600 dark:text-gray-400">Email: {selectedCommune.email}</p>
+                <p className="text-gray-600 dark:text-gray-400">Telefon: {selectedCommune.phone}</p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Adres urzędu:</h4>
-                <p className="text-gray-600 dark:text-gray-400">{selectedMunicipality.address}, {selectedMunicipality.city}</p>
+                <p className="text-gray-600 dark:text-gray-400">{selectedCommune.address}, {selectedCommune.city}</p>
               </div>
             </div>
 
@@ -1028,7 +1028,7 @@ export const ApplicationsPage: React.FC = () => {
           <AnimatePresence mode="wait">
             {currentStep === 'overview' && renderOverview()}
             {currentStep === 'select-tree' && renderTreeSelection()}
-            {currentStep === 'select-municipality' && renderMunicipalitySelection()}
+            {currentStep === 'select-commune' && renderCommuneSelection()}
             {currentStep === 'select-template' && renderTemplateSelection()}
             {currentStep === 'fill-form' && renderFormFilling()}
             {currentStep === 'submitted' && renderSubmitted()}

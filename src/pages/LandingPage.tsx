@@ -7,7 +7,6 @@ import { LoginForm } from '../components/Auth/LoginForm';
 import { HeroSection } from '../components/Landing/HeroSection';
 import { FeaturesSection } from '../components/Landing/FeaturesSection';
 import { FAQSection } from '../components/Landing/FAQSection';
-import { GuidesSection } from '../components/Landing/GuidesSection';
 import { ContactSection } from '../components/Landing/ContactSection';
 import { RegisterForm } from '../components/Auth/RegisterForm';
 import { useSystemTheme } from '../hooks/useSystemTheme';
@@ -127,27 +126,27 @@ export const LandingPage = () => {
       </div>
 
       {/* Top Navigation - Fixed */}
-      <nav className="fixed top-0 left-0 right-0 z-40 py-1 sm:py-2 bg-gray-900/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-2 sm:px-3">
+      <nav className="fixed top-0 left-0 right-0 z-40 py-0.5 sm:py-1 bg-gray-900/80 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-1 sm:px-2">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <img 
                 src="/logo.png" 
                 alt="ZgłośPomnik" 
-                className="w-7 h-7 sm:w-8 sm:h-8"
+                className="w-5 h-5 sm:w-6 sm:h-6"
               />
-              <span className="text-sm sm:text-lg font-bold" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+              <span className="text-xs sm:text-sm font-bold" style={{ fontFamily: 'Exo 2, sans-serif' }}>
                 <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
               </span>
             </div>
             
             {/* Navigation Links - Desktop Only */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-1">
               <DarkGlassButton
                 onClick={scrollToTop}
                 variant="secondary"
                 size="xs"
-                className="text-xs px-2 py-0.5"
+                className="text-xs px-1 py-0.5"
               >
                 Home
               </DarkGlassButton>
@@ -155,7 +154,7 @@ export const LandingPage = () => {
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
                 variant="secondary"
                 size="xs"
-                className="text-xs px-2 py-0.5"
+                className="text-xs px-1 py-0.5"
               >
                 Funkcje
               </DarkGlassButton>
@@ -163,29 +162,21 @@ export const LandingPage = () => {
                 onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
                 variant="secondary"
                 size="xs"
-                className="text-xs px-2 py-0.5"
+                className="text-xs px-1 py-0.5"
               >
                 FAQ
-              </DarkGlassButton>
-              <DarkGlassButton
-                onClick={() => document.getElementById('guides')?.scrollIntoView({ behavior: 'smooth' })}
-                variant="secondary"
-                size="xs"
-                className="text-xs px-2 py-0.5"
-              >
-                Poradniki
               </DarkGlassButton>
               <DarkGlassButton
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                 variant="secondary"
                 size="xs"
-                className="text-xs px-2 py-0.5"
+                className="text-xs px-1 py-0.5"
               >
                 Kontakt
               </DarkGlassButton>
             </div>
-            <div className="flex items-center gap-1 sm:gap-2 text-xs">
-              <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-0.5 sm:gap-1 text-xs">
+              <div className="flex items-center gap-1 sm:gap-1.5">
                 <DarkGlassButton
                   onClick={() => {
                     setAuthMode('login');
@@ -193,7 +184,7 @@ export const LandingPage = () => {
                   }}
                   variant="primary"
                   size="sm"
-                  className="text-xs sm:text-sm w-fit px-4 py-2"
+                  className="text-xs sm:text-sm w-fit px-2 py-1"
                 >
                   ZALOGUJ SIĘ
                 </DarkGlassButton>
@@ -213,25 +204,20 @@ export const LandingPage = () => {
       <FeaturesSection />
 
       {/* Spacing between sections */}
-      <div className="h-24"></div>
+      <div className="h-6"></div>
 
       {/* FAQ Section */}
       <FAQSection />
 
-      {/* Guides Section */}
-      <GuidesSection onShowAuthModal={(mode) => {
-        setAuthMode(mode);
-                    setShowAuthModal(true);
-      }} />
 
       {/* Contact Section */}
       <ContactSection />
 
       {/* Footer */}
-      <footer className="relative z-10 bg-gray-900/80 backdrop-blur-sm py-4 sm:py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <footer className="relative z-10 bg-gray-900/80 backdrop-blur-sm py-2 sm:py-3">
+        <div className="max-w-5xl mx-auto px-2 sm:px-3">
           <div className="text-center text-gray-500">
-            <p className="text-xs sm:text-sm">© 2025 Aplikacja do zgłaszania pomników przyrody. Wszystkie prawa zastrzeżone.</p>
+            <p className="text-xs">© 2025 Aplikacja do zgłaszania pomników przyrody. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>
       </footer>
@@ -244,11 +230,11 @@ export const LandingPage = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-gray-800 rounded-2xl shadow-xl max-w-md w-full"
+              className="bg-gray-800 rounded-xl shadow-xl max-w-xs w-full"
             >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-white">
+              <div className="p-3">
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="text-lg font-bold text-white">
                     {authMode === 'login' ? 'Zaloguj się' : 'Zarejestruj się'}
                   </h2>
                   <button
@@ -265,7 +251,7 @@ export const LandingPage = () => {
                   </div>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {authMode === 'login' ? (
                     <LoginForm
                       onSubmit={handleLogin}
