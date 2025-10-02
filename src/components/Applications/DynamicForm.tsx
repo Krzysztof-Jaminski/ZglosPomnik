@@ -29,6 +29,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   const navigate = useNavigate();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [isFormValid, setIsFormValid] = useState(false);
   const [isAutoFilling, setIsAutoFilling] = useState(false);
 
@@ -172,9 +173,29 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   const handleFieldChange = (fieldName: string, value: any) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
     
-    // Clear error when user starts typing
+    // Mark field as touched when user starts typing
+    setTouchedFields(prev => ({ ...prev, [fieldName]: true }));
+    
+    // Clear error when user starts typing in this field
     if (errors[fieldName]) {
       setErrors(prev => ({ ...prev, [fieldName]: '' }));
+    }
+  };
+
+
+  const handleFieldBlur = (fieldName: string) => {
+    // Mark field as touched when user leaves it
+    setTouchedFields(prev => ({ ...prev, [fieldName]: true }));
+    
+    // Validate field when user leaves it
+    const field = schema.requiredFields.find(f => f.name === fieldName);
+    if (field) {
+      const error = validateField(field, formData[fieldName]);
+      if (error) {
+        setErrors(prev => ({ ...prev, [fieldName]: error }));
+      } else {
+        setErrors(prev => ({ ...prev, [fieldName]: '' }));
+      }
     }
   };
 
@@ -425,8 +446,8 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
     const error = errors[field.name];
 
     const baseInputClasses = `w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all ${
-      error 
-        ? 'border-blue-500 dark:border-blue-500' 
+      error && touchedFields[field.name]
+        ? 'border-red-500 dark:border-red-500' 
         : 'border-gray-300 dark:border-gray-600'
     }`;
 
@@ -456,6 +477,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
           <textarea
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            onBlur={() => handleFieldBlur(field.name)}
             placeholder={field.placeholder || 'Wpisz tekst...'}
             rows={3}
             className={`${baseInputClasses} resize-none`}
@@ -464,6 +486,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
           <select
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            onBlur={() => handleFieldBlur(field.name)}
             className={baseInputClasses}
           >
             <option value="">Wybierz opcję</option>
@@ -479,6 +502,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
               type="checkbox"
               checked={!!value}
               onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              onBlur={() => handleFieldBlur(field.name)}
               className="w-5 h-5 mt-0.5 text-green-600 bg-white border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 flex-shrink-0"
             />
             <div className="flex-1">
@@ -497,6 +521,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             type={field.type === 'Phone' ? 'tel' : field.type === 'Email' ? 'email' : field.type === 'Number' ? 'number' : 'text'}
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            onBlur={() => handleFieldBlur(field.name)}
             placeholder={
               field.type === 'Phone' ? 'np. +48 123 456 789' :
               field.name === 'user_postal_code' ? 'np. 30-001' :
@@ -508,8 +533,8 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
           />
         )}
 
-        {error && (
-          <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded border border-blue-200 dark:border-blue-800">
+        {error && touchedFields[field.name] && (
+          <div className="flex items-center space-x-1 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded border border-red-200 dark:border-red-800">
             <span className="text-xs font-medium">{error}</span>
           </div>
         )}
@@ -530,54 +555,54 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
       <div className="w-full px-3 sm:px-4">
-        {/* Header with back button, title and auto-fill button */}
-        <div className="mb-3 bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 shadow-xl">
+         {/* Header with back button, title and auto-fill button */}
+         <div className="mb-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
           <div className="flex items-center justify-between">
-            {/* Back button - more to the left */}
-            <button
-              onClick={onBack}
-              className="flex items-center justify-center p-1 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Powrót do tworzenia wniosków"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+             {/* Back button - more to the left */}
+             <button
+               onClick={onBack}
+               className="flex items-center justify-center p-1 rounded-lg transition-colors focus:outline-none focus:ring-0 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+               title="Powrót do tworzenia wniosków"
+             >
+               <ArrowLeft className="w-5 h-5" />
+             </button>
             
-            {/* Title centered - smaller with more space */}
-            <div className="flex-1 px-6">
-              <h1 className="text-xs font-semibold text-gray-800 dark:text-gray-200 text-center leading-tight">
-                {schema.templateName}
-              </h1>
-            </div>
+             {/* Title centered - smaller with more space */}
+             <div className="flex-1 px-6">
+               <h1 className="text-xs font-semibold text-green-800 dark:text-green-200 text-center leading-tight">
+                 {schema.templateName}
+               </h1>
+             </div>
             
-            {/* Auto-fill button - more to the right */}
-            <button
-              onClick={handleAutoFill}
-              disabled={isAutoFilling}
-              className="flex items-center justify-center w-14 h-14 rounded-lg transition-all duration-200 focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Wypełnij automatycznie"
-            >
-              {isAutoFilling ? (
-                <Loader2 className="w-7 h-7 animate-spin" />
-              ) : (
-                <Bot className="w-7 h-7 hover:animate-bounce" />
-              )}
-            </button>
+             {/* Auto-fill button - more to the right */}
+             <button
+               onClick={handleAutoFill}
+               disabled={isAutoFilling}
+               className="flex items-center justify-center w-14 h-14 rounded-lg transition-all duration-200 focus:outline-none focus:ring-0 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+               title="Wypełnij automatycznie"
+             >
+               {isAutoFilling ? (
+                 <Loader2 className="w-7 h-7 animate-spin" />
+               ) : (
+                 <Bot className="w-7 h-7 hover:animate-bounce" />
+               )}
+             </button>
           </div>
         </div>
 
-        {/* Auto-fill information */}
-        <div className="mb-3">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              <strong>Informacja:</strong> Dane zostały automatycznie wypełnione ze zgłoszenia i profilu, aby je zmienić przejdź do sekcji profil. Uzupełnij pozostałe pola ręcznie lub skorzystaj z asystenta AI.
-            </p>
-          </div>
-        </div>
+         {/* Auto-fill information */}
+         <div className="mb-3">
+           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+             <p className="text-xs text-blue-700 dark:text-blue-300">
+               <strong>Informacja:</strong> Dane zostały automatycznie wypełnione ze zgłoszenia i profilu, aby je zmienić przejdź do sekcji profil. Uzupełnij pozostałe pola ręcznie lub skorzystaj z asystenta AI.
+             </p>
+           </div>
+         </div>
 
         <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
-          {/* Contact Data Section */}
-          {groupedFields.contact.length > 0 && (
-            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+           {/* Contact Data Section */}
+           {groupedFields.contact.length > 0 && (
+             <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Dane kontaktowe
               </h3>
@@ -587,9 +612,9 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             </div>
           )}
 
-          {/* Plot Data Section */}
-          {groupedFields.plot.length > 0 && (
-            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-sky-200/50 dark:border-sky-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+           {/* Plot Data Section */}
+           {groupedFields.plot.length > 0 && (
+             <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-sky-200/50 dark:border-sky-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Dane działki
               </h3>
@@ -599,9 +624,9 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             </div>
           )}
 
-          {/* Study Data Section */}
-          {groupedFields.study.length > 0 && (
-            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-indigo-200/50 dark:border-indigo-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+           {/* Study Data Section */}
+           {groupedFields.study.length > 0 && (
+             <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-indigo-200/50 dark:border-indigo-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Dane opracowania
               </h3>
@@ -611,13 +636,13 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             </div>
           )}
 
-          {/* Other fields */}
-          {sortedFields.filter(field => 
-            !field.name.startsWith('user_') && 
-            !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
-            !field.name.startsWith('study_')
-          ).length > 0 && (
-            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-cyan-200/50 dark:border-cyan-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+           {/* Other fields */}
+           {sortedFields.filter(field => 
+             !field.name.startsWith('user_') && 
+             !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
+             !field.name.startsWith('study_')
+           ).length > 0 && (
+             <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-cyan-200/50 dark:border-cyan-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                 {sortedFields.filter(field => 
                   !field.name.startsWith('user_') && 
