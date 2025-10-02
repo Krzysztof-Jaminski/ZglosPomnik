@@ -763,44 +763,44 @@ export const ApplicationsPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-xl shadow-xl p-6 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="relative bg-white dark:bg-gray-800 border-2 border-green-200/50 dark:border-green-400/30 rounded-lg shadow-xl p-4 max-w-md w-full max-h-[80vh] overflow-y-auto"
             >
-              <div className="text-center mb-6">
-                <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+              <div className="text-center mb-4">
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   Wniosek został wygenerowany!
                 </h3>
-                <p className="text-base text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Postępuj zgodnie z instrukcją!
                 </p>
               </div>
               
               {/* Instructions */}
-              <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-4 mb-6 shadow-xl">
-                <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 mb-4">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">
                   Instrukcja wysyłania wniosku:
                 </h4>
-                <div className="space-y-3 text-sm text-blue-800 dark:text-blue-200">
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">1</div>
+                <div className="space-y-2 text-xs text-blue-800 dark:text-blue-200">
+                  <div className="flex items-start space-x-2">
+                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">1</div>
                     <span>Zaloguj się na portalu <strong>ePUAP</strong> (epuap.gov.pl)</span>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">2</div>
+                  <div className="flex items-start space-x-2">
+                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">2</div>
                     <span>Wybierz odpowiednią <strong>gminę</strong> (tę samą co w formularzu)</span>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">3</div>
+                  <div className="flex items-start space-x-2">
+                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">3</div>
                     <span>Znajdź sekcję <strong>"Wnioski"</strong> lub <strong>"Sprawy urzędowe"</strong></span>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">4</div>
+                  <div className="flex items-start space-x-2">
+                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">4</div>
                     <span>Wyślij wygenerowany <strong>PDF jako załącznik</strong> do odpowiedniego wniosku</span>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">5</div>
+                  <div className="flex items-start space-x-2">
+                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">5</div>
                     <span>Podpisz wniosek <strong>profilem zaufanym</strong> i czekaj na odpowiedź od gminy</span>
                   </div>
                 </div>
@@ -818,13 +818,13 @@ export const ApplicationsPage: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="space-y-3 mt-8">
+              <div className="space-y-2 mt-4">
                 <GlassButton
                   onClick={() => {
                     window.open('https://epuap.gov.pl', '_blank');
                   }}
                   variant="primary"
-                  size="md"
+                  size="sm"
                   className="w-full"
                   icon={ExternalLink}
                 >
@@ -843,7 +843,7 @@ export const ApplicationsPage: React.FC = () => {
                     document.body.removeChild(link);
                   }}
                   variant="secondary"
-                  size="md"
+                  size="sm"
                   className="w-full"
                   icon={Download}
                 >
