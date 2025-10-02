@@ -1,5 +1,6 @@
 import React from 'react';
-import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { SearchInput } from '../UI/SearchInput';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Species } from '../../types';
 import { GlassButton } from '../UI/GlassButton';
@@ -88,14 +89,13 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
           
           {/* Search input */}
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-            <input
-              type="text"
+            <SearchInput
               value={speciesQuery}
-              onChange={(e) => setSpeciesQuery(e.target.value)}
-              onFocus={handleSpeciesInputFocus}
+              onChange={setSpeciesQuery}
               placeholder="Polska lub łacińska nazwa"
-              className="w-full pl-8 pr-10 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+              size="md"
+              variant="compact"
+              showClearButton={false}
             />
             <button
               type="button"

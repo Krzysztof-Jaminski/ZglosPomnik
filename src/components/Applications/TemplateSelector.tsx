@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { SearchInput } from '../UI/SearchInput';
 import { ApplicationTemplate } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,16 +34,14 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   return (
     <div className="space-y-2 p-2">
       {/* Search Filter - Always visible */}
-      <div className="relative">
-        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-        <input
-          type="text"
-          placeholder="Szukaj po nazwie szablonu..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-8 pr-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-        />
-      </div>
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Szukaj po nazwie szablonu..."
+        size="md"
+        variant="compact"
+        showClearButton={false}
+      />
 
       {/* Templates List */}
       <div className="bg-gradient-to-r from-orange-50/20 to-orange-100/10 dark:from-orange-900/20 dark:to-orange-800/10 border border-orange-200/30 dark:border-orange-700/30 rounded-lg p-2">

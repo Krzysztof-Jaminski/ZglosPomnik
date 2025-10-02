@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { SearchInput } from '../UI/SearchInput';
 import { Commune } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,16 +34,14 @@ export const CommuneSelector: React.FC<CommuneSelectorProps> = ({
   return (
     <div className="space-y-2 p-2">
       {/* Search Filter - Always visible */}
-      <div className="relative">
-        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-        <input
-          type="text"
-          placeholder="Szukaj po nazwie gminy lub mieście..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-8 pr-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-        />
-      </div>
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Szukaj po nazwie gminy lub mieście..."
+        size="md"
+        variant="compact"
+        showClearButton={false}
+      />
 
       {/* Communes List */}
       <div className="bg-gradient-to-r from-blue-50/20 to-blue-100/10 dark:from-blue-900/20 dark:to-blue-800/10 border border-blue-200/30 dark:border-blue-700/30 rounded-lg p-2">
