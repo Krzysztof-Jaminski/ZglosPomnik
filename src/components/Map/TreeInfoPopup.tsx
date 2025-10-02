@@ -44,7 +44,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed top-10 sm:top-12 left-0 right-0 bottom-16 sm:bottom-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => {
         e.stopPropagation();
         onClose();
@@ -54,7 +54,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 sm:p-8 max-w-sm sm:max-w-md w-full max-h-[80vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 sm:p-8 max-w-md sm:max-w-lg lg:max-w-xl w-full max-h-full overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4 sm:mb-6">
@@ -275,7 +275,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="relative max-w-4xl max-h-full"
+              className="relative max-w-5xl max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -287,7 +287,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
               <img
                 src={tree.imageUrls?.[0] || ''}
                 alt="Tree photo - enlarged"
-                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                className="max-w-full max-h-full object-contain rounded-lg"
                 crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
                 referrerPolicy="no-referrer"
               />

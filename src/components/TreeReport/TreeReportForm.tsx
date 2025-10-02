@@ -503,7 +503,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
-              className="relative max-w-4xl max-h-full"
+              className="relative max-w-5xl max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
               <img

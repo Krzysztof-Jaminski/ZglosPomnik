@@ -355,7 +355,7 @@ export const EncyclopediaPage: React.FC = () => {
     const currentImage = (selectedSpecies as Species).images?.[selectedImageIndex];
     return (
       <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center">
-        <div className="relative max-w-6xl max-h-full p-4">
+        <div className="relative max-w-7xl max-h-[90vh] p-4">
           <button
             onClick={closeImageViewer}
             className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"

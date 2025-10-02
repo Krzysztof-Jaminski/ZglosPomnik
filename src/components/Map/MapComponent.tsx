@@ -106,6 +106,9 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
                 currentClickMarker.setMap(null);
               }
               
+              // Close any existing tree popup
+              setShowTreePopup(false);
+              
               // Add blue marker at clicked location
               const clickMarker = new (window as any).google.maps.Marker({
                 position: event.latLng,
@@ -202,15 +205,29 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
               }
             });
 
-            marker.addListener('click', () => {
+            marker.addListener('click', (event: any) => {
+              // Prevent event bubbling to map click
+              event.stop();
+              
               // Close previous info window
               if (currentInfoWindow) {
                 currentInfoWindow.close();
               }
               
-              // Show custom popup instead of InfoWindow
-              setSelectedTree(tree);
-              setShowTreePopup(true);
+              // Close any existing tree popup
+              setShowTreePopup(false);
+              
+              // Clear any existing click marker
+              if (currentClickMarker) {
+                currentClickMarker.setMap(null);
+                setCurrentClickMarker(null);
+              }
+              
+              // Small delay to prevent double-click issues
+              setTimeout(() => {
+                setSelectedTree(tree);
+                setShowTreePopup(true);
+              }, 50);
             });
 
             markersRef.current.push(marker);
@@ -273,7 +290,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       <div ref={mapRef} className="h-full w-full min-h-0" style={{ minHeight: '100%' }} />
       
       {/* Map controls */}
-      <div className="absolute top-4 right-4 flex flex-col space-y-2">
+      <div className="absolute top-2 right-2 flex flex-col space-y-2">
         <GlassButton
           onClick={() => setMapType(mapType === 'roadmap' ? 'satellite' : 'roadmap')}
           title={mapType === 'roadmap' ? 'Przełącz na widok satelitarny' : 'Przełącz na mapę drogową'}
@@ -288,7 +305,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       </div>
 
       {/* Tree count indicator and Legend - Left side */}
-      <div className="absolute bottom-5 left-3 sm:bottom-5 sm:left-5 space-y-2">
+      <div className="absolute bottom-2 left-2 sm:bottom-2 sm:left-2 space-y-2">
         {/* Tree count indicator */}
         <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm px-2 py-1 sm:px-5 sm:py-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50">
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
