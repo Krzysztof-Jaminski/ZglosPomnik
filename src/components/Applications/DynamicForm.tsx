@@ -532,45 +532,44 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
       <div className="w-full px-3 sm:px-4">
         {/* Header with back button, title and auto-fill button */}
         <div className="mb-3 bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 shadow-xl">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between">
+            {/* Back button - more to the left */}
             <button
               onClick={onBack}
-              className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="flex items-center justify-center p-1 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
               title="Powrót do tworzenia wniosków"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
             
-            {/* Title centered */}
-            <div className="flex-1 text-center">
-              <h1 className="text-sm font-bold text-gray-900 dark:text-white">
+            {/* Title centered - smaller with more space */}
+            <div className="flex-1 px-6">
+              <h1 className="text-xs font-semibold text-gray-800 dark:text-gray-200 text-center leading-tight">
                 {schema.templateName}
               </h1>
             </div>
             
-            {/* Auto-fill button */}
-            <div className="flex-shrink-0">
-              <button
-                onClick={handleAutoFill}
-                disabled={isAutoFilling}
-                className="flex items-center justify-center w-16 h-16 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Wypełnij automatycznie"
-              >
-                {isAutoFilling ? (
-                  <Loader2 className="w-8 h-8 animate-spin" />
-                ) : (
-                  <Bot className="w-8 h-8" />
-                )}
-              </button>
-            </div>
+            {/* Auto-fill button - more to the right */}
+            <button
+              onClick={handleAutoFill}
+              disabled={isAutoFilling}
+              className="flex items-center justify-center w-14 h-14 rounded-lg transition-all duration-200 focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Wypełnij automatycznie"
+            >
+              {isAutoFilling ? (
+                <Loader2 className="w-7 h-7 animate-spin" />
+              ) : (
+                <Bot className="w-7 h-7 hover:animate-bounce" />
+              )}
+            </button>
           </div>
         </div>
 
         {/* Auto-fill information */}
         <div className="mb-3">
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Informacja:</strong> Dane z Twojego profilu i zgłoszenia zostały automatycznie wypełnione. Pola poniżej uzupełnij ręcznie lub skorzystaj z asystenta AI. Jeśli chcesz zmienić dane kontaktowe na inne niż w profilu, przejdź do sekcji Profil i usuń odpowiednie informacje - wtedy pojawią się dodatkowe pola do wypełnienia.
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              <strong>Informacja:</strong> Dane zostały automatycznie wypełnione ze zgłoszenia i profilu, aby je zmienić przejdź do sekcji profil. Uzupełnij pozostałe pola ręcznie lub skorzystaj z asystenta AI.
             </p>
           </div>
         </div>
@@ -578,7 +577,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
         <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
           {/* Contact Data Section */}
           {groupedFields.contact.length > 0 && (
-            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-purple-200/50 dark:border-purple-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Dane kontaktowe
               </h3>
@@ -590,7 +589,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
 
           {/* Plot Data Section */}
           {groupedFields.plot.length > 0 && (
-            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-sky-200/50 dark:border-sky-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Dane działki
               </h3>
@@ -602,7 +601,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
 
           {/* Study Data Section */}
           {groupedFields.study.length > 0 && (
-            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-indigo-200/50 dark:border-indigo-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Dane opracowania
               </h3>
@@ -618,7 +617,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             !['plot', 'cadastral_district', 'record_keeping_unit', 'ownership_form', 'land_type'].includes(field.name) &&
             !field.name.startsWith('study_')
           ).length > 0 && (
-            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-amber-200/50 dark:border-amber-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+            <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-cyan-200/50 dark:border-cyan-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                 {sortedFields.filter(field => 
                   !field.name.startsWith('user_') && 
