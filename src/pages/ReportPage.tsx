@@ -18,6 +18,11 @@ export const ReportPage: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
 
+  // Track which page was last active
+  React.useEffect(() => {
+    localStorage.setItem('lastActivePage', 'report');
+  }, []);
+
   // Synchronize photos with form
   const handlePhotosChange = (newPhotos: File[]) => {
     console.log('ReportPage: handlePhotosChange called with', newPhotos.length, 'photos');
@@ -108,9 +113,8 @@ export const ReportPage: React.FC = () => {
     const initialLocation = initializeLocation();
     if (initialLocation) {
       setSelectedLocation(initialLocation);
-    } else {
-      getCurrentLocation();
     }
+    // Don't automatically get current location - let user click the button
 
     // Load photos from localStorage
     const savedData = localStorage.getItem('treeReportFormData');
@@ -220,7 +224,7 @@ export const ReportPage: React.FC = () => {
 
   const getCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      console.error('Geolocation is not supported by this browser.');
+      alert('Geolokalizacja nie jest obsługiwana przez tę przeglądarkę.');
       return;
     }
 
@@ -238,11 +242,20 @@ export const ReportPage: React.FC = () => {
         });
       },
       (error) => {
-        console.error('Geolocation error:', error);
-        
-        // Sprawdź czy to błąd związany z zablokowanymi uprawnieniami
-        if (error.message && error.message.includes('permission')) {
-          console.warn('Geolocation permission has been blocked as the user has ignored the permission prompt several times. This can be reset in Page Info which can be accessed by clicking the tune icon next to the URL. See https://www.chromestatus.com/feature/6443143280984064 for more information.');
+        // Handle different types of geolocation errors gracefully
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            alert('Dostęp do geolokalizacji został zablokowany. Możesz wybrać lokalizację na mapie.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            alert('Lokalizacja jest niedostępna. Spróbuj wybrać lokalizację na mapie.');
+            break;
+          case error.TIMEOUT:
+            alert('Przekroczono czas oczekiwania na lokalizację. Spróbuj ponownie lub wybierz lokalizację na mapie.');
+            break;
+          default:
+            alert('Wystąpił błąd podczas pobierania lokalizacji. Wybierz lokalizację na mapie.');
+            break;
         }
       },
       geolocationOptions
@@ -299,21 +312,21 @@ export const ReportPage: React.FC = () => {
               <div className="space-y-1">
                 <GlassButton
                   onClick={handleLocationButtonClick}
-                  className="w-full flex-shrink-0"
+                  className="w-full flex-shrink-0 min-w-0 max-w-full"
                   size="xs"
                   variant="primary"
                 >
-                  <span className="text-xs whitespace-nowrap">
+                  <span className="text-xs whitespace-nowrap truncate">
                     Użyj mojej lokalizacji
                   </span>
                 </GlassButton>
                 <GlassButton
                   onClick={handleMapSelectionClick}
-                  className="w-full flex-shrink-0"
+                  className="w-full flex-shrink-0 min-w-0 max-w-full"
                   size="xs"
                   variant="secondary"
                 >
-                  <span className="text-xs whitespace-nowrap">
+                  <span className="text-xs whitespace-nowrap truncate">
                     Wybierz lokalizację na mapie
                   </span>
                 </GlassButton>

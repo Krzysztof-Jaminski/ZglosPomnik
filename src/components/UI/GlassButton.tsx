@@ -28,7 +28,7 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 }) => {
   const { triggerLightHaptic } = useHapticFeedback();
   const baseClasses = `
-    relative overflow-hidden flex-shrink-0
+    relative overflow-hidden flex-shrink-0 max-w-full
     backdrop-blur-md
     border-l-4 border-transparent
     rounded-lg
@@ -99,8 +99,8 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
       disabled={disabled}
       title={title}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]}`}
-      whileHover={{ scale: disabled ? 1 : 1.02, x: disabled ? 0 : 4 }}
-      whileTap={{ scale: disabled ? 1 : 0.98, x: disabled ? 0 : 2 }}
+      whileHover={{ scale: disabled ? 1 : 1.01 }}
+      whileTap={{ scale: disabled ? 1 : 0.99 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       {/* Left border highlight on hover */}
@@ -109,9 +109,9 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
       }`} />
       
       {/* Content */}
-      <div className="relative flex items-center justify-center space-x-2">
-        {Icon && <Icon className={`${iconSizes[size]} stroke-2`} />}
-        <span>{children}</span>
+      <div className="relative flex items-center justify-center space-x-2 min-w-0 max-w-full">
+        {Icon && <Icon className={`${iconSizes[size]} stroke-2 flex-shrink-0`} />}
+        <span className="truncate">{children}</span>
       </div>
     </motion.button>
   );

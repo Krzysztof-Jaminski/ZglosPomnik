@@ -3,10 +3,12 @@ import { NavLink } from 'react-router-dom';
 import { Map, Rss, TreePine, FileText, BookOpen } from 'lucide-react';
 import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
+import { useModal } from '../../context/ModalContext';
 
 export const BottomNavigation: React.FC = () => {
   const isKeyboardOpen = useKeyboardStatus();
   const { triggerLightHaptic } = useHapticFeedback();
+  const { isPdfModalOpen } = useModal();
 
   const navItems = [
     { to: '/map', icon: Map, label: 'Mapa' },
@@ -19,7 +21,7 @@ export const BottomNavigation: React.FC = () => {
   return (
     <nav className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 sm:hidden bottom-nav transition-all duration-300 ${
       isKeyboardOpen ? 'hidden' : 'block'
-    }`}>
+    } ${isPdfModalOpen ? 'pointer-events-none opacity-50' : ''}`}>
       <div className="flex justify-around items-center py-2">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink

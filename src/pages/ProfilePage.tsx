@@ -541,8 +541,8 @@ export const ProfilePage: React.FC = () => {
 
             {isEditing ? (
               <div className="space-y-4">
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                <div className="p-4 py-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
                     <strong>Informacja:</strong> Możesz edytować wszystkie swoje dane. 
                     Zmiany są zapisywane na serwerze.
                   </p>
@@ -756,9 +756,6 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
-
-
-
 
         {/* Settings */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">

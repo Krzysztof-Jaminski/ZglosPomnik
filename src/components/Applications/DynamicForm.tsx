@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { ArrowLeft, FileText, Bot, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface DynamicFormProps {
   schema: FormSchema;
@@ -25,6 +26,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   selectedTemplate = null
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isFormValid, setIsFormValid] = useState(false);
@@ -472,16 +474,23 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             ))}
           </select>
         ) : field.type === 'Checkbox' ? (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
             <input
               type="checkbox"
               checked={!!value}
               onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              className="w-5 h-5 mt-0.5 text-green-600 bg-white border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 flex-shrink-0"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              {field.label}
-            </span>
+            <div className="flex-1">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {field.label}
+              </span>
+              {field.helpText && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {field.helpText}
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <input
@@ -527,7 +536,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
             <button
               onClick={onBack}
               className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Powrót"
+              title="Powrót do tworzenia wniosków"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>

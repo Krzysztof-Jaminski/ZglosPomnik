@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { ModalProvider } from './context/ModalContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './pages/LandingPage';
 import { Header } from './components/Layout/Header';
@@ -74,12 +75,14 @@ function App() {
     <ThemeProvider>
       <ErrorBoundary>
         <AuthProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/*" element={<MainContent />} />
-            </Routes>
-          </Router>
+          <ModalProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/*" element={<MainContent />} />
+              </Routes>
+            </Router>
+          </ModalProvider>
         </AuthProvider>
       </ErrorBoundary>
     </ThemeProvider>
