@@ -424,7 +424,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
     const value = formData[field.name] || '';
     const error = errors[field.name];
 
-    const baseInputClasses = `w-full px-2 py-1.5 text-xs sm:text-sm border rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-700 dark:text-white transition-colors ${
+    const baseInputClasses = `w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all ${
       error 
         ? 'border-blue-500 dark:border-blue-500' 
         : 'border-gray-300 dark:border-gray-600'
@@ -530,8 +530,8 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
       <div className="w-full px-3 sm:px-4">
-        {/* Header with back button and title */}
-        <div className="mb-3">
+        {/* Header with back button, title and auto-fill button */}
+        <div className="mb-3 bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 shadow-xl">
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
@@ -541,17 +541,14 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
               <ArrowLeft className="w-6 h-6" />
             </button>
             
-            {/* Description on the left */}
-            <div className="flex-1">
+            {/* Title centered */}
+            <div className="flex-1 text-center">
               <h1 className="text-sm font-bold text-gray-900 dark:text-white">
                 {schema.templateName}
               </h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Wypełnij wszystkie wymagane pola formularza
-              </p>
             </div>
             
-            {/* Auto-fill button - fixed large size on the right */}
+            {/* Auto-fill button */}
             <div className="flex-shrink-0">
               <button
                 onClick={handleAutoFill}
@@ -566,6 +563,15 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
                 )}
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Auto-fill information */}
+        <div className="mb-3">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>Informacja:</strong> Dane z Twojego profilu i zgłoszenia zostały automatycznie wypełnione. Pola poniżej uzupełnij ręcznie lub skorzystaj z asystenta AI. Jeśli chcesz zmienić dane kontaktowe na inne niż w profilu, przejdź do sekcji Profil i usuń odpowiednie informacje - wtedy pojawią się dodatkowe pola do wypełnienia.
+            </p>
           </div>
         </div>
 
