@@ -25,8 +25,6 @@ interface TreeReportFormSectionSpeciesProps {
   setPierśnica: (value: string) => void;
   height: string;
   setHeight: (value: string) => void;
-  plotNumber: string;
-  setPlotNumber: (value: string) => void;
   condition: string;
   setCondition: (value: string) => void;
   detailedHealth: string[];
@@ -64,8 +62,6 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
   setPierśnica,
   height,
   setHeight,
-  plotNumber,
-  setPlotNumber,
   condition,
   setCondition,
   detailedHealth,
@@ -212,7 +208,6 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
                                       speciesQuery,
                                       pierśnica,
                                       height,
-                                      plotNumber,
                                       condition,
                                       detailedHealth,
                                       isAlive,
@@ -325,19 +320,6 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
           </div>
         </div>
 
-        {/* Address */}
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Adres drzewa <span className="text-gray-500">(opcjonalny)</span>
-          </label>
-          <input
-            type="text"
-            value={plotNumber}
-            onChange={(e) => setPlotNumber(e.target.value)}
-            placeholder="np. ul. Słowackiego 15, 30-001 Kraków"
-            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
-          />
-        </div>
 
       </div>
     </div>

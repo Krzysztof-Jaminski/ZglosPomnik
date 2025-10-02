@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Loader2, X } from 'lucide-react';
+import { Plus, Loader2, X } from 'lucide-react';
 import { Tree, ApplicationTemplate, Commune, Application, FormSchema } from '../types';
 import { applicationsService } from '../services/applicationsService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -362,7 +362,11 @@ export const ApplicationsPage: React.FC = () => {
                     Wybierz drzewo
                   </label>
                   
-                  <div className="max-h-[30vh] overflow-y-auto">
+                  <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
+                    {/* Top fade gradient */}
+                    <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                    {/* Bottom fade gradient */}
+                    <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
                     <TreeSelector
                       trees={trees}
                       selectedTree={selectedTree}
@@ -391,7 +395,11 @@ export const ApplicationsPage: React.FC = () => {
                       Wybierz gminę
                     </label>
                     
-                    <div className="max-h-[30vh] overflow-y-auto">
+                    <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
+                      {/* Top fade gradient */}
+                      <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                      {/* Bottom fade gradient */}
+                      <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
                       <CommuneSelector
                         communes={communes}
                         selectedCommune={selectedCommune}
@@ -417,7 +425,11 @@ export const ApplicationsPage: React.FC = () => {
                       Wybierz szablon wniosku
                     </label>
                     
-                    <div className="max-h-[30vh] overflow-y-auto">
+                    <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
+                      {/* Top fade gradient */}
+                      <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                      {/* Bottom fade gradient */}
+                      <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
                       {isLoading ? (
                         <div className="flex items-center justify-center py-4">
                           <Loader2 className="w-4 h-4 animate-spin text-green-600" />

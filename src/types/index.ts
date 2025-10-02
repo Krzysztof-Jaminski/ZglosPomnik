@@ -11,9 +11,14 @@ export interface Tree {
     lat: number;
     lng: number;
     address: string;
+    plotNumber: string;
+    district: string;
+    province: string;
+    county: string;
+    commune: string;
   };
-  circumference: number;
-  height: number;
+  circumference: number; // Changed to double
+  height: number; // Changed to double
   condition: string;
   isAlive: boolean;
   estimatedAge: number;
@@ -95,9 +100,14 @@ export interface ApiTreeSubmission {
     lat: number;
     lng: number;
     address: string;
+    plotNumber: string;
+    district: string;
+    province: string;
+    county: string;
+    commune: string;
   };
-  circumference: number;
-  height: number;
+  circumference: number; // Changed to double
+  height: number; // Changed to double
   condition: string;
   isAlive?: boolean;
   estimatedAge: number;
