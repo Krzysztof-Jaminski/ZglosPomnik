@@ -186,6 +186,29 @@ export const ApplicationsPage: React.FC = () => {
     }
   }, [selectedCommune]);
 
+  // Load form schema when currentApplication is available
+  useEffect(() => {
+    if (currentApplication && !formSchema) {
+      const loadFormSchema = async () => {
+        try {
+          setIsLoading(true);
+          const schema = await applicationsService.getFormSchema(currentApplication.id);
+          setFormSchema(schema);
+        } catch (error) {
+          console.error('Error loading form schema:', error);
+          if (error instanceof Error && error.message.includes('autoryzacji')) {
+            handleAuthError(error);
+            await clearCacheAndReset();
+            return;
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadFormSchema();
+    }
+  }, [currentApplication, formSchema]);
+
   const handleTreeSelect = async (tree: Tree) => {
     setSelectedTree(tree);
     setAutoSelectAttempted(false); // Reset auto-select flag for new tree
@@ -345,7 +368,7 @@ export const ApplicationsPage: React.FC = () => {
   // Check if we can show the next section
   const canShowCommuneSelection = selectedTree !== null;
   const canShowTemplateSelection = selectedTree !== null && selectedCommune !== null;
-  const canShowForm = selectedTree !== null && selectedCommune !== null && selectedTemplate !== null && formSchema !== null;
+  const canShowForm = currentApplication !== null && formSchema !== null;
     
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
@@ -447,19 +470,51 @@ export const ApplicationsPage: React.FC = () => {
               )}
             </AnimatePresence>
 
-            {/* Create Application Button - Always show but disable when not all 3 are selected */}
+            {/* Create/Continue Application Button */}
             {!canShowForm && (
               <div className="w-full">
-                <GlassButton
-                  onClick={handleCreateApplication}
-                  disabled={isCreatingApplication || !selectedTree || !selectedCommune || !selectedTemplate}
-                  variant={selectedTree && selectedCommune && selectedTemplate ? "primary" : "secondary"}
-                  size="sm"
-                  icon={isCreatingApplication ? Loader2 : Plus}
-                  className={`w-full text-sm ${!selectedTree || !selectedCommune || !selectedTemplate ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isCreatingApplication ? 'Tworzenie wniosku...' : 'Utwórz wniosek'}
-                </GlassButton>
+                {currentApplication ? (
+                  <GlassButton
+                    onClick={() => {
+                      // Reload form schema for existing application
+                      const loadFormSchema = async () => {
+                        try {
+                          setIsLoading(true);
+                          const schema = await applicationsService.getFormSchema(currentApplication.id);
+                          setFormSchema(schema);
+                        } catch (error) {
+                          console.error('Error loading form schema:', error);
+                          if (error instanceof Error && error.message.includes('autoryzacji')) {
+                            handleAuthError(error);
+                            await clearCacheAndReset();
+                            return;
+                          }
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      };
+                      loadFormSchema();
+                    }}
+                    disabled={isLoading}
+                    variant="primary"
+                    size="sm"
+                    icon={isLoading ? Loader2 : Plus}
+                    className="w-full text-sm"
+                  >
+                    {isLoading ? 'Ładowanie wniosku...' : 'Kontynuuj wniosek'}
+                  </GlassButton>
+                ) : (
+                  <GlassButton
+                    onClick={handleCreateApplication}
+                    disabled={isCreatingApplication || !selectedTree || !selectedCommune || !selectedTemplate}
+                    variant={selectedTree && selectedCommune && selectedTemplate ? "primary" : "secondary"}
+                    size="sm"
+                    icon={isCreatingApplication ? Loader2 : Plus}
+                    className={`w-full text-sm ${!selectedTree || !selectedCommune || !selectedTemplate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isCreatingApplication ? 'Tworzenie wniosku...' : 'Utwórz wniosek'}
+                  </GlassButton>
+                )}
               </div>
             )}
 
@@ -476,11 +531,10 @@ export const ApplicationsPage: React.FC = () => {
                     schema={formSchema}
                     onSubmit={handleFormSubmit}
                     onBack={() => {
-                      // Only hide the form, keep the selections
-                      setCurrentApplication(null);
+                      // Only hide the form, keep everything else
                       setFormSchema(null);
-                      // Don't reset selectedTree, selectedCommune, selectedTemplate
-                      // The form will be recreated when user clicks "Utwórz wniosek" again
+                      // Keep currentApplication, selectedTree, selectedCommune, selectedTemplate
+                      // User can return to the form by clicking "Utwórz wniosek" again
                     }}
                     isSubmitting={isSubmitting}
                     selectedTree={selectedTree}

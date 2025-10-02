@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield, Eye, EyeOff, Check, X as XIcon } from 'lucide-react';
+import { User, Mail, Phone, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield, Eye, EyeOff, Check, X as XIcon, MapPin, Building, Hash } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
@@ -697,17 +697,19 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-3">
-                    <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                     <span className="text-gray-700 dark:text-gray-300 text-base">
                       Adres: {additionalData.address}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-3 ml-7">
+                  <div className="flex items-center space-x-3">
+                    <Building className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                     <span className="text-gray-700 dark:text-gray-300 text-base">
                       Miasto: {additionalData.city}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-3 ml-7">
+                  <div className="flex items-center space-x-3">
+                    <Hash className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                     <span className="text-gray-700 dark:text-gray-300 text-base">
                       Kod pocztowy: {additionalData.postalCode}
                     </span>

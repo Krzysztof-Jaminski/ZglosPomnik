@@ -74,10 +74,12 @@ export const ReportPage: React.FC = () => {
   const initializeLocation = useCallback((): { lat: number; lng: number } | null => {
     // First try navigation state
     if (location.state?.latitude && location.state?.longitude) {
-      return { 
-        lat: location.state.latitude, 
-        lng: location.state.longitude 
-      };
+      const lat = location.state.latitude;
+      const lng = location.state.longitude;
+      // Check if coordinates are not the specific default values
+      if (!(lat === 0.000000 && lng === 0.000000)) {
+        return { lat, lng };
+      }
     }
     
     // Then try localStorage
@@ -86,10 +88,12 @@ export const ReportPage: React.FC = () => {
       try {
         const formData: SavedFormData = JSON.parse(savedData);
         if (formData.latitude !== undefined && formData.longitude !== undefined) {
-          return { 
-            lat: formData.latitude, 
-            lng: formData.longitude 
-          };
+          const lat = formData.latitude;
+          const lng = formData.longitude;
+          // Check if coordinates are not the specific default values
+          if (!(lat === 0.000000 && lng === 0.000000)) {
+            return { lat, lng };
+          }
         }
       } catch (error) {
         console.error('Error loading saved location:', error);
@@ -136,11 +140,16 @@ export const ReportPage: React.FC = () => {
   // Save location from navigation state to localStorage
   React.useEffect(() => {
     if (location.state?.latitude && location.state?.longitude) {
-      const newLocation = {
-        lat: location.state.latitude,
-        lng: location.state.longitude
-      };
-      setSelectedLocation(newLocation);
+      const lat = location.state.latitude;
+      const lng = location.state.longitude;
+      // Only set location if coordinates are not the specific default values
+      if (!(lat === 0.000000 && lng === 0.000000)) {
+        const newLocation = {
+          lat: lat,
+          lng: lng
+        };
+        setSelectedLocation(newLocation);
+      }
       
       // Save to localStorage immediately
       const savedData = localStorage.getItem('treeReportFormData');
@@ -156,8 +165,8 @@ export const ReportPage: React.FC = () => {
       
       const updatedFormData = {
         ...formData,
-        latitude: newLocation.lat,
-        longitude: newLocation.lng
+        latitude: lat,
+        longitude: lng
       };
       
       localStorage.setItem('treeReportFormData', JSON.stringify(updatedFormData));
@@ -290,21 +299,21 @@ export const ReportPage: React.FC = () => {
               <div className="space-y-1">
                 <GlassButton
                   onClick={handleLocationButtonClick}
-                  className="w-full"
+                  className="w-full flex-shrink-0"
                   size="xs"
                   variant="primary"
                 >
-                  <span className="text-xs">
+                  <span className="text-xs whitespace-nowrap">
                     Użyj mojej lokalizacji
                   </span>
                 </GlassButton>
                 <GlassButton
                   onClick={handleMapSelectionClick}
-                  className="w-full"
+                  className="w-full flex-shrink-0"
                   size="xs"
                   variant="secondary"
                 >
-                  <span className="text-xs">
+                  <span className="text-xs whitespace-nowrap">
                     Wybierz lokalizację na mapie
                   </span>
                 </GlassButton>

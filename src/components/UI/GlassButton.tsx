@@ -28,7 +28,7 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 }) => {
   const { triggerLightHaptic } = useHapticFeedback();
   const baseClasses = `
-    relative overflow-hidden
+    relative overflow-hidden flex-shrink-0
     backdrop-blur-md
     border-l-4 border-transparent
     rounded-lg
