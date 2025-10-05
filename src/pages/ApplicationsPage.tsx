@@ -378,7 +378,9 @@ export const ApplicationsPage: React.FC = () => {
     
     try {
       setIsSubmitting(true);
-      await applicationsService.submitApplication(currentApplication.id, { formData });
+      
+      // DON'T submit application - just generate PDF directly
+      // await applicationsService.submitApplication(currentApplication.id, { formData });
       
       // Generate PDF using real endpoint
       const pdfResponse = await applicationsService.generatePdf(currentApplication.id);
@@ -398,17 +400,17 @@ export const ApplicationsPage: React.FC = () => {
         document.body.removeChild(link);
       }
       
-      // Clear all application data from localStorage
-      localStorage.removeItem('currentApplication');
-      localStorage.removeItem('applicationFormData');
-      localStorage.removeItem('selectedTree');
-      localStorage.removeItem('selectedCommune');
-      localStorage.removeItem('selectedTemplate');
+      // DON'T clear application data - allow multiple PDF generations
+      // localStorage.removeItem('currentApplication');
+      // localStorage.removeItem('applicationFormData');
+      // localStorage.removeItem('selectedTree');
+      // localStorage.removeItem('selectedCommune');
+      // localStorage.removeItem('selectedTemplate');
       
-      // Clear state and close form
-      setCurrentApplication(null);
-      setFormSchema(null);
-      setUserManuallyClosedForm(false);
+      // DON'T clear state - keep form open for multiple PDF generations
+      // setCurrentApplication(null);
+      // setFormSchema(null);
+      // setUserManuallyClosedForm(false);
       
       // Show success modal with PDF link
       setGeneratedPdfUrl(pdfResponse.pdfUrl);
@@ -427,7 +429,20 @@ export const ApplicationsPage: React.FC = () => {
     }
   };
 
-
+  // Function to completely close the application form
+  const handleCloseForm = () => {
+    // Clear all application data from localStorage
+    localStorage.removeItem('currentApplication');
+    localStorage.removeItem('applicationFormData');
+    localStorage.removeItem('selectedTree');
+    localStorage.removeItem('selectedCommune');
+    localStorage.removeItem('selectedTemplate');
+    
+    // Clear state and close form
+    setCurrentApplication(null);
+    setFormSchema(null);
+    setUserManuallyClosedForm(false);
+  };
 
   const clearCacheAndReset = async () => {
     console.log('Clearing cache and resetting');
@@ -634,6 +649,7 @@ export const ApplicationsPage: React.FC = () => {
                       // Keep currentApplication, selectedTree, selectedCommune, selectedTemplate
                       // User can return to the form by clicking "Kontynuuj wniosek" or "Utwórz wniosek"
                     }}
+                    onClose={handleCloseForm}
                     isSubmitting={isSubmitting}
                     selectedTree={selectedTree}
                     selectedCommune={selectedCommune}

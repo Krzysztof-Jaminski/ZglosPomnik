@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FormField, FormSchema, Tree, Commune, ApplicationTemplate } from '../../types';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
-import { ArrowLeft, FileText, Bot, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Bot, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,6 +10,7 @@ interface DynamicFormProps {
   schema: FormSchema;
   onSubmit: (formData: Record<string, any>) => void;
   onBack: () => void;
+  onClose?: () => void;
   isSubmitting?: boolean;
   selectedTree?: Tree | null;
   selectedCommune?: Commune | null;
@@ -20,6 +21,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   schema,
   onSubmit,
   onBack,
+  onClose,
   isSubmitting = false,
   selectedTree = null,
   selectedCommune = null,
@@ -436,8 +438,8 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
     e.preventDefault();
     if (validateForm()) {
       onSubmit(formData);
-      // Clear saved form data after successful submission
-      localStorage.removeItem('applicationFormData');
+      // DON'T clear saved form data - allow multiple PDF generations
+      // localStorage.removeItem('applicationFormData');
     }
   };
 
@@ -558,14 +560,26 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
          {/* Header with back button, title and auto-fill button */}
          <div className="mb-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
           <div className="flex items-center justify-between">
-             {/* Back button - more to the left */}
-             <button
-               onClick={onBack}
-               className="flex items-center justify-center p-1 rounded-lg transition-colors focus:outline-none focus:ring-0 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-               title="Powrót do tworzenia wniosków"
-             >
-               <ArrowLeft className="w-5 h-5" />
-             </button>
+             {/* Back button and Close button */}
+             <div className="flex items-center space-x-2">
+               <button
+                 onClick={onBack}
+                 className="flex items-center justify-center p-1 rounded-lg transition-colors focus:outline-none focus:ring-0 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                 title="Powrót do tworzenia wniosków"
+               >
+                 <ArrowLeft className="w-5 h-5" />
+               </button>
+               
+               {onClose && (
+                 <button
+                   onClick={onClose}
+                   className="flex items-center justify-center p-1 rounded-lg transition-colors focus:outline-none focus:ring-0 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                   title="Zamknij formularz"
+                 >
+                   <X className="w-5 h-5" />
+                 </button>
+               )}
+             </div>
             
              {/* Title centered - smaller with more space */}
              <div className="flex-1 px-6">
@@ -663,7 +677,7 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
               icon={isSubmitting ? Loader2 : FileText}
               className={`w-full text-sm ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {isSubmitting ? 'Generowanie PDF...' : 'Wygeneruj wniosek'}
+              {isSubmitting ? 'Generowanie PDF...' : 'Wygeneruj PDF'}
             </GlassButton>
           </div>
         </form>
