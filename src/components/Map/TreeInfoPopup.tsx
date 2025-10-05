@@ -3,7 +3,6 @@ import { TreePine, MapPin, X, Calendar, User, ArrowRight, ZoomIn } from 'lucide-
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { Tree } from '../../types';
-import { parseTreeDescription } from '../../utils/descriptionParser';
 
 interface TreeInfoPopupProps {
   tree: Tree;
@@ -16,10 +15,10 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
   onClose,
   onGoToFeed
 }) => {
+  // Log tree object to console for debugging
+  console.log('TreeInfoPopup - Tree object:', tree);
   const [showImageModal, setShowImageModal] = useState(false);
   
-  // Parse description using the same logic as TreeReportForm
-  const parsedDescription = tree.description ? parseTreeDescription(tree.description) : null;
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Monument': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
@@ -61,7 +60,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
           <div className="flex items-center space-x-3 sm:space-x-4">
              <TreePine className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" />
             <h3 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
-              {parsedDescription?.treeName || 'Drzewo'}
+              {tree.name || 'Drzewo'}
             </h3>
           </div>
           <button
@@ -73,39 +72,26 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
         </div>
 
 
-        {/* User description */}
-        {parsedDescription?.userDescription && (
-          <div className="mb-3 sm:mb-4">
-            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Opis:
-            </p>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              {parsedDescription.userDescription}
-            </p>
-          </div>
-        )}
-
-        {/* Stories section */}
-        {parsedDescription?.stories && (
-          <div className="mb-3 sm:mb-4">
-            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Historie i legendy:
-            </p>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              {parsedDescription.stories}
-            </p>
-          </div>
-        )}
-
-
-        {/* Fallback for old format descriptions */}
-        {parsedDescription && !parsedDescription.hasStructuredFormat && tree.description && (
+        {/* Description */}
+        {tree.description && (
           <div className="mb-3 sm:mb-4">
             <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
               Opis:
             </p>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               {tree.description}
+            </p>
+          </div>
+        )}
+
+        {/* Legend section */}
+        {tree.legend && (
+          <div className="mb-3 sm:mb-4">
+            <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Historie i legendy:
+            </p>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              {tree.legend}
             </p>
           </div>
         )}
@@ -140,51 +126,9 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
           </div>
         </div>
 
-        {/* Health Status - only show if there are health conditions */}
-        {parsedDescription?.detailedHealth && 
-         parsedDescription.detailedHealth.length > 0 && 
-         parsedDescription.detailedHealth.some(condition => condition && condition.trim() !== '') && (
-          <div className="mb-3 sm:mb-4">
-            <div className="flex flex-wrap gap-1 mb-3">
-              {parsedDescription.detailedHealth
-                .filter(condition => condition && condition.trim() !== '')
-                .map((condition, index) => {
-                  // Categorize conditions by type
-                  const isHealthPositive = ['Dobry stan', 'Zdrowy', 'Silny'].includes(condition);
-                  const isHealthNeutral = ['Ubytki w pniu', 'Narośla', 'Odbarwienia', 'Złamania'].includes(condition);
-                  const isHealthNegative = ['Posusz', 'Choroby grzybowe', 'Szkodniki', 'Uszkodzenia mechaniczne', 'Zgnilizna', 'Pęknięcia'].includes(condition);
-                  const isSoil = condition.startsWith('Gleba');
-                  const isEnvironment = ['Ekspozycja słoneczna', 'Cień częściowy', 'Cień głęboki', 'Wiatr', 'Zanieczyszczenia', 'Bliskość dróg', 'Bliskość budynków', 'Drenaż dobry', 'Drenaż słaby', 'Wilgotność wysoka', 'Wilgotność niska'].includes(condition);
-                  
-                  let colorClass = 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300';
-                  
-                  if (isHealthPositive) {
-                    colorClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-                  } else if (isHealthNegative) {
-                    colorClass = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-                  } else if (isHealthNeutral) {
-                    colorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-                  } else if (isSoil) {
-                    colorClass = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
-                  } else if (isEnvironment) {
-                    colorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-                  }
-                  
-                  return (
-                    <span
-                      key={index}
-                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md font-medium border border-white/20 backdrop-blur-sm ${colorClass}`}
-                    >
-                      <span className="whitespace-nowrap">{condition}</span>
-                    </span>
-                  );
-                })}
-            </div>
-          </div>
-        )}
 
         {/* Tree Details */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3">
             <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Obwód:
@@ -199,6 +143,14 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
             </p>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               {tree.height} m
+            </p>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3">
+            <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Rozpiętość korony:
+            </p>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              {tree.crownSpread} m
             </p>
           </div>
         </div>

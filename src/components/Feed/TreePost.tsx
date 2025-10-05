@@ -4,7 +4,6 @@ import { TreePost as TreePostType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DeleteConfirmationModal } from '../UI/DeleteConfirmationModal';
 import { treesService } from '../../services/treesService';
-import { parseTreeDescription } from '../../utils/descriptionParser';
 
 interface TreePostProps {
   post: TreePostType;
@@ -15,12 +14,12 @@ export const TreePost: React.FC<TreePostProps> = ({
   post,
   onDelete
 }) => {
+  // Log tree object to console for debugging
+  console.log('TreePost - Tree object:', post);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
-  // Parse description using the same logic as TreeReportForm
-  const parsedDescription = post.description ? parseTreeDescription(post.description) : null;
 
 
   // Handle tree post deletion
@@ -136,53 +135,43 @@ export const TreePost: React.FC<TreePostProps> = ({
       <div className="mb-4 sm:mb-6">
 
         {/* Tree name */}
-        {parsedDescription?.treeName && (
+        {post.name && (
           <div className="mb-3 sm:mb-4">
             <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nazwa drzewa:
             </p>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              {parsedDescription.treeName}
+              {post.name}
             </p>
           </div>
         )}
 
-        {/* Description and Stories in two columns */}
+        {/* Description and Legend in two columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-          {/* User description */}
-          {parsedDescription?.userDescription && (
+          {/* Description */}
+          {post.description && (
             <div>
               <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Opis:
               </p>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                {parsedDescription.userDescription}
+                {post.description}
               </p>
             </div>
           )}
 
-          {/* Stories section */}
-          {parsedDescription?.stories && (
+          {/* Legend section */}
+          {post.legend && (
             <div>
               <h5 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
                 Historie i legendy:
               </h5>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                {parsedDescription.stories}
+                {post.legend}
               </p>
             </div>
           )}
         </div>
-
-
-        {/* Fallback for old format descriptions */}
-        {parsedDescription && !parsedDescription.hasStructuredFormat && post.description && (
-          <div className="mb-4 sm:mb-6">
-            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
-            {post.description}
-          </p>
-          </div>
-        )}
       </div>
 
       {/* Photos */}
@@ -224,49 +213,9 @@ export const TreePost: React.FC<TreePostProps> = ({
                 </div>
               </div>
 
-        {/* Health Status - only show if there are health conditions */}
-        {parsedDescription?.detailedHealth && parsedDescription.detailedHealth.length > 0 && parsedDescription.detailedHealth.some(condition => condition && condition.trim() !== '') && (
-          <div className="mb-3 sm:mb-4">
-            <div className="flex flex-wrap gap-1 mb-2">
-              {parsedDescription.detailedHealth
-                .filter(condition => condition && condition.trim() !== '')
-                .map((condition, index) => {
-                  // Categorize conditions by type
-                  const isHealthPositive = ['Dobry stan', 'Zdrowy', 'Silny'].includes(condition);
-                  const isHealthNeutral = ['Ubytki w pniu', 'Narośla', 'Odbarwienia', 'Złamania'].includes(condition);
-                  const isHealthNegative = ['Posusz', 'Choroby grzybowe', 'Szkodniki', 'Uszkodzenia mechaniczne', 'Zgnilizna', 'Pęknięcia'].includes(condition);
-                  const isSoil = condition.startsWith('Gleba');
-                  const isEnvironment = ['Ekspozycja słoneczna', 'Cień częściowy', 'Cień głęboki', 'Wiatr', 'Zanieczyszczenia', 'Bliskość dróg', 'Bliskość budynków', 'Drenaż dobry', 'Drenaż słaby', 'Wilgotność wysoka', 'Wilgotność niska'].includes(condition);
-                  
-                  let colorClass = 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300';
-                  
-                  if (isHealthPositive) {
-                    colorClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-                  } else if (isHealthNegative) {
-                    colorClass = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-                  } else if (isHealthNeutral) {
-                    colorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-                  } else if (isSoil) {
-                    colorClass = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
-                  } else if (isEnvironment) {
-                    colorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-                  }
-                  
-                  return (
-                    <span
-                      key={index}
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md font-medium border border-white/20 backdrop-blur-sm ${colorClass}`}
-                    >
-                      <span className="whitespace-nowrap text-xs">{condition}</span>
-                    </span>
-                  );
-                })}
-            </div>
-        </div>
-      )}
 
       {/* Tree Details */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
           <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
             Obwód:
@@ -281,6 +230,14 @@ export const TreePost: React.FC<TreePostProps> = ({
           </p>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             {post.height} m
+          </p>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Rozpiętość korony:
+          </p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            {post.crownSpread} m
           </p>
         </div>
       </div>

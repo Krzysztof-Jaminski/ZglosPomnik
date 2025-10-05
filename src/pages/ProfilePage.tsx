@@ -41,13 +41,8 @@ export const ProfilePage: React.FC = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(additionalData);
-  const [editBasicData, setEditBasicData] = useState({
-    name: '',
-    email: ''
-  });
   const [editAvatar, setEditAvatar] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -116,10 +111,6 @@ export const ProfilePage: React.FC = () => {
         });
         
         setEditAvatar(userData.avatar || '');
-        setEditBasicData({
-          name: userData.name || '',
-          email: userData.email || ''
-        });
 
         // Zapisz zaktualizowane dane do localStorage
         localStorage.setItem('user_data', JSON.stringify(userData));
@@ -164,29 +155,10 @@ export const ProfilePage: React.FC = () => {
     try {
       setIsSaving(true);
       
-      // Upload avatara jeśli został wybrany nowy plik
-      let avatarUrl = editAvatar;
-      if (avatarFile) {
-        setIsUploadingAvatar(true);
-        // TODO: Implement avatar upload to backend API
-        // For now, create a local URL for preview
-        avatarUrl = URL.createObjectURL(avatarFile);
-        setIsUploadingAvatar(false);
-      }
-      
       // Przygotuj dane do wysłania na serwer
       const updateData: any = {};
       
-      // Podstawowe dane
-      if (editBasicData.name.trim() !== '') {
-        updateData.name = editBasicData.name;
-      }
-      
-      if (editBasicData.email.trim() !== '') {
-        updateData.email = editBasicData.email;
-      }
-      
-      // Dodatkowe dane
+      // Dodatkowe dane (name i email nie można już edytować)
       if (editData.phone !== 'Nie podano' && editData.phone.trim() !== '') {
         updateData.phone = editData.phone;
       }
@@ -202,11 +174,6 @@ export const ProfilePage: React.FC = () => {
       if (editData.postalCode !== 'Nie podano' && editData.postalCode.trim() !== '') {
         updateData.postalCode = editData.postalCode;
       }
-      
-      if (avatarUrl && avatarUrl.trim() !== '') {
-        updateData.avatar = avatarUrl;
-      }
-
 
       // Use the new API endpoint for updating user data
       const { authService } = await import('../services/authService');
@@ -215,7 +182,7 @@ export const ProfilePage: React.FC = () => {
         address: updateData.address,
         city: updateData.city,
         postalCode: updateData.postalCode,
-        avatar: updateData.avatar
+        avatarFile: avatarFile || undefined // Przekazujemy plik bezpośrednio
       });
       
       setFullUserData(updatedUserData);
@@ -243,10 +210,6 @@ export const ProfilePage: React.FC = () => {
     triggerLightHaptic();
     setEditData(additionalData);
     setEditAvatar(fullUserData?.avatar || '');
-    setEditBasicData({
-      name: fullUserData?.name || '',
-      email: fullUserData?.email || ''
-    });
     setAvatarFile(null);
     setIsEditing(false);
   };
@@ -397,12 +360,14 @@ export const ProfilePage: React.FC = () => {
         return;
       }
 
+      const loginData = await loginResponse.json();
+
       // Use the new API endpoint for changing password
       const { authService } = await import('../services/authService');
       await authService.changePassword({
-        oldPassword: passwordData.currentPassword,
+        token: loginData.token, // Używamy tokenu z odpowiedzi logowania
         newPassword: passwordData.newPassword,
-        confirmNewPassword: passwordData.confirmPassword
+        confirmPassword: passwordData.confirmPassword
       });
 
       // Wyczyść formularz i zamknij modal
@@ -548,29 +513,7 @@ export const ProfilePage: React.FC = () => {
                   </p>
                 </div>
                 
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
-                    Imię i nazwisko
-                  </label>
-                  <input
-                    type="text"
-                    value={editBasicData.name}
-                    onChange={(e) => setEditBasicData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={editBasicData.email}
-                    onChange={(e) => setEditBasicData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
+                {/* Name and email are no longer editable according to new API */}
                 
                 <div>
                   <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
@@ -676,7 +619,7 @@ export const ProfilePage: React.FC = () => {
                     disabled={isSaving}
                   >
                     <span className="text-sm">
-                      {isSaving ? (isUploadingAvatar ? 'Przesyłanie avatara...' : 'Zapisywanie...') : 'Zapisz'}
+                      {isSaving ? 'Zapisywanie...' : 'Zapisz'}
                     </span>
                   </GlassButton>
                 </div>

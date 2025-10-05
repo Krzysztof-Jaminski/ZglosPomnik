@@ -26,6 +26,8 @@ interface TreeReportFormSectionSpeciesProps {
   setPierśnica: (value: string) => void;
   height: string;
   setHeight: (value: string) => void;
+  crownSpread: string;
+  setCrownSpread: (value: string) => void;
   condition: string;
   setCondition: (value: string) => void;
   detailedHealth: string[];
@@ -63,6 +65,8 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
   setPierśnica,
   height,
   setHeight,
+  crownSpread,
+  setCrownSpread,
   condition,
   setCondition,
   detailedHealth,
@@ -208,6 +212,7 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
                                       speciesQuery,
                                       pierśnica,
                                       height,
+                                      crownSpread,
                                       condition,
                                       detailedHealth,
                                       isAlive,
@@ -289,7 +294,7 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
         </div>
 
         {/* Tree measurements */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Pierśnica (cm)
@@ -313,6 +318,20 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
               value={height}
               onChange={(e) => setHeight(e.target.value)}
               placeholder="np. 25"
+              min="0"
+              step="0.1"
+              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Rozpiętość korony (m)
+            </label>
+            <input
+              type="number"
+              value={crownSpread}
+              onChange={(e) => setCrownSpread(e.target.value)}
+              placeholder="np. 15"
               min="0"
               step="0.1"
               className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"

@@ -288,28 +288,55 @@ class AuthService {
     city?: string;
     postalCode?: string;
     avatar?: string;
+    avatarFile?: File;
   }): Promise<User> {
     const token = this.getToken();
     if (!token) {
       throw new Error('No authentication token');
     }
 
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) {
+      throw new Error('No current user found');
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/Users/data`, {
+      // Create FormData for multipart/form-data
+      const formData = new FormData();
+      
+      // Add user data fields
+      if (userData.phone) {
+        formData.append('Phone', userData.phone);
+      }
+      if (userData.address) {
+        formData.append('Address', userData.address);
+      }
+      if (userData.city) {
+        formData.append('City', userData.city);
+      }
+      if (userData.postalCode) {
+        formData.append('PostalCode', userData.postalCode);
+      }
+      if (userData.avatarFile) {
+        formData.append('image', userData.avatarFile);
+      }
+
+      console.log('Updating user data with FormData:');
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+
+      const response = await fetch(`${API_BASE_URL}/Users/data/${currentUser.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
           'accept': '*/*'
         },
-        body: JSON.stringify({
-          userId: null, // API expects null for current user
-          phone: userData.phone || null,
-          address: userData.address || null,
-          city: userData.city || null,
-          postalCode: userData.postalCode || null,
-          avatar: userData.avatar || null
-        })
+        body: formData
       });
 
       if (!response.ok) {
@@ -318,21 +345,13 @@ class AuthService {
           const newToken = await this.refreshAccessToken();
           if (newToken) {
             // Retry with new token
-            const retryResponse = await fetch(`${API_BASE_URL}/Users/data`, {
+            const retryResponse = await fetch(`${API_BASE_URL}/Users/data/${currentUser.id}`, {
               method: 'PUT',
               headers: {
                 'Authorization': `Bearer ${newToken}`,
-                'Content-Type': 'application/json',
                 'accept': '*/*'
               },
-              body: JSON.stringify({
-                userId: null,
-                phone: userData.phone || null,
-                address: userData.address || null,
-                city: userData.city || null,
-                postalCode: userData.postalCode || null,
-                avatar: userData.avatar || null
-              })
+              body: formData
             });
             
             if (!retryResponse.ok) {
@@ -350,6 +369,7 @@ class AuthService {
       }
 
       const updatedUserData = await response.json();
+      console.log('User data updated successfully:', updatedUserData);
       this.saveUser(updatedUserData);
       return updatedUserData;
     } catch (error) {
@@ -360,28 +380,33 @@ class AuthService {
 
   // Change password
   async changePassword(passwordData: {
-    oldPassword: string;
+    token: string;
     newPassword: string;
-    confirmNewPassword: string;
+    confirmPassword: string;
   }): Promise<void> {
-    const token = this.getToken();
-    if (!token) {
+    const authToken = this.getToken();
+    if (!authToken) {
       throw new Error('No authentication token');
     }
 
     try {
+      console.log('Changing password with new API format:', {
+        token: passwordData.token,
+        newPassword: '[HIDDEN]',
+        confirmPassword: '[HIDDEN]'
+      });
+
       const response = await fetch(`${API_BASE_URL}/Users/password`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
           'accept': '*/*'
         },
         body: JSON.stringify({
-          userId: null, // API expects null for current user
-          oldPassword: passwordData.oldPassword,
+          token: passwordData.token,
           newPassword: passwordData.newPassword,
-          confirmNewPassword: passwordData.confirmNewPassword
+          confirmPassword: passwordData.confirmPassword
         })
       });
 
@@ -399,10 +424,9 @@ class AuthService {
                 'accept': '*/*'
               },
               body: JSON.stringify({
-                userId: null,
-                oldPassword: passwordData.oldPassword,
+                token: passwordData.token,
                 newPassword: passwordData.newPassword,
-                confirmNewPassword: passwordData.confirmNewPassword
+                confirmPassword: passwordData.confirmPassword
               })
             });
             
@@ -410,6 +434,7 @@ class AuthService {
               throw new Error('Failed to change password after token refresh');
             }
             
+            console.log('Password changed successfully');
             return; // Password change successful
           } else {
             throw new Error('Authentication token expired and refresh failed');
@@ -418,7 +443,7 @@ class AuthService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Password change successful
+      console.log('Password changed successfully');
     } catch (error) {
       console.error('Change password error:', error);
       throw error;

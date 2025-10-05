@@ -5,6 +5,7 @@ export interface Tree {
     userName: string;
     avatar: string | null;
   };
+  name: string; // Tree name - separate field
   species: string;
   speciesLatin: string;
   location: {
@@ -19,10 +20,12 @@ export interface Tree {
   };
   circumference: number; // Changed to double
   height: number; // Changed to double
+  crownSpread: number; // Rozpiętość korony
   condition: string;
   isAlive: boolean;
   estimatedAge: number;
-  description: string;
+  description: string; // Plain description without special formatting
+  legend: string; // Tree legend/stories - separate field
   imageUrls: string[];
   isMonument: boolean;
   status: string;
@@ -108,10 +111,13 @@ export interface ApiTreeSubmission {
   };
   circumference: number; // Changed to double
   height: number; // Changed to double
+  crownSpread: number; // Rozpiętość korony
   condition: string;
   isAlive?: boolean;
   estimatedAge: number;
-  description?: string;
+  name?: string; // Tree name - separate field
+  description?: string; // Plain description without special formatting
+  legend?: string; // Tree legend/stories - separate field
   isMonument?: boolean;
 }
 

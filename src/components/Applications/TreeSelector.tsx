@@ -3,7 +3,6 @@ import { SearchInput } from '../UI/SearchInput';
 import { Tree } from '../../types';
 import { GlassButton } from '../UI/GlassButton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { parseTreeDescription } from '../../utils/descriptionParser';
 
 interface TreeSelectorProps {
   trees: Tree[];
@@ -33,8 +32,7 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
     
     const query = searchQuery.toLowerCase();
     return trees.filter(tree => {
-      const parsedDescription = parseTreeDescription(tree.description);
-      const treeName = parsedDescription.treeName || tree.species;
+      const treeName = tree.name || tree.species;
       
       return treeName.toLowerCase().includes(query) ||
              tree.species.toLowerCase().includes(query) ||
@@ -109,8 +107,7 @@ export const TreeSelector: React.FC<TreeSelectorProps> = ({
               ) : (
                 <>
                   {filteredTrees.slice(0, 10).map(tree => {
-                    const parsedDescription = parseTreeDescription(tree.description);
-                    const treeName = parsedDescription.treeName || tree.species;
+                    const treeName = tree.name || tree.species;
                     
                     return (
                       <button

@@ -8,7 +8,6 @@ import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { GlassButton } from '../UI/GlassButton';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { createTreeDescription } from '../../utils/descriptionParser';
 import { TreeReportFormSectionSpecies } from './TreeReportFormSectionSpecies';
 import { TreeReportFormSectionDetails } from './TreeReportFormSectionDetails';
 import { TreeReportFormSectionNotes } from './TreeReportFormSectionNotes';
@@ -56,6 +55,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   };
   const [pierśnica, setPierśnica] = useState<string>('');
   const [height, setHeight] = useState<string>('');
+  const [crownSpread, setCrownSpread] = useState<string>('');
   const [condition, setCondition] = useState<string>('dobry');
   const [detailedHealth, setDetailedHealth] = useState<string[]>([]);
   const [expandedCategories, setExpandedCategories] = useState({
@@ -85,6 +85,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         setTreeName(formData.treeName || '');
         setPierśnica(formData.pierśnica || '');
         setHeight(formData.height || '');
+        setCrownSpread(formData.crownSpread || '');
         setCondition(formData.condition || 'dobry');
         setDetailedHealth(formData.detailedHealth || []);
         // isAlive nie jest przywracane z localStorage - zostaje domyślne
@@ -120,6 +121,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           treeName,
           pierśnica,
           height,
+          crownSpread,
           condition,
           detailedHealth,
           isAlive,
@@ -138,10 +140,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     };
 
     // Only save if we have some data (not on initial empty state)
-    if (speciesQuery || treeName || pierśnica || height || notes || treeStories || photos.length > 0) {
+    if (speciesQuery || treeName || pierśnica || height || crownSpread || notes || treeStories || photos.length > 0) {
       saveFormData();
     }
-  }, [speciesQuery, selectedSpecies, treeName, pierśnica, height, condition, detailedHealth, isAlive, estimatedAge, treeStories, notes, photos, latitude, longitude]);
+  }, [speciesQuery, selectedSpecies, treeName, pierśnica, height, crownSpread, condition, detailedHealth, isAlive, estimatedAge, treeStories, notes, photos, latitude, longitude]);
 
   // Load all species when component mounts
   React.useEffect(() => {
@@ -225,6 +227,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           treeName,
           pierśnica,
           height,
+          crownSpread,
           condition,
           detailedHealth,
           estimatedAge,
@@ -299,9 +302,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           return;
         }
 
-        // Create description using the same logic as display components
-        const combinedDescription = createTreeDescription(treeName, notes, treeStories, detailedHealth);
-
         // Transform data to match API specification
         const apiTreeData: ApiTreeSubmission = {
           speciesId: selectedSpecies.id.toUpperCase(), // Convert to uppercase for backend
@@ -317,10 +317,13 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           },
           circumference: pierśnica ? parseFloat(pierśnica) : 0,
           height: height ? parseFloat(height) : 0,
+          crownSpread: crownSpread ? parseFloat(crownSpread) : 0,
           condition: condition,
           isAlive: isAlive,
           estimatedAge: estimatedAge ? parseInt(estimatedAge) : 0,
-          description: combinedDescription,
+          name: treeName,
+          description: notes,
+          legend: treeStories,
           isMonument: false // Default to false, can be changed later
         };
 
@@ -340,6 +343,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         handlePhotosChange([]);
         setPierśnica('');
         setHeight('');
+        setCrownSpread('');
         setCondition('dobry');
         setIsAlive(true);
         setEstimatedAge('');
@@ -428,6 +432,8 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           setPierśnica={setPierśnica}
           height={height}
           setHeight={setHeight}
+          crownSpread={crownSpread}
+          setCrownSpread={setCrownSpread}
           condition={condition}
           setCondition={setCondition}
           detailedHealth={detailedHealth}
