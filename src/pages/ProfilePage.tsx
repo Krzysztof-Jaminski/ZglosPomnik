@@ -155,25 +155,18 @@ export const ProfilePage: React.FC = () => {
     try {
       setIsSaving(true);
       
-      // Przygotuj dane do wysłania na serwer
+      // Przygotuj dane do wysłania na serwer - API wymaga wszystkich pól
       const updateData: any = {};
       
-      // Dodatkowe dane (name i email nie można już edytować)
-      if (editData.phone !== 'Nie podano' && editData.phone.trim() !== '') {
-        updateData.phone = editData.phone;
-      }
-      
-      if (editData.address !== 'Nie podano' && editData.address.trim() !== '') {
-        updateData.address = editData.address;
-      }
-      
-      if (editData.city !== 'Nie podano' && editData.city.trim() !== '') {
-        updateData.city = editData.city;
-      }
-      
-      if (editData.postalCode !== 'Nie podano' && editData.postalCode.trim() !== '') {
-        updateData.postalCode = editData.postalCode;
-      }
+      // Zawsze wysyłaj wszystkie pola, nawet jeśli są puste
+      // Konwertuj "Nie podano" na pusty string
+      updateData.phone = editData.phone === 'Nie podano' ? '' : editData.phone;
+      updateData.address = editData.address === 'Nie podano' ? '' : editData.address;
+      updateData.city = editData.city === 'Nie podano' ? '' : editData.city;
+      updateData.postalCode = editData.postalCode === 'Nie podano' ? '' : editData.postalCode;
+
+      console.log('ProfilePage: Preparing update data:', updateData);
+      console.log('ProfilePage: Original editData:', editData);
 
       // Use the new API endpoint for updating user data
       const { authService } = await import('../services/authService');

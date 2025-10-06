@@ -295,30 +295,30 @@ class AuthService {
       throw new Error('No authentication token');
     }
 
-    const currentUser = this.getCurrentUser();
+    const currentUser = this.getCurrentUserData();
     if (!currentUser) {
       throw new Error('No current user found');
     }
 
+    console.log('updateUserData called with:', userData);
+    console.log('Current user ID:', currentUser.id);
+
     try {
-      // Create FormData for multipart/form-data
+      // Create FormData for multipart/form-data - ALL fields must be sent
       const formData = new FormData();
       
-      // Add user data fields
-      if (userData.phone) {
-        formData.append('Phone', userData.phone);
-      }
-      if (userData.address) {
-        formData.append('Address', userData.address);
-      }
-      if (userData.city) {
-        formData.append('City', userData.city);
-      }
-      if (userData.postalCode) {
-        formData.append('PostalCode', userData.postalCode);
-      }
+      // Always send all fields, even if empty/null
+      formData.append('Phone', userData.phone || '');
+      formData.append('Address', userData.address || '');
+      formData.append('City', userData.city || '');
+      formData.append('PostalCode', userData.postalCode || '');
+      
+      // Always send image field - API requires it
       if (userData.avatarFile) {
         formData.append('image', userData.avatarFile);
+      } else {
+        // Send null for image field when no file is provided
+        formData.append('image', null as any);
       }
 
       console.log('Updating user data with FormData:');
@@ -340,6 +340,14 @@ class AuthService {
       });
 
       if (!response.ok) {
+        // Log error details for debugging
+        const errorText = await response.text();
+        console.error('API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        
         if (response.status === 401) {
           // Try to refresh token
           const newToken = await this.refreshAccessToken();
@@ -355,6 +363,12 @@ class AuthService {
             });
             
             if (!retryResponse.ok) {
+              const retryErrorText = await retryResponse.text();
+              console.error('API Retry Error Response:', {
+                status: retryResponse.status,
+                statusText: retryResponse.statusText,
+                body: retryErrorText
+              });
               throw new Error('Failed to update user data after token refresh');
             }
             
@@ -365,7 +379,7 @@ class AuthService {
             throw new Error('Authentication token expired and refresh failed');
           }
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const updatedUserData = await response.json();
