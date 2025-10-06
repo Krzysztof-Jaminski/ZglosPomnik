@@ -244,7 +244,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Sprawdź czy użytkownik jest administratorem (admin = 1, user = 0)
-  const isAdmin = user?.role === 1 || user?.role === '1' || user?.role === 'Admin' || user?.role === 'admin';
+  const isAdmin = user?.role === '1' || user?.role === 'Admin' || user?.role === 'admin';
 
   const value: AuthContextType = {
     user,
@@ -274,6 +274,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           >
             Odśwież stronę
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render children until auth is initialized
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center p-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Ładowanie...</p>
         </div>
       </div>
     );
