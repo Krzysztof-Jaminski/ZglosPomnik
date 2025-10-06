@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DarkGlassButton } from '../UI/DarkGlassButton';
+import { Plus, Minus } from 'lucide-react';
 
-const FAQItem = ({ question, answer, index }: { question: string; answer: string; index: number }) => {
+interface FAQItemProps {
+  question: string;
+  answer: string;
+  index: number;
+}
+
+const FAQItem = ({ question, answer, index }: FAQItemProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -11,22 +17,27 @@ const FAQItem = ({ question, answer, index }: { question: string; answer: string
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
-      className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden"
+       className="bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-700/70 overflow-hidden hover:border-green-400/50 transition-all duration-300"
     >
       <motion.button
         whileHover={{ backgroundColor: 'rgba(55, 65, 81, 0.8)' }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-2 text-left flex justify-between items-center text-white transition-colors duration-300"
+        className="w-full px-6 py-6 text-left flex justify-between items-center text-white transition-all duration-300"
       >
-        <span className="font-semibold text-sm">{question}</span>
-        <motion.span
-          animate={{ rotate: isOpen ? 45 : 0 }}
+        <span className="font-semibold text-lg pr-4">{question}</span>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.3 }}
-          className="text-green-400 text-lg font-bold"
+          className="flex-shrink-0"
         >
-          +
-        </motion.span>
+          {isOpen ? (
+            <Minus className="w-6 h-6 text-green-400" />
+          ) : (
+            <Plus className="w-6 h-6 text-green-400" />
+          )}
+        </motion.div>
       </motion.button>
+      
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -36,7 +47,7 @@ const FAQItem = ({ question, answer, index }: { question: string; answer: string
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-4 pt-1 text-gray-300 text-sm leading-relaxed">
+            <div className="px-6 pb-6 pt-2 text-gray-300 leading-relaxed">
               {answer}
             </div>
           </motion.div>
@@ -63,50 +74,68 @@ export const FAQSection = () => {
     {
       question: "Czy aplikacja jest bezpłatna?",
       answer: "Tak, aplikacja jest w pełni darmowa dla wszystkich użytkowników. Możesz zgłaszać pomniki przyrody, tworzyć wnioski, korzystać z encyklopedii gatunków i społeczności bez żadnych opłat. Wszystkie podstawowe funkcjonalności są dostępne za darmo."
+    },
+    {
+      question: "Jak działa system lokalizacji GPS?",
+      answer: "Aplikacja wykorzystuje precyzyjny GPS do automatycznego określania lokalizacji drzew. Możesz też ręcznie dostosować pozycję na mapie. Wszystkie współrzędne są zapisywane z dokładnością do kilku metrów, co zapewnia precyzyjne oznaczenie lokalizacji pomnika przyrody."
+    },
+    {
+      question: "Czy mogę edytować zgłoszenie po jego wysłaniu?",
+      answer: "Tak, możesz edytować swoje zgłoszenia w określonych ramach czasowych. Po wysłaniu wniosku do urzędu, możesz jeszcze wprowadzać poprawki przez 48 godzin. Po tym czasie zgłoszenie przechodzi do procesu weryfikacji i edycja nie jest już możliwa."
     }
   ];
 
   return (
-    <section id="faq" className="relative z-10 py-6 bg-gray-900/40 backdrop-blur-sm">
-      <div className="max-w-3xl mx-auto px-3 sm:px-4">
+    <section id="faq" className="relative py-20 bg-gradient-to-b from-gray-900/85 to-gray-900/95">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-6"
+          className="text-center mb-16"
         >
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6" style={{ fontFamily: 'Exo 2, sans-serif' }}>
             Najczęściej zadawane pytania
           </h2>
-          <p className="text-sm text-gray-300">
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
             Odpowiedzi na najważniejsze pytania dotyczące ochrony pomników przyrody
           </p>
         </motion.div>
 
-        <div className="space-y-2">
+        <div className="space-y-4">
           {faqData.map((faq, index) => (
-            <FAQItem key={index} question={faq.question} answer={faq.answer} index={index} />
+            <FAQItem 
+              key={index} 
+              question={faq.question} 
+              answer={faq.answer} 
+              index={index} 
+            />
           ))}
         </div>
 
-        {/* CTA Button after FAQ */}
+        {/* Contact CTA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           viewport={{ once: true }}
-          className="text-center mt-8"
+          className="text-center mt-16"
         >
-          <DarkGlassButton
-            onClick={() => {
-              // Symulacja pobierania aplikacji
-              alert('Funkcja pobierania aplikacji będzie dostępna wkrótce!');
-            }}
-            className="text-sm px-4 py-2"
-          >
-            Pobierz aplikację mobilną
-          </DarkGlassButton>
+           <div className="bg-gradient-to-r from-green-500/15 to-blue-500/15 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/70">
+            <h3 className="text-2xl font-bold text-white mb-4">
+              Nie znalazłeś odpowiedzi?
+            </h3>
+            <p className="text-gray-300 mb-6">
+              Skontaktuj się z naszym zespołem, a chętnie pomożemy Ci w ochronie pomników przyrody
+            </p>
+            <button
+              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-3 rounded-xl font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105"
+            >
+              Skontaktuj się z nami
+            </button>
+          </div>
         </motion.div>
       </div>
     </section>
