@@ -31,7 +31,7 @@ export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   };
 
   // For Azure Blob Storage, don't use crossOrigin to avoid CORS issues
-  const shouldUseCrossOrigin = !src.includes('drzewaapistorage2024.blob.core.windows.net') && crossOrigin;
+  const shouldUseCrossOrigin = !src.includes('drzewapistorage.blob.core.windows.net') && crossOrigin;
 
   return (
     <div className="relative">

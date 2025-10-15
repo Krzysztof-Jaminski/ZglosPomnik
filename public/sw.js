@@ -39,8 +39,8 @@ self.addEventListener('fetch', (event) => {
   
   // Skip external domains (Azure Blob Storage, API endpoints, etc.)
   const externalDomains = [
-    'drzewaapistorage2024.blob.core.windows.net',
-    'drzewaapi-app-2024.azurewebsites.net',
+    'drzewapistorage.blob.core.windows.net',
+    'drzewaapi.thankfulmoss-a87bb02c.polandcentral.azurecontainerapps.io',
     'images.pexels.com',
     'fonts.googleapis.com',
     'fonts.gstatic.com'

@@ -51,17 +51,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       {/* Form container */}
       <div className="w-full">
         <div className="text-center mb-6">
-          <div className="relative flex items-center justify-center mb-4">
-            <img 
-              src="/logo.png" 
-              alt="ZgłośPomnik" 
-              className="w-10 h-10 absolute"
-              style={{ left: 'calc(50% - 105px)', top: '-4px' }}
-            />
-            <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif' }}>
-              <span className="text-blue-400">Zgłoś</span><span className="text-green-400">Pomnik</span>
-            </h2>
-          </div>
           <p className="text-sm text-gray-400">
             Witaj ponownie
           </p>

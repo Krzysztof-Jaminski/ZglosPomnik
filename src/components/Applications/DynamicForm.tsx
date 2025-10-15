@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { ArrowLeft, FileText, Bot, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { applicationsService } from '../../services/applicationsService';
+import { DynamicFormFieldsValidation, ValidationPatterns, UserValidation } from '../../utils/validationRules';
 
 interface DynamicFormProps {
   schema: FormSchema;
@@ -24,16 +25,20 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   onClose,
   isSubmitting = false,
   selectedTree = null,
-  selectedCommune = null,
-  selectedTemplate = null
+  selectedCommune = null
 }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [isFormValid, setIsFormValid] = useState(false);
   const [isAutoFilling, setIsAutoFilling] = useState(false);
+
+  // Auto-resize textarea function
+  const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.max(textarea.scrollHeight, 60) + 'px'; // min 60px height
+  };
 
   // Initialize form data with default values and user data
   useEffect(() => {
@@ -94,6 +99,15 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     setFormData(initialData);
   }, [schema, user]);
 
+  // Auto-resize textareas when form data changes (for AI-generated content)
+  useEffect(() => {
+    // Find all textareas and auto-resize them
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach((textarea) => {
+      autoResizeTextarea(textarea as HTMLTextAreaElement);
+    });
+  }, [formData]);
+
   // Save form data to localStorage whenever it changes
   useEffect(() => {
     if (Object.keys(formData).length > 0) {
@@ -127,24 +141,53 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       return null; // Empty optional field is valid
     }
 
+    // Get centralized validation rules for known fields
+    const centralizedRules = (DynamicFormFieldsValidation as any)[field.name];
+    
+    // Use centralized rules if available, otherwise fallback to field.validation
     const validation = field.validation;
-    if (!validation) return null;
-
-    // Special validation for phone number
-    if (field.name === 'user_phone') {
-      const phoneRegex = /^\+?[0-9\s\-\(\)]{9,15}$/;
-      if (!phoneRegex.test(value.toString())) {
-        return 'Numer telefonu musi zawierać 9-15 cyfr i może zawierać spacje, myślniki, nawiasy lub znak +';
+    
+    // Apply centralized validation patterns
+    if (field.name === 'user_phone' || field.name.includes('phone')) {
+      if (!ValidationPatterns.phone.test(value.toString())) {
+        return UserValidation.phone.message;
+      }
+      if (centralizedRules?.minLength && value.toString().length < centralizedRules.minLength) {
+        return `Minimum ${centralizedRules.minLength} znaków`;
+      }
+      if (centralizedRules?.maxLength && value.toString().length > centralizedRules.maxLength) {
+        return `Maksimum ${centralizedRules.maxLength} znaków`;
       }
     }
 
     // Special validation for postal code
-    if (field.name === 'user_postal_code') {
-      const postalRegex = /^\d{2}-\d{3}$/;
-      if (!postalRegex.test(value.toString())) {
-        return 'Kod pocztowy musi być w formacie XX-XXX (np. 30-001)';
+    if (field.name === 'user_postal_code' || field.name.includes('postal') || field.name.includes('zip')) {
+      if (!ValidationPatterns.postalCode.test(value.toString())) {
+        return UserValidation.postalCode.message;
+      }
+      if (centralizedRules?.maxLength && value.toString().length > centralizedRules.maxLength) {
+        return `Maksimum ${centralizedRules.maxLength} znaków`;
       }
     }
+
+    // Apply centralized min/max length for known fields
+    if (centralizedRules) {
+      if (centralizedRules.minLength && value.toString().length < centralizedRules.minLength) {
+        return `Minimum ${centralizedRules.minLength} znaków`;
+      }
+      if (centralizedRules.maxLength && value.toString().length > centralizedRules.maxLength) {
+        return `Maksimum ${centralizedRules.maxLength} znaków`;
+      }
+      if (centralizedRules.min !== undefined && Number(value) < centralizedRules.min) {
+        return `Wartość musi być większa lub równa ${centralizedRules.min}`;
+      }
+      if (centralizedRules.max !== undefined && Number(value) > centralizedRules.max) {
+        return `Wartość może być maksymalnie ${centralizedRules.max}`;
+      }
+    }
+    
+    // Fallback to backend validation rules
+    if (!validation) return null;
 
     if (validation.minLength && value.toString().length < validation.minLength) {
       return validation.validationMessage || `Minimum ${validation.minLength} znaków`;
@@ -225,187 +268,41 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     // Prepare user context data
     const userContext = {
       name: user?.name || 'Użytkownik',
-      email: user?.email || 'user@example.com',
       phone: user?.phone || '+48 123 456 789',
       address: user?.address || 'ul. Krakowska 15',
       city: user?.city || 'Kraków',
       postalCode: user?.postalCode || '30-001'
     };
     
-    // Prepare tree context data (from selected tree)
+    // Prepare tree context data
     const treeContext = {
-      id: selectedTree?.id || 'unknown',
       species: selectedTree?.species || 'Nieznany gatunek',
       location: selectedTree?.location?.address || 'Nieznana lokalizacja',
-      lat: selectedTree?.location?.lat || 0,
-      lng: selectedTree?.location?.lng || 0,
-      circumference: selectedTree?.circumference || 0,
-      height: selectedTree?.height || 0,
-      condition: selectedTree?.condition || 'nieznana',
-      estimatedAge: selectedTree?.estimatedAge || 0,
-      description: selectedTree?.description || 'Brak opisu',
-      isAlive: selectedTree?.isAlive || true,
-      isMonument: selectedTree?.isMonument || false,
-      imageUrls: selectedTree?.imageUrls || []
     };
     
     // Prepare commune context data
     const communeContext = {
-      id: selectedCommune?.id || 'unknown',
-      name: selectedCommune?.name || 'Nieznana gmina',
       city: selectedCommune?.city || 'Nieznane miasto',
-      address: selectedCommune?.address || 'Nieznany adres',
-      email: selectedCommune?.email || 'nieznany@email.com',
-      phone: selectedCommune?.phone || 'Nieznany telefon'
-    };
-    
-    // Prepare template context data
-    const templateContext = {
-      id: selectedTemplate?.id || 'unknown',
-      name: selectedTemplate?.name || 'Nieznany szablon',
-      description: selectedTemplate?.description || 'Brak opisu szablonu'
     };
     
     try {
-      // Prepare fields information for Gemini
-      const fieldsInfo = schema.requiredFields.map(field => ({
-        name: field.name,
-        label: field.label,
-        type: field.type,
-        isRequired: field.isRequired,
-        placeholder: field.placeholder,
-        helpText: field.helpText,
-        validation: field.validation
-      }));
+      // Try to get justification from backend AI (Gemini)
+      let generatedDescription = '';
       
-      const prompt = `Jesteś asystentem AI pomagającym wypełnić formularz aplikacji o drzewo w Polsce. 
-
-KONTEKST WNIOSKU:
-- Szablon: ${templateContext.name} (${templateContext.description})
-- Gmina: ${communeContext.name} w ${communeContext.city}
-
-DANE UŻYTKOWNIKA (używaj tych danych gdy to ma sens):
-- Imię: ${userContext.name}
-- Email: ${userContext.email}
-- Telefon: ${userContext.phone}
-- Adres: ${userContext.address}
-- Miasto: ${userContext.city}
-- Kod pocztowy: ${userContext.postalCode}
-
-DANE DRZEWA (używaj tych danych gdy to ma sens):
-- ID: ${treeContext.id}
-- Gatunek: ${treeContext.species}
-- Lokalizacja: ${treeContext.location}
-- Współrzędne: ${treeContext.lat}, ${treeContext.lng}
-- Pierśnica: ${treeContext.circumference} cm
-- Wysokość: ${treeContext.height} m
-- Kondycja: ${treeContext.condition}
-- Szacowany wiek: ${treeContext.estimatedAge} lat
-- Opis: ${treeContext.description}
-- Czy żywe: ${treeContext.isAlive ? 'Tak' : 'Nie'}
-- Czy pomnik przyrody: ${treeContext.isMonument ? 'Tak' : 'Nie'}
-- Liczba zdjęć: ${treeContext.imageUrls.length}
-
-DANE GMINY (używaj tych danych gdy to ma sens):
-- Nazwa: ${communeContext.name}
-- Miasto: ${communeContext.city}
-- Adres urzędu: ${communeContext.address}
-- Email: ${communeContext.email}
-- Telefon: ${communeContext.phone}
-
-Formularz zawiera następujące pola (WYPEŁNIJ WSZYSTKIE):
-${fieldsInfo.map(field => 
-  `- ${field.label} (${field.name}): ${field.type}${field.isRequired ? ' - WYMAGANE' : ' - opcjonalne'}${field.helpText ? ` - ${field.helpText}` : ''}`
-).join('\n')}
-
-ZASADY WYPEŁNIANIA WSZYSTKICH PÓL:
-1. Dla pól związanych z użytkownikiem (user_phone, user_address, user_city, user_postal_code) - użyj danych użytkownika
-2. Dla pól związanych z drzewem (plot, cadastral_district, record_keeping_unit) - użyj danych drzewa i gminy
-3. Dla pól związanych z opracowaniem (study_name, study_author) - wygeneruj profesjonalne dane związane z drzewem
-4. Dla pól związanych z własnością (ownership_form, land_type) - wygeneruj realistyczne dane polskie
-5. Dla pozostałych pól - wygeneruj realistyczne dane polskie związane z kontekstem
-
-WAŻNE: Musisz wypełnić WSZYSTKIE pola z listy powyżej. Nie pomijaj żadnego pola!
-
-Zwróć odpowiedź w formacie JSON gdzie klucze to nazwy pól (name), a wartości to wypełnione dane.
-
-Przykład odpowiedzi (wypełnij wszystkie pola z formularza):
-{
-  "user_phone": "${userContext.phone}",
-  "user_address": "${userContext.address}",
-  "user_city": "${userContext.city}",
-  "user_postal_code": "${userContext.postalCode}",
-  "plot": "Działka nr 123/4 w obrębie ${treeContext.location}",
-  "cadastral_district": "Obręb ${communeContext.city}-Centrum",
-  "record_keeping_unit": "Jednostka ewidencyjna ${communeContext.city}",
-  "ownership_form": "Własność prywatna",
-  "land_type": "Grunt zabudowany",
-  "study_name": "Opracowanie dendrologiczne dla ${treeContext.species} w ${treeContext.location}",
-  "study_author": "Dr ${userContext.name}"
-}
-
-Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
-
-      // API call to Gemini (try multiple endpoints)
-      let response;
-      let data;
-      
-      try {
-        // Try the correct Gemini API endpoint
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-          throw new Error('Brak klucza API Gemini. Skonfiguruj VITE_GEMINI_API_KEY w pliku .env');
+      if (selectedTree?.id) {
+        try {
+          console.log('Calling Gemini to generate justification for tree:', selectedTree.id);
+          generatedDescription = await applicationsService.generateJustification(selectedTree.id);
+          console.log('Generated justification from Gemini:', generatedDescription);
+        } catch (error) {
+          console.error('Gemini API error:', error);
+          console.log('Falling back to default description');
+          // Continue with fallback data if backend fails
         }
-        
-        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: prompt
-              }]
-            }]
-          })
-        });
-
-        if (!response.ok) {
-          console.error('Gemini API response not ok:', response.status, response.statusText);
-          throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
-        }
-
-        data = await response.json();
-        console.log('Gemini API response:', data);
-        
-        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
-          throw new Error('Invalid Gemini API response structure');
-        }
-        
-        const aiResponse = data.candidates[0].content.parts[0].text;
-        console.log('AI response text:', aiResponse);
-        
-        // Parse JSON response
-        const autoFillData = JSON.parse(aiResponse);
-        console.log('Parsed auto-fill data:', autoFillData);
-        
-        // Update form data
-        setFormData(prev => ({ ...prev, ...autoFillData }));
-        
-        // Save to localStorage
-        localStorage.setItem('applicationFormData', JSON.stringify({ ...formData, ...autoFillData }));
-        
-      } catch (apiError) {
-        console.error('Gemini API error:', apiError);
-        throw apiError; // Re-throw to be caught by outer catch
       }
       
-    } catch (error) {
-      console.error('Auto-fill error:', error);
-      
-      // Fallback: Use mock data if API fails (using all contexts)
-      const mockData = {
+      // Prepare mock data for empty fields
+      const mockData: Record<string, any> = {
         user_phone: userContext.phone,
         user_address: userContext.address,
         user_city: userContext.city,
@@ -416,19 +313,61 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
         ownership_form: 'Własność prywatna',
         land_type: 'Grunt zabudowany',
         study_name: `Opracowanie dendrologiczne dla ${treeContext.species} w ${treeContext.location}`,
-        study_author: `Dr ${userContext.name}`
+        study_author: `Dr ${userContext.name}`,
+        // Default description when AI generation is unavailable
+        description: `Profesjonalne opracowanie dendrologiczne dotyczące ${treeContext.species} zlokalizowanego w ${treeContext.location}. Drzewo charakteryzuje się dobrym stanem zdrowotnym i wysokimi walorami przyrodniczymi.`
       };
       
-      // Filter mock data to only include fields that exist in the form
-      const filteredMockData = Object.keys(mockData).reduce((acc, key) => {
-        if (schema.requiredFields.some(field => field.name === key)) {
-          acc[key] = mockData[key as keyof typeof mockData];
-        }
-        return acc;
-      }, {} as Record<string, any>);
+      // Find the justification field by label
+      const justificationField = schema.requiredFields.find(field => 
+        field.label.toLowerCase().includes('uzasadnienie') || 
+        field.label.toLowerCase().includes('wniosku')
+      );
       
-      setFormData(prev => ({ ...prev, ...filteredMockData }));
-      localStorage.setItem('applicationFormData', JSON.stringify({ ...formData, ...filteredMockData }));
+      console.log('Found justification field:', justificationField);
+      
+      // Add generated description if available
+      if (generatedDescription && justificationField) {
+        mockData[justificationField.name] = generatedDescription;
+        console.log(`Setting ${justificationField.name} (${justificationField.label}) with:`, generatedDescription.substring(0, 100) + '...');
+      }
+      
+      // Debug: Log all available fields
+      console.log('Available form fields:', schema.requiredFields.map(f => ({ name: f.name, label: f.label })));
+      console.log('Current form data:', formData);
+      console.log('Mock data to apply:', mockData);
+      
+      // Only fill empty fields
+      const updatedData: Record<string, any> = {};
+      schema.requiredFields.forEach(field => {
+        // If field is empty and we have mock data for it, use mock data
+        if (!formData[field.name] && mockData[field.name]) {
+          console.log(`Filling field ${field.name} (${field.label}) with:`, mockData[field.name]);
+          updatedData[field.name] = mockData[field.name];
+        }
+      });
+      
+      // Also try to fill justification field directly if found
+      if (generatedDescription && justificationField && !formData[justificationField.name] && !updatedData[justificationField.name]) {
+        console.log(`Filling justification field ${justificationField.name} directly`);
+        updatedData[justificationField.name] = generatedDescription;
+      }
+      
+      console.log('Final updated data:', updatedData);
+      
+      // Update form data
+      setFormData(prev => ({ ...prev, ...updatedData }));
+      
+      // Save to localStorage
+      localStorage.setItem('applicationFormData', JSON.stringify({ ...formData, ...updatedData }));
+      
+    } catch (error) {
+      console.error('Auto-fill error:', error);
+      // Show inline error instead of alert
+      setErrors(prev => ({
+        ...prev,
+        autofill: 'Nie udało się wygenerować opisu. Spróbuj ponownie później.'
+      }));
     } finally {
       setIsAutoFilling(false);
     }
@@ -478,11 +417,16 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
         {field.type === 'TextArea' ? (
           <textarea
             value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            onChange={(e) => {
+              handleFieldChange(field.name, e.target.value);
+              // Auto-resize textarea
+              autoResizeTextarea(e.target);
+            }}
             onBlur={() => handleFieldBlur(field.name)}
             placeholder={field.placeholder || 'Wpisz tekst...'}
             rows={3}
-            className={`${baseInputClasses} resize-none`}
+            className={`${baseInputClasses} resize-none overflow-hidden`}
+            style={{ minHeight: '60px' }}
           />
         ) : field.type === 'Select' ? (
           <select
@@ -612,6 +556,17 @@ Zwróć TYLKO JSON bez dodatkowych komentarzy.`;
              </p>
            </div>
          </div>
+
+         {/* Auto-fill error */}
+         {errors.autofill && (
+           <div className="mb-3">
+             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+               <p className="text-xs text-red-700 dark:text-red-300">
+                 <strong>Błąd:</strong> {errors.autofill}
+               </p>
+             </div>
+           </div>
+         )}
 
         <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
            {/* Contact Data Section */}

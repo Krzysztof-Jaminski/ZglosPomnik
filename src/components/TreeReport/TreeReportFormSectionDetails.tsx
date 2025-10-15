@@ -5,8 +5,12 @@ interface TreeReportFormSectionDetailsProps {
   setIsAlive: (alive: boolean) => void;
   estimatedAge: string;
   setEstimatedAge: (age: string) => void;
-  detailedHealth: string[];
-  setDetailedHealth: (health: string[]) => void;
+  healthTags: string[];
+  setHealthTags: (health: string[]) => void;
+  soilTags: string[];
+  setSoilTags: (soil: string[]) => void;
+  environmentTags: string[];
+  setEnvironmentTags: (environment: string[]) => void;
   expandedCategories: {
     health: boolean;
     soil: boolean;
@@ -17,6 +21,7 @@ interface TreeReportFormSectionDetailsProps {
     soil: boolean;
     environment: boolean;
   }) => void;
+  validationErrors?: Record<string, string>;
 }
 
 export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetailsProps> = ({
@@ -24,10 +29,15 @@ export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetails
   setIsAlive,
   estimatedAge,
   setEstimatedAge,
-  detailedHealth,
-  setDetailedHealth,
+  healthTags,
+  setHealthTags,
+  soilTags,
+  setSoilTags,
+  environmentTags,
+  setEnvironmentTags,
   expandedCategories,
-  setExpandedCategories
+  setExpandedCategories,
+  validationErrors = {}
 }) => {
   return (
     <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full">
@@ -61,8 +71,15 @@ export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetails
               placeholder="np. 150"
               min="0"
               step="1"
-              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+              className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:ring-0 dark:bg-gray-800 dark:text-white transition-all ${
+                validationErrors.estimatedAge 
+                  ? 'border-red-500 focus:border-red-500' 
+                  : 'border-gray-300 dark:border-gray-600 focus:border-gray-400'
+              }`}
             />
+            {validationErrors.estimatedAge && (
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{validationErrors.estimatedAge}</p>
+            )}
           </div>
         </div>
 
@@ -96,14 +113,14 @@ export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetails
                     key={condition}
                     type="button"
                     onClick={() => {
-                      if (detailedHealth.includes(condition)) {
-                        setDetailedHealth(prev => prev.filter(item => item !== condition));
+                      if (healthTags.includes(condition)) {
+                        setHealthTags(prev => prev.filter(item => item !== condition));
                       } else {
-                        setDetailedHealth(prev => [...prev, condition]);
+                        setHealthTags(prev => [...prev, condition]);
                       }
                     }}
                     className={`no-focus p-1.5 rounded text-xs text-left transition-all ${
-                      detailedHealth.includes(condition)
+                      healthTags.includes(condition)
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-700'
                         : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20'
                     }`}
@@ -138,32 +155,14 @@ export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetails
                     key={condition}
                     type="button"
                     onClick={() => {
-                      if (detailedHealth.includes(condition)) {
-                        setDetailedHealth(prev => prev.filter(item => item !== condition));
+                      if (soilTags.includes(condition)) {
+                        setSoilTags(prev => prev.filter(item => item !== condition));
                       } else {
-                        // Check if this is a soil condition and limit to 3
-                        const soilConditions = [
-                          'Gleba gliniasta', 'Gleba piaszczysta', 'Gleba próchniczna',
-                          'Gleba kwaśna', 'Gleba zasadowa', 'Gleba wilgotna', 'Gleba sucha'
-                        ];
-                        if (soilConditions.includes(condition)) {
-                          const currentSoilCount = detailedHealth.filter(h => soilConditions.includes(h)).length;
-                          if (currentSoilCount >= 3) {
-                            // Remove the first selected soil condition
-                            const firstSoilIndex = detailedHealth.findIndex(h => soilConditions.includes(h));
-                            if (firstSoilIndex !== -1) {
-                              const newHealth = [...detailedHealth];
-                              newHealth.splice(firstSoilIndex, 1);
-                              setDetailedHealth([...newHealth, condition]);
-                              return;
-                            }
-                          }
-                        }
-                        setDetailedHealth(prev => [...prev, condition]);
+                        setSoilTags(prev => [...prev, condition]);
                       }
                     }}
                     className={`no-focus p-1.5 rounded text-xs text-left transition-all ${
-                      detailedHealth.includes(condition)
+                      soilTags.includes(condition)
                         ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-700'
                         : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
                     }`}
@@ -199,14 +198,14 @@ export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetails
                     key={condition}
                     type="button"
                     onClick={() => {
-                      if (detailedHealth.includes(condition)) {
-                        setDetailedHealth(prev => prev.filter(item => item !== condition));
+                      if (environmentTags.includes(condition)) {
+                        setEnvironmentTags(prev => prev.filter(item => item !== condition));
                       } else {
-                        setDetailedHealth(prev => [...prev, condition]);
+                        setEnvironmentTags(prev => [...prev, condition]);
                       }
                     }}
                     className={`no-focus p-1.5 rounded text-xs text-left transition-all ${
-                      detailedHealth.includes(condition)
+                      environmentTags.includes(condition)
                         ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
                         : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                     }`}

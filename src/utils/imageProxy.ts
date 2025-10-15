@@ -10,7 +10,7 @@ export const getProxiedImageUrl = (originalUrl: string): string => {
   }
   
   // If it's from Azure Blob Storage, use proxy
-  if (originalUrl.includes('drzewaapistorage2024.blob.core.windows.net')) {
+  if (originalUrl.includes('drzewapistorage.blob.core.windows.net')) {
     // Encode the URL to pass it as a parameter
     const encodedUrl = encodeURIComponent(originalUrl);
     return `${API_BASE_URL}/proxy-image?url=${encodedUrl}`;

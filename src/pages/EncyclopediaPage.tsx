@@ -26,7 +26,10 @@ export const EncyclopediaPage: React.FC = () => {
   useEffect(() => {
     const loadSpecies = async () => {
       try {
+        console.log('EncyclopediaPage: Loading species...');
         const data = await speciesService.getSpecies();
+        console.log('EncyclopediaPage: Loaded species count:', data.length);
+        console.log('EncyclopediaPage: Species data:', data);
         setSpecies(data);
         setFilteredSpecies(data);
         
@@ -203,7 +206,7 @@ export const EncyclopediaPage: React.FC = () => {
                   alt={(selectedSpecies.images || [])[selectedImageIndex]?.altText || selectedSpecies.polishName}
                   className="w-full h-64 sm:h-80 object-cover cursor-pointer"
                   onClick={() => openImageViewer(selectedImageIndex)}
-                  crossOrigin={(selectedSpecies.images || [])[selectedImageIndex]?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                  crossOrigin={(selectedSpecies.images || [])[selectedImageIndex]?.imageUrl?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
                 />
               </div>
               
@@ -261,7 +264,7 @@ export const EncyclopediaPage: React.FC = () => {
                         src={image?.imageUrl}
                         alt={image?.altText || selectedSpecies.polishName}
                         className="w-full h-full object-cover"
-                        crossOrigin={image?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                        crossOrigin={image?.imageUrl?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
                       />
                     </button>
                   ))}
@@ -367,7 +370,7 @@ export const EncyclopediaPage: React.FC = () => {
             src={currentImage?.imageUrl}
             alt={currentImage?.altText || (selectedSpecies as Species).polishName}
             className="max-w-full max-h-full object-contain"
-            crossOrigin={currentImage?.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+            crossOrigin={currentImage?.imageUrl?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
           />
           
           {((selectedSpecies as Species).images?.length || 0) > 1 && (

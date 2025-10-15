@@ -17,12 +17,12 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'https://drzewaapi-app-2024.azurewebsites.net',
+        target: 'https://drzewaapi.thankfulmoss-a87bb02c.polandcentral.azurecontainerapps.io',
         changeOrigin: true,
         secure: true
       },
       '/blob-proxy': {
-        target: 'https://drzewaapistorage2024.blob.core.windows.net',
+        target: 'https://drzewapistorage.blob.core.windows.net',
         changeOrigin: true,
         secure: true,
         rewrite: (path) => path.replace(/^\/blob-proxy/, ''),

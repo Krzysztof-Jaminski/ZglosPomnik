@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://drzewaapi-app-2024.azurewebsites.net/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 console.log('AuthService API_BASE_URL:', API_BASE_URL);
 
 export interface RegisterRequest {
@@ -307,18 +307,17 @@ class AuthService {
       // Create FormData for multipart/form-data - ALL fields must be sent
       const formData = new FormData();
       
-      // Always send all fields, even if empty/null
+      // Always send all text fields, even if empty
       formData.append('Phone', userData.phone || '');
       formData.append('Address', userData.address || '');
       formData.append('City', userData.city || '');
       formData.append('PostalCode', userData.postalCode || '');
       
-      // Always send image field - API requires it
+      // Always send image field - null if not provided
       if (userData.avatarFile) {
         formData.append('image', userData.avatarFile);
       } else {
-        // Send null for image field when no file is provided
-        formData.append('image', null as any);
+        formData.append('image', 'null');
       }
 
       console.log('Updating user data with FormData:');

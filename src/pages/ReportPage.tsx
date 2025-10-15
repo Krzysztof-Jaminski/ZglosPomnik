@@ -17,11 +17,67 @@ export const ReportPage: React.FC = () => {
   // State management
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
+  const [mapScreenshot, setMapScreenshot] = useState<File | null>(null);
+
+  // Generate map screenshot using Google Maps Static API
+  const generateMapScreenshot = useCallback(async (lat: number, lng: number): Promise<File | null> => {
+    try {
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        console.error('Google Maps API key not found');
+        return null;
+      }
+
+      // Create Google Maps Static API URL
+      // Using satellite view with maximum zoom and a marker at the tree location
+      const width = 600;
+      const height = 400;
+      const zoom = 20; // Maximum zoom for detailed satellite view
+      const mapType = 'satellite';
+      
+      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
+        `center=${lat},${lng}` +
+        `&zoom=${zoom}` +
+        `&size=${width}x${height}` +
+        `&maptype=${mapType}` +
+        `&markers=color:red%7C${lat},${lng}` +
+        `&key=${apiKey}`;
+
+      console.log('Generating map screenshot from:', staticMapUrl);
+
+      // Fetch the image
+      const response = await fetch(staticMapUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch map screenshot');
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], `map_screenshot_${Date.now()}.png`, { type: 'image/png' });
+      
+      console.log('Map screenshot generated:', file.name, file.size, 'bytes');
+      return file;
+    } catch (error) {
+      console.error('Error generating map screenshot:', error);
+      return null;
+    }
+  }, []);
 
   // Track which page was last active
   React.useEffect(() => {
     localStorage.setItem('lastActivePage', 'report');
   }, []);
+
+  // Auto-generate map screenshot when location is selected
+  React.useEffect(() => {
+    if (selectedLocation && !mapScreenshot) {
+      generateMapScreenshot(selectedLocation.lat, selectedLocation.lng).then(screenshot => {
+        if (screenshot) {
+          setMapScreenshot(screenshot);
+          console.log('Auto-generated map screenshot');
+        }
+      });
+    }
+  }, [selectedLocation, mapScreenshot, generateMapScreenshot]);
 
   // Synchronize photos with form
   const handlePhotosChange = (newPhotos: File[]) => {
@@ -390,6 +446,17 @@ export const ReportPage: React.FC = () => {
             onSubmit={handleSubmitSuccess}
             photos={photos}
             setPhotos={handlePhotosChange}
+            mapScreenshot={mapScreenshot}
+            onRegenerateScreenshot={() => {
+              if (selectedLocation) {
+                setMapScreenshot(null); // Clear current screenshot to trigger regeneration
+                generateMapScreenshot(selectedLocation.lat, selectedLocation.lng).then(screenshot => {
+                  if (screenshot) {
+                    setMapScreenshot(screenshot);
+                  }
+                });
+              }
+            }}
           />
         </div>
       </div>

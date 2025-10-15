@@ -96,6 +96,48 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
           </div>
         )}
 
+        {/* Tags Section */}
+        {((tree.health && tree.health.length > 0) || 
+          (tree.soil && tree.soil.length > 0) || 
+          (tree.environment && tree.environment.length > 0)) && (
+          <div className="mb-3 sm:mb-4">
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Szczegóły:
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {/* Health Tags */}
+              {tree.health && tree.health.map((tag, index) => (
+                <span
+                  key={`health-${index}`}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-700"
+                >
+                  {tag}
+                </span>
+              ))}
+              
+              {/* Soil Tags */}
+              {tree.soil && tree.soil.map((tag, index) => (
+                <span
+                  key={`soil-${index}`}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-700"
+                >
+                  {tag}
+                </span>
+              ))}
+              
+              {/* Environment Tags */}
+              {tree.environment && tree.environment.map((tag, index) => (
+                <span
+                  key={`env-${index}`}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Photo and Health Status */}
         <div className="mb-3 sm:mb-4">
           {/* Photo */}
@@ -106,7 +148,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
                 alt="Tree photo"
                 className="w-full h-40 sm:h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => setShowImageModal(true)}
-                crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                crossOrigin={tree.imageUrls?.[0]?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -240,7 +282,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
                 src={tree.imageUrls?.[0] || ''}
                 alt="Tree photo - enlarged"
                 className="max-w-full max-h-full object-contain rounded-lg"
-                crossOrigin={tree.imageUrls?.[0]?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                crossOrigin={tree.imageUrls?.[0]?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
                 referrerPolicy="no-referrer"
               />
             </motion.div>

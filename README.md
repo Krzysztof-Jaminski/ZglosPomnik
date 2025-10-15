@@ -240,7 +240,7 @@ Aplikacja używa systemu JWT (JSON Web Tokens):
 
 ## API Backend
 
-Backend dostępny pod adresem: `https://drzewaapi-app-2024.azurewebsites.net/api`
+Backend dostępny pod adresem: `https://drzewaapi.thankfulmoss-a87bb02c.polandcentral.azurecontainerapps.io/api`
 
 Główne endpointy:
 - `GET /trees` - lista wszystkich drzew

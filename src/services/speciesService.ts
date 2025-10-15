@@ -24,7 +24,10 @@ class SpeciesService {
 
   // Pobierz wszystkie gatunki drzew
   async getSpecies(): Promise<Species[]> {
-    return this.fetchWithAuth(API_BASE_URL);
+    console.log('SpeciesService: Fetching species from:', API_BASE_URL);
+    const result = await this.fetchWithAuth(API_BASE_URL);
+    console.log('SpeciesService: Fetched species count:', result.length);
+    return result;
   }
 
   // Pobierz konkretny gatunek po ID (jeśli API to obsługuje)

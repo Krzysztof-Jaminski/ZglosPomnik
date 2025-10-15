@@ -379,10 +379,10 @@ export const ApplicationsPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       
-      // DON'T submit application - just generate PDF directly
-      // await applicationsService.submitApplication(currentApplication.id, { formData });
+      // FIRST: Submit application with form data (changes status from draft to submitted)
+      await applicationsService.submitApplication(currentApplication.id, { formData });
       
-      // Generate PDF using real endpoint
+      // THEN: Generate PDF (only works for submitted applications, not drafts)
       const pdfResponse = await applicationsService.generatePdf(currentApplication.id);
       
       // Open PDF in new tab

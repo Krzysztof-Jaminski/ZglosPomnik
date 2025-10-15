@@ -26,13 +26,13 @@ export const useImageLoader = (originalUrl: string, fallbackUrl: string = '/logo
     }
 
     // For Azure Blob Storage URLs, use proxy in development
-    const isAzureBlob = originalUrl.includes('drzewaapistorage2024.blob.core.windows.net');
+    const isAzureBlob = originalUrl.includes('drzewapistorage.blob.core.windows.net');
     const isDevelopment = import.meta.env.DEV;
     
     let finalUrl = originalUrl;
     if (isAzureBlob && isDevelopment) {
       // Use proxy in development
-      const blobPath = originalUrl.replace('https://drzewaapistorage2024.blob.core.windows.net', '');
+      const blobPath = originalUrl.replace('https://drzewapistorage.blob.core.windows.net', '');
       finalUrl = `/blob-proxy${blobPath}`;
       console.log('Using proxy for Azure Blob Storage:', finalUrl);
     }

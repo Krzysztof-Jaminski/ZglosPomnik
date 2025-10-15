@@ -69,26 +69,17 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // ENABLE SERVICE WORKER FOR DEVELOPMENT AND PRODUCTION
       if ('serviceWorker' in navigator) {
-        // First, unregister any existing service workers
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            console.log('Unregistering old service worker:', registration);
-            registration.unregister();
-          }
-          
-          // Then register the new one
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-              .then((registration) => {
-                console.log('New SW registered: ', registration);
-                // Force update
-                registration.update();
-              })
-              .catch((registrationError) => {
-                console.log('SW registration failed: ', registrationError);
-              });
-          });
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered successfully:', registration);
+              registration.update();
+            })
+            .catch((error) => {
+              console.log('SW registration failed:', error);
+            });
         });
       }
     </script>

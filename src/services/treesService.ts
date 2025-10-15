@@ -2,7 +2,7 @@
 import { Tree, ApiTreeSubmission } from '../types';
 import { authService } from './authService';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://drzewaapi-app-2024.azurewebsites.net/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 console.log('TreesService API_BASE_URL:', API_BASE_URL);
 
 class TreesService {
@@ -195,7 +195,7 @@ class TreesService {
   }
 
   // Submit tree report to API with multipart/form-data
-  async submitTreeReport(treeData: ApiTreeSubmission, photos: File[]): Promise<any> {
+  async submitTreeReport(treeData: ApiTreeSubmission, photos: File[], mapScreenshot?: File | null): Promise<any> {
     try {
       const token = authService.getToken();
       console.log('Token from authService:', token ? 'exists' : 'null');
@@ -224,7 +224,9 @@ class TreesService {
       console.log('- name:', treeData.name);
       console.log('- description:', treeData.description);
       console.log('- legend:', treeData.legend);
-      console.log('- condition:', treeData.condition);
+      console.log('- soil tags:', treeData.soil);
+      console.log('- health tags:', treeData.health);
+      console.log('- environment tags:', treeData.environment);
       console.log('Photos count:', photos.length);
       console.log('Request URL:', `${API_BASE_URL}/trees`);
 
@@ -239,7 +241,6 @@ class TreesService {
       formData.append('circumference', treeData.circumference.toString());
       formData.append('height', treeData.height.toString());
       formData.append('crownSpread', treeData.crownSpread.toString());
-      formData.append('condition', treeData.condition);
       formData.append('estimatedAge', treeData.estimatedAge.toString());
       
       // Add optional fields
@@ -259,6 +260,23 @@ class TreesService {
         formData.append('isMonument', treeData.isMonument.toString());
       }
       
+      // Add array fields (soil, health, environment tags)
+      if (treeData.soil && treeData.soil.length > 0) {
+        treeData.soil.forEach(tag => {
+          formData.append('soil', tag);
+        });
+      }
+      if (treeData.health && treeData.health.length > 0) {
+        treeData.health.forEach(tag => {
+          formData.append('health', tag);
+        });
+      }
+      if (treeData.environment && treeData.environment.length > 0) {
+        treeData.environment.forEach(tag => {
+          formData.append('environment', tag);
+        });
+      }
+      
       // Log FormData contents
       console.log('FormData contents:');
       for (let [key, value] of formData.entries()) {
@@ -275,6 +293,16 @@ class TreesService {
         });
         formData.append('images', photo);
       });
+
+      // Add map screenshot if available
+      if (mapScreenshot) {
+        console.log('Adding map screenshot:', {
+          name: mapScreenshot.name,
+          size: mapScreenshot.size,
+          type: mapScreenshot.type
+        });
+        formData.append('screenshot', mapScreenshot);
+      }
       
       // Debug FormData contents
       console.log('FormData entries:');

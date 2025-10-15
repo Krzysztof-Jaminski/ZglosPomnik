@@ -8,6 +8,15 @@
     overflow-x: hidden;
   }
   
+  
+  /* Zaokrąglone rogi dla ikon aplikacji */
+  img[src*="logo.png"],
+  img[src*="HighQualityIco.png"],
+  img[alt*="Logo"],
+  img[alt*="ZgłośPomnik"] {
+    border-radius: 8px;
+  }
+  
   body {
     @apply text-green-900 dark:text-white;
     font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;

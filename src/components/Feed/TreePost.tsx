@@ -172,6 +172,48 @@ export const TreePost: React.FC<TreePostProps> = ({
             </div>
           )}
         </div>
+
+        {/* Tags Section */}
+        {((post.health && post.health.length > 0) || 
+          (post.soil && post.soil.length > 0) || 
+          (post.environment && post.environment.length > 0)) && (
+          <div className="mb-4 sm:mb-6">
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Szczegóły:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {/* Health Tags */}
+              {post.health && post.health.map((tag, index) => (
+                <span
+                  key={`health-${index}`}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-700"
+                >
+                  {tag}
+                </span>
+              ))}
+              
+              {/* Soil Tags */}
+              {post.soil && post.soil.map((tag, index) => (
+                <span
+                  key={`soil-${index}`}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-700"
+                >
+                  {tag}
+                </span>
+              ))}
+              
+              {/* Environment Tags */}
+              {post.environment && post.environment.map((tag, index) => (
+                <span
+                  key={`env-${index}`}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Photos */}
@@ -182,7 +224,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                 <div key={index} className="relative group">
                 <img
                   src={image}
-                  crossOrigin={image.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                  crossOrigin={image.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
                   referrerPolicy="no-referrer"
                   alt={`Tree photo ${index + 1}`}
                     className="w-full h-32 sm:h-36 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm"

@@ -12,29 +12,29 @@ export interface Tree {
     lat: number;
     lng: number;
     address: string;
-    plotNumber: string;
-    district: string;
-    province: string;
-    county: string;
-    commune: string;
+    plotNumber: string | null;
+    district: string | null;
+    province: string | null;
+    county: string | null;
+    commune: string | null;
   };
   circumference: number; // Changed to double
   height: number; // Changed to double
   crownSpread: number; // Rozpiętość korony
-  condition: string;
+  soil: string[] | null; // Array of soil tags
+  health: string[] | null; // Array of health tags
+  environment: string[] | null; // Array of environment tags
   isAlive: boolean;
   estimatedAge: number;
   description: string; // Plain description without special formatting
   legend: string; // Tree legend/stories - separate field
   imageUrls: string[];
   isMonument: boolean;
+  treeScreenshotUrl: string; // Screenshot of the tree location on map
   status: string;
   submissionDate: string;
   approvalDate: string | null;
-  votes: {
-    like: number;
-    dislike: number;
-  };
+  votesCount: number; // Single vote count instead of like/dislike
 }
 
 export interface Species {
@@ -99,23 +99,25 @@ export interface User {
 
 export interface ApiTreeSubmission {
   speciesId: string;
+  name?: string; // Tree name - separate field
   location: {
     lat: number;
     lng: number;
     address: string;
-    plotNumber: string;
-    district: string;
-    province: string;
-    county: string;
-    commune: string;
+    plotNumber?: string;
+    district?: string;
+    province?: string;
+    county?: string;
+    commune?: string;
   };
   circumference: number; // Changed to double
   height: number; // Changed to double
-  crownSpread: number; // Rozpiętość korony
-  condition: string;
+  soil?: string[]; // Array of soil tags
+  health?: string[]; // Array of health tags
+  environment?: string[]; // Array of environment tags
   isAlive?: boolean;
   estimatedAge: number;
-  name?: string; // Tree name - separate field
+  crownSpread: number; // Rozpiętość korony
   description?: string; // Plain description without special formatting
   legend?: string; // Tree legend/stories - separate field
   isMonument?: boolean;

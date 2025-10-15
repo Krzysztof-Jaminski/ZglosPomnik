@@ -28,10 +28,8 @@ interface TreeReportFormSectionSpeciesProps {
   setHeight: (value: string) => void;
   crownSpread: string;
   setCrownSpread: (value: string) => void;
-  condition: string;
-  setCondition: (value: string) => void;
-  detailedHealth: string[];
-  setDetailedHealth: (health: string[]) => void;
+  healthTags: string[];
+  setHealthTags: (health: string[]) => void;
   isAlive: boolean;
   setIsAlive: (alive: boolean) => void;
   estimatedAge: string;
@@ -42,6 +40,9 @@ interface TreeReportFormSectionSpeciesProps {
   setNotes: (notes: string) => void;
   latitude?: number;
   longitude?: number;
+  mapScreenshot?: File | null;
+  onRegenerateScreenshot?: () => void;
+  validationErrors?: Record<string, string>;
 }
 
 export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpeciesProps> = ({
@@ -67,10 +68,8 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
   setHeight,
   crownSpread,
   setCrownSpread,
-  condition,
-  setCondition,
-  detailedHealth,
-  setDetailedHealth,
+  healthTags,
+  setHealthTags,
   isAlive,
   setIsAlive,
   estimatedAge,
@@ -80,7 +79,10 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
   notes,
   setNotes,
   latitude,
-  longitude
+  longitude,
+  mapScreenshot,
+  onRegenerateScreenshot,
+  validationErrors = {}
 }) => {
   return (
     <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full">
@@ -181,7 +183,7 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
                                         e.stopPropagation();
                                         setEnlargedImage(image.imageUrl);
                                       }}
-                                      crossOrigin={image.imageUrl?.includes('drzewaapistorage2024.blob.core.windows.net') ? undefined : 'anonymous'}
+                                      crossOrigin={image.imageUrl?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
                                     />
                                     <div className="absolute bottom-0.5 left-0.5 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
                                       {typeLabels[image.type] || 'Zdjęcie'}
@@ -306,8 +308,15 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
               placeholder="np. 120"
               min="0"
               step="1"
-              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+              className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:ring-0 dark:bg-gray-800 dark:text-white transition-all ${
+                validationErrors.circumference 
+                  ? 'border-red-500 focus:border-red-500' 
+                  : 'border-gray-300 dark:border-gray-600 focus:border-gray-400'
+              }`}
             />
+            {validationErrors.circumference && (
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{validationErrors.circumference}</p>
+            )}
           </div>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -320,8 +329,15 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
               placeholder="np. 25"
               min="0"
               step="0.1"
-              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+              className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:ring-0 dark:bg-gray-800 dark:text-white transition-all ${
+                validationErrors.height 
+                  ? 'border-red-500 focus:border-red-500' 
+                  : 'border-gray-300 dark:border-gray-600 focus:border-gray-400'
+              }`}
             />
+            {validationErrors.height && (
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{validationErrors.height}</p>
+            )}
           </div>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -334,11 +350,45 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
               placeholder="np. 15"
               min="0"
               step="0.1"
-              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+              className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:ring-0 dark:bg-gray-800 dark:text-white transition-all ${
+                validationErrors.crownSpread 
+                  ? 'border-red-500 focus:border-red-500' 
+                  : 'border-gray-300 dark:border-gray-600 focus:border-gray-400'
+              }`}
             />
+            {validationErrors.crownSpread && (
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{validationErrors.crownSpread}</p>
+            )}
           </div>
         </div>
 
+        {/* Map Screenshot Preview */}
+        {mapScreenshot && (
+          <div className="mt-3">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Screenshot mapy:
+            </label>
+            <div className="relative">
+              <img
+                src={URL.createObjectURL(mapScreenshot)}
+                alt="Map screenshot"
+                className="w-full h-32 sm:h-40 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+              />
+              {onRegenerateScreenshot && (
+                <button
+                  type="button"
+                  onClick={onRegenerateScreenshot}
+                  className="absolute bottom-2 right-2 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-lg"
+                >
+                  🔄 Regeneruj
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Widok satelitarny lokalizacji drzewa
+            </p>
+          </div>
+        )}
 
       </div>
     </div>

@@ -5,13 +5,15 @@ interface TreeReportFormSectionNotesProps {
   setNotes: (notes: string) => void;
   treeStories: string;
   setTreeStories: (stories: string) => void;
+  validationErrors?: Record<string, string>;
 }
 
 export const TreeReportFormSectionNotes: React.FC<TreeReportFormSectionNotesProps> = ({
   notes,
   setNotes,
   treeStories,
-  setTreeStories
+  setTreeStories,
+  validationErrors = {}
 }) => {
   return (
     <div className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl w-full">
@@ -31,8 +33,15 @@ export const TreeReportFormSectionNotes: React.FC<TreeReportFormSectionNotesProp
             }}
             placeholder="Opisz rzeczy, których nie zaznaczyłeś w poprzednich miejscach lub wymagają dopowiedzenia..."
             rows={5}
-            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[80px]"
+            className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:ring-0 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[80px] ${
+              validationErrors.description 
+                ? 'border-red-500 focus:border-red-500' 
+                : 'border-gray-300 dark:border-gray-600 focus:border-gray-400'
+            }`}
           />
+          {validationErrors.description && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{validationErrors.description}</p>
+          )}
         </div>
 
         {/* Tree Stories and Legends */}
@@ -50,8 +59,15 @@ export const TreeReportFormSectionNotes: React.FC<TreeReportFormSectionNotesProp
             }}
             placeholder="Podziel się historiami, legendami lub ciekawostkami związanymi z tym drzewem..."
             rows={4}
-            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[60px]"
+            className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:ring-0 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[60px] ${
+              validationErrors.legend 
+                ? 'border-red-500 focus:border-red-500' 
+                : 'border-gray-300 dark:border-gray-600 focus:border-gray-400'
+            }`}
           />
+          {validationErrors.legend && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{validationErrors.legend}</p>
+          )}
         </div>
       </div>
     </div>

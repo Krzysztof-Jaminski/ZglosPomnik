@@ -46,7 +46,7 @@ export interface SpeciesFormData {
 }
 
 class AdminService {
-  private baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7000/api';
+  private baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   // Pobierz wszystkie drzewa (używa prawdziwego API)
   async getAllTrees(): Promise<Tree[]> {
