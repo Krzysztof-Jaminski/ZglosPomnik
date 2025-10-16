@@ -16,7 +16,13 @@ export const LandingPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  // Check if mobile immediately (SSR safe)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 1024;
+    }
+    return false;
+  });
   
   const { login, register, isLoading } = useAuth();
   useSystemTheme('dark');
@@ -66,8 +72,11 @@ export const LandingPage = () => {
 
   // Show mobile landing page for mobile devices
   if (isMobile) {
+    console.log('Rendering MobileLandingPage, screen width:', window.innerWidth);
     return <MobileLandingPage />;
   }
+  
+  console.log('Rendering Desktop LandingPage, screen width:', window.innerWidth);
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
     try {
@@ -102,7 +111,7 @@ export const LandingPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-white text-lg mb-2">Ładowanie...</div>
           <div className="text-gray-400 text-sm">Sprawdzanie danych logowania</div>

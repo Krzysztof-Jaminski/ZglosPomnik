@@ -49,7 +49,7 @@ export const MobileLandingPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-white text-lg mb-2">Ładowanie...</div>
           <div className="text-gray-400 text-sm">Sprawdzanie danych logowania</div>
