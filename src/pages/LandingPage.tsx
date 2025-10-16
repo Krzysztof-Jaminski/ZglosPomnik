@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { LoginForm } from '../components/Auth/LoginForm';
 import { RegisterForm } from '../components/Auth/RegisterForm';
 import { useSystemTheme } from '../hooks/useSystemTheme';
+import { MobileLandingPage } from './MobileLandingPage';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -15,9 +16,21 @@ export const LandingPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const { login, register, isLoading } = useAuth();
   useSystemTheme('dark');
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -50,6 +63,11 @@ export const LandingPage = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Show mobile landing page for mobile devices
+  if (isMobile) {
+    return <MobileLandingPage />;
+  }
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
     try {
@@ -134,23 +152,23 @@ export const LandingPage = () => {
             <img 
               src="/LandPagePhotos/image.png" 
               alt="ZgłośPomnik App Screenshot" 
-              className="max-w-md max-h-lg w-full h-auto rounded-3xl mx-auto"
+               className="max-w-sm max-h-md w-full h-auto rounded-3xl mx-auto"
             />
-          </div>
+            </div>
 
           {/* Mobile: Buttons second */}
           <div className="order-2 lg:order-4 flex justify-center lg:hidden mb-2">
             <div className="flex flex-row gap-3">
-              <DarkGlassButton
-                onClick={() => {
-                  setAuthMode('login');
-                  setShowAuthModal(true);
-                }}
-                variant="primary"
-                size="md"
+            <DarkGlassButton
+              onClick={() => {
+                setAuthMode('login');
+                setShowAuthModal(true);
+              }}
+              variant="primary"
+              size="md"
                 className="px-4 py-2 text-sm font-semibold"
-              >
-                Zaloguj się
+            >
+              Zaloguj się
               </DarkGlassButton>
                 
                 <DarkGlassButton
@@ -163,9 +181,9 @@ export const LandingPage = () => {
                   className="px-4 py-2 text-sm font-semibold"
                 >
                   Zarejestruj się
-                </DarkGlassButton>
-            </div>
+            </DarkGlassButton>
           </div>
+        </div>
 
           {/* Mobile: Text third, Desktop: Text first */}
           <div className="space-y-2 order-3 lg:order-1 text-center lg:text-left lg:ml-12 lg:pr-0">
@@ -213,7 +231,7 @@ export const LandingPage = () => {
               <DarkGlassButton
                 onClick={() => {
                   setAuthMode('register');
-                  setShowAuthModal(true);
+          setShowAuthModal(true);
                 }}
                 variant="secondary"
                 size="md"
@@ -339,7 +357,7 @@ export const LandingPage = () => {
               </p>
             </div>
           </div>
-        </div>
+              </div>
       </section>
 
       {/* Generator Zgłoszeń Section */}
@@ -386,7 +404,7 @@ export const LandingPage = () => {
                 />
               </div>
             </div>
-
+            
             {/* Right - Text Content */}
             <div className="space-y-6 order-1 lg:order-2 text-center">
               <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
@@ -430,9 +448,9 @@ export const LandingPage = () => {
                   alt="ZgłośPomnik Report Screenshot" 
                   className="relative max-w-sm max-h-md w-full h-auto rounded-3xl"
                 />
-              </div>
             </div>
-            
+          </div>
+          
             {/* Right - Text Content */}
             <div className="space-y-6 order-1 lg:order-2 text-center">
               <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
