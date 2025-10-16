@@ -72,11 +72,8 @@ export const LandingPage = () => {
 
   // Show mobile landing page for mobile devices
   if (isMobile) {
-    console.log('Rendering MobileLandingPage, screen width:', window.innerWidth);
     return <MobileLandingPage />;
   }
-  
-  console.log('Rendering Desktop LandingPage, screen width:', window.innerWidth);
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
     try {
