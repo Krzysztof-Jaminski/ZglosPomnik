@@ -15,7 +15,6 @@ export const LandingPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showNavbar, setShowNavbar] = useState(false);
   
   const { login, register, isLoading } = useAuth();
   useSystemTheme('dark');
@@ -33,16 +32,22 @@ export const LandingPage = () => {
 
   // Handle scroll to hide/show topbar
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
+      const currentScrollY = window.scrollY;
       
-      setIsScrolled(scrollTop > 300); // Dłużej się utrzymuje
-      setShowNavbar(scrollTop + windowHeight >= documentHeight - 100);
+      // Hide header when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 300) {
+        setIsScrolled(true);
+      } else if (currentScrollY < lastScrollY) {
+        setIsScrolled(false);
+      }
+      
+      lastScrollY = currentScrollY;
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -123,11 +128,50 @@ export const LandingPage = () => {
           <div className="absolute inset-0 bg-gray-900/70"></div>
             </div>
             
-        <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-0 items-center w-full">
-          {/* Left Content */}
-          <div className="space-y-6 order-2 lg:order-1 text-center lg:text-left lg:ml-12 lg:pr-0">
-            <div className="space-y-4">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.4' }}>
+        <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-0 items-center w-full pt-0 lg:pt-0">
+          {/* Mobile: Phone first */}
+          <div className="relative order-1 lg:order-2 flex justify-center lg:justify-end lg:mr-4">
+            <img 
+              src="/LandPagePhotos/image.png" 
+              alt="ZgłośPomnik App Screenshot" 
+              className="max-w-md max-h-lg w-full h-auto rounded-3xl mx-auto"
+            />
+          </div>
+
+          {/* Mobile: Buttons second */}
+          <div className="order-2 lg:order-4 flex justify-center lg:hidden mb-2">
+            <div className="flex flex-row gap-3">
+              <DarkGlassButton
+                onClick={() => {
+                  setAuthMode('login');
+                  setShowAuthModal(true);
+                }}
+                variant="primary"
+                size="md"
+                className="px-4 py-2 text-sm font-semibold"
+              >
+                Zaloguj się
+              </DarkGlassButton>
+                
+                <DarkGlassButton
+                  onClick={() => {
+                    setAuthMode('register');
+                    setShowAuthModal(true);
+                  }}
+                  variant="secondary"
+                  size="md"
+                  className="px-4 py-2 text-sm font-semibold"
+                >
+                  Zarejestruj się
+                </DarkGlassButton>
+            </div>
+          </div>
+
+          {/* Mobile: Text third, Desktop: Text first */}
+          <div className="space-y-2 order-3 lg:order-1 text-center lg:text-left lg:ml-12 lg:pr-0">
+            {/* Desktop: Full content */}
+            <div className="hidden lg:block space-y-4">
+              <h2 className="text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.4' }}>
                 Chroń drzewa przed wycinką.
                 <br />
                 Zgłaszaj pomniki przyrody.
@@ -142,8 +186,18 @@ export const LandingPage = () => {
               </p>
             </div>
 
-            {/* Auth Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 mt-8">
+            {/* Mobile: Text only (no title) */}
+            <div className="lg:hidden space-y-2">
+              <p className="text-base text-gray-300 leading-relaxed">
+                ZgłośPomnik to platforma, która umożliwia Ci wygodne zgłaszanie drzew w Twojej okolicy oraz generowanie profesjonalnych wniosków o ochronę.
+              </p>
+              <p className="text-base text-gray-300 leading-relaxed">
+                Aplikacja jest przeznaczona dla nowych ekologów, profesjonalistów, hobbystów jak i fundacji ekologicznych!
+              </p>
+            </div>
+
+            {/* Desktop: Auth Buttons */}
+            <div className="hidden lg:flex flex-row gap-3 mt-8">
             <DarkGlassButton
               onClick={() => {
                 setAuthMode('login');
@@ -168,15 +222,6 @@ export const LandingPage = () => {
                 Zarejestruj się
               </DarkGlassButton>
             </div>
-          </div>
-
-          {/* Right Content - Zdjęcie telefonu z oprawką */}
-          <div className="relative order-1 lg:order-2 flex justify-center lg:justify-end lg:mr-4">
-            <img 
-              src="/LandPagePhotos/image.png" 
-              alt="ZgłośPomnik App Screenshot" 
-              className="max-w-md max-h-lg w-full h-auto rounded-3xl mx-auto"
-            />
           </div>
         </div>
       </section>
@@ -513,33 +558,6 @@ export const LandingPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Bottom Navbar - pojawia się na dole */}
-      <AnimatePresence>
-        {showNavbar && (
-          <motion.div
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t border-gray-800"
-            style={{
-              background: 'linear-gradient(to top, rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.7))'
-            }}
-          >
-            <div className="max-w-7xl mx-auto px-4 py-6">
-              <div className="text-center space-y-4">
-                <div className="text-sm text-gray-400">
-                  <p>Kontakt: kontakt@zglospomnik.pl</p>
-                  <p>Telefon: +48 123 456 789</p>
-                </div>
-                <div className="text-xs text-gray-500">
-                  <p>© 2025 ZgłośPomnik. Wszystkie prawa zastrzeżone.</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
