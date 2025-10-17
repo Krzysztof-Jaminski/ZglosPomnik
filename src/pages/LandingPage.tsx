@@ -83,7 +83,7 @@ export const LandingPage = () => {
       navigate('/map');
     } catch (error: any) {
       setError(error.message || 'Błąd logowania');
-      // Nie przekierowuj - zostaw modal otwarty z błędem
+      throw error; // Przekaż błąd do formularza
     }
   };
 
@@ -107,16 +107,7 @@ export const LandingPage = () => {
     setShowEmailConfirmation(false);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="text-white text-lg mb-2">Ładowanie...</div>
-          <div className="text-gray-400 text-sm">Sprawdzanie danych logowania</div>
-        </div>
-      </div>
-    );
-  }
+  // Usunięto pełnoekranowy loading - teraz loading jest tylko w formularzu
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
@@ -14,17 +14,50 @@ export const MobileLandingPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   
-  const { login, register, isLoading } = useAuth();
+  // Ref do przechowania stanu modala podczas błędów
+  const showAuthModalRef = useRef(false);
+  
+  const { login, register } = useAuth();
   useSystemTheme('dark');
+
+  // Debug: monitoruj zmiany w showAuthModal
+  useEffect(() => {
+    console.log('MobileLandingPage: showAuthModal changed to:', showAuthModal);
+    showAuthModalRef.current = showAuthModal;
+  }, [showAuthModal]);
+
+  // Debug: monitoruj zmiany w error
+  useEffect(() => {
+    console.log('MobileLandingPage: error changed to:', error);
+  }, [error]);
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
     try {
+      console.log('MobileLandingPage: Starting login, showAuthModal:', showAuthModal);
       setError(null);
       await login(credentials);
+      console.log('MobileLandingPage: Login successful, closing modal');
       setShowAuthModal(false);
       navigate('/map');
     } catch (error: any) {
-      setError(error.message || 'Błąd logowania');
+      console.log('MobileLandingPage: Login failed, setting error');
+      console.log('MobileLandingPage: showAuthModal should still be true:', showAuthModal);
+      console.log('MobileLandingPage: showAuthModalRef.current:', showAuthModalRef.current);
+      
+      // Opóźnij ustawienie błędu żeby zobaczyć czy to pomoże
+      setTimeout(() => {
+        console.log('MobileLandingPage: Setting error after timeout');
+        setError('Sprawdź dane logowania'); // Ogólny komunikat dla bezpieczeństwa
+        console.log('MobileLandingPage: Error set after timeout');
+        
+        // Upewnij się, że modal pozostaje otwarty
+        if (!showAuthModalRef.current) {
+          console.log('MobileLandingPage: Modal was closed, reopening it');
+          setShowAuthModal(true);
+        }
+      }, 100);
+      
+      // Nie rzucamy błędu - Error Boundary by złapało i zresetowało komponent
     }
   };
 
@@ -35,7 +68,7 @@ export const MobileLandingPage = () => {
       setShowAuthModal(false);
       setShowEmailConfirmation(true);
     } catch (error: any) {
-      setError(error.message || 'Błąd rejestracji');
+      setError('Sprawdź dane rejestracji'); // Ogólny komunikat dla bezpieczeństwa
     }
   };
 
@@ -47,16 +80,7 @@ export const MobileLandingPage = () => {
     setShowEmailConfirmation(false);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="text-white text-lg mb-2">Ładowanie...</div>
-          <div className="text-gray-400 text-sm">Sprawdzanie danych logowania</div>
-        </div>
-      </div>
-    );
-  }
+  // Usunięto pełnoekranowy loading - teraz loading jest tylko w formularzu
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -88,6 +112,7 @@ export const MobileLandingPage = () => {
         <div className="w-full max-w-sm space-y-3 mx-auto">
           <DarkGlassButton
             onClick={() => {
+              setError(null); // Wyczyść błąd przy otwieraniu
               setAuthMode('login');
               setShowAuthModal(true);
             }}
@@ -100,6 +125,7 @@ export const MobileLandingPage = () => {
           
           <DarkGlassButton
             onClick={() => {
+              setError(null); // Wyczyść błąd przy otwieraniu
               setAuthMode('register');
               setShowAuthModal(true);
             }}
@@ -147,15 +173,6 @@ export const MobileLandingPage = () => {
                       </button>
                     </div>
 
-                    {error && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-4 p-3 bg-red-900/20 border-2 border-red-800 rounded-lg"
-                      >
-                        <p className="text-sm text-red-400">{error}</p>
-                      </motion.div>
-                    )}
 
                     <div className="space-y-4">
                       {authMode === 'login' ? (
@@ -163,14 +180,14 @@ export const MobileLandingPage = () => {
                           onSubmit={handleLogin}
                           onSwitchToRegister={() => setAuthMode('register')}
                           onClose={closeModal}
-                          isLoading={isLoading}
+                          error={error}
                         />
                       ) : (
                         <RegisterForm
                           onSubmit={handleRegister}
                           onSwitchToLogin={() => setAuthMode('login')}
                           onClose={closeModal}
-                          isLoading={isLoading}
+                          error={error}
                         />
                       )}
                     </div>

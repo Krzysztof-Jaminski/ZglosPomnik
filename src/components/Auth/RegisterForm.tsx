@@ -10,13 +10,15 @@ interface RegisterFormProps {
   onClose: () => void;
   onBackToMenu?: () => void;
   isLoading?: boolean;
+  error?: string | null;
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit,
   onSwitchToLogin,
   onBackToMenu,
-  isLoading = false
+  isLoading = false,
+  error = null
 }) => {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -59,9 +61,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     // Telefon jest opcjonalny, więc nie blokuje rejestracji
     const phoneValid = validation.phone.isValid;
     
+    // Sprawdź czy wszystkie wymagane pola są wypełnione
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
+      return; // Nie wysyłaj jeśli pola są puste
+    }
+    
     if (!requiredFieldsValid) {
-      alert('Proszę poprawić wszystkie błędy w wymaganych polach przed rejestracją');
-      return;
+      return; // Nie wysyłaj jeśli pola są nieprawidłowe
     }
     
     if (!phoneValid) {
@@ -226,7 +232,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
           {/* Name fields in a row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -239,7 +245,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   onChange={handleInputChange}
                   onFocus={() => handleFieldFocus('firstName')}
                   onBlur={handleFieldBlur}
-                  required
                   className={`w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                     formData.firstName && !validation.firstName.isValid 
                       ? 'border-red-500/50' 
@@ -270,7 +275,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   onChange={handleInputChange}
                   onFocus={() => handleFieldFocus('lastName')}
                   onBlur={handleFieldBlur}
-                  required
                   className={`w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                     formData.lastName && !validation.lastName.isValid 
                       ? 'border-red-500/50' 
@@ -610,13 +614,25 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             </div>
           )}
 
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 bg-red-900/20 border-2 border-red-800 rounded-lg text-center"
+            >
+              <p className="text-sm text-red-400">Sprawdź dane rejestracji</p>
+            </motion.div>
+          )}
+
           <div className="pt-2">
             <DarkGlassButton
               type="submit"
               variant="primary"
               size="sm"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || !validation.firstName.isValid || !validation.lastName.isValid || !validation.email.isValid || 
+                       !Object.values(validation.password).every(Boolean) || !validation.passwordsMatch ||
+                       !formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">

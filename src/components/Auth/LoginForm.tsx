@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Mail, Lock, Eye, EyeOff, Check, X as XIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DarkGlassButton } from '../UI/DarkGlassButton';
 import { LoginRequest, authService } from '../../services/authService';
 
 interface LoginFormProps {
-  onSubmit: (credentials: LoginRequest) => void;
+  onSubmit: (credentials: LoginRequest) => Promise<void>;
   onSwitchToRegister: () => void;
   onClose: () => void;
   onBackToMenu?: () => void;
@@ -17,7 +17,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit,
   onSwitchToRegister,
   onBackToMenu,
-  isLoading = false,
   error = null
 }) => {
   const [formData, setFormData] = useState({
@@ -30,24 +29,48 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
+  const [forgotPasswordValidation, setForgotPasswordValidation] = useState({
+    isValid: false
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [validation, setValidation] = useState({
     email: { isValid: false },
     password: { isValid: false }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Sprawdź walidację przed wysłaniem
+    // Sprawdź czy już wysyłamy żądanie (używając ref dla natychmiastowego blokowania)
+    if (isSubmittingRef.current || isSubmitting) {
+      return;
+    }
+    
+    // Sprawdź czy pola są wypełnione i prawidłowe przed wysłaniem
+    if (!formData.email || !formData.password) {
+      return; // Nie wysyłaj jeśli pola są puste
+    }
+    
     if (!validation.email.isValid || !validation.password.isValid) {
       return; // Nie wysyłaj jeśli pola są nieprawidłowe
     }
+    
+    // Natychmiastowe blokowanie używając ref
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
     
     const credentials: LoginRequest = {
       email: formData.email,
       password: formData.password
     };
-    onSubmit(credentials);
+    
+    // onSubmit nie rzuca już błędu - błąd jest obsługiwany w parent component
+    await onSubmit(credentials);
+    
+    // Reset loading state po zakończeniu
+    isSubmittingRef.current = false;
+    setIsSubmitting(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,8 +113,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     setFocusedField(null);
   };
 
+  const validateForgotPasswordEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email) && email.length <= 100;
+    setForgotPasswordValidation({ isValid });
+  };
+
+  const handleForgotPasswordEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setForgotPasswordEmail(value);
+    validateForgotPasswordEmail(value);
+  };
+
   const handleForgotPassword = async () => {
-    if (!forgotPasswordEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotPasswordEmail)) {
+    if (!forgotPasswordEmail || !forgotPasswordValidation.isValid) {
       setForgotPasswordMessage('Proszę podać prawidłowy adres email');
       return;
     }
@@ -134,17 +169,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </p>
         </div>
 
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-3 bg-red-900/20 border-2 border-red-800 rounded-lg"
-          >
-            <p className="text-sm text-red-400">{error}</p>
-          </motion.div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -155,7 +180,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('email')}
                 onBlur={handleFieldBlur}
-                required
                 className={`w-full pl-10 pr-4 py-3 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 ${
                   formData.email && !validation.email.isValid 
                     ? 'border-red-500/50' 
@@ -187,7 +211,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('password')}
                 onBlur={handleFieldBlur}
-                required
                 className={`w-full pl-10 pr-12 py-3 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 ${
                   formData.password && !validation.password.isValid 
                     ? 'border-red-500/50' 
@@ -265,15 +288,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             </div>
           )}
 
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 bg-red-900/20 border-2 border-red-800 rounded-lg text-center"
+            >
+              <p className="text-sm text-red-400">Sprawdź dane logowania</p>
+            </motion.div>
+          )}
+
           <div className="pt-2">
             <DarkGlassButton
               type="submit"
               variant="primary"
               size="sm"
               className="w-full"
-              disabled={isLoading}
+              disabled={isSubmitting || !validation.email.isValid || !validation.password.isValid || !formData.email || !formData.password}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                   <span>Logowanie...</span>
@@ -321,13 +354,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             >
               <h3 className="text-sm font-medium text-gray-300 mb-3">Resetowanie hasła</h3>
               <div className="space-y-3">
-                <input
-                  type="email"
-                  value={forgotPasswordEmail}
-                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                  placeholder="Wprowadź swój email"
-                  className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="email"
+                    value={forgotPasswordEmail}
+                    onChange={handleForgotPasswordEmailChange}
+                    placeholder="jan@example.com"
+                    className={`w-full pl-10 pr-4 py-3 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm ${
+                      forgotPasswordEmail && !forgotPasswordValidation.isValid 
+                        ? 'border-red-500/50' 
+                        : forgotPasswordEmail && forgotPasswordValidation.isValid 
+                          ? 'border-green-500/50' 
+                          : 'border-gray-600/50'
+                    }`}
+                  />
+                  {forgotPasswordEmail && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {forgotPasswordValidation.isValid ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <XIcon className="w-4 h-4 text-red-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
                 {forgotPasswordMessage && (
                   <p className={`text-xs ${forgotPasswordMessage.includes('wysłany') ? 'text-green-400' : 'text-red-400'}`}>
                     {forgotPasswordMessage}
@@ -339,7 +390,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                     variant="primary"
                     size="sm"
                     className="flex-1"
-                    disabled={forgotPasswordLoading}
+                    disabled={forgotPasswordLoading || !forgotPasswordValidation.isValid || !forgotPasswordEmail}
                   >
                     {forgotPasswordLoading ? 'Wysyłanie...' : 'Wyślij email'}
                   </DarkGlassButton>
@@ -348,6 +399,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                       setShowForgotPassword(false);
                       setForgotPasswordEmail('');
                       setForgotPasswordMessage('');
+                      setForgotPasswordValidation({ isValid: false });
                     }}
                     variant="secondary"
                     size="sm"

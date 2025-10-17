@@ -165,7 +165,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (credentials: LoginRequest) => {
     try {
-      setIsLoading(true);
+      // Usunięto setIsLoading(true) - powodowało re-render i reset stanu
       await authService.login(credentials);
       
       // Fetch user data from API
@@ -189,10 +189,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('User data from API:', userData);
     } catch (error) {
       console.error('Login failed:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+      // Nie rzucamy błędu - pozwalamy parent component obsłużyć błąd
+      throw error; // Zachowujemy throw dla kompatybilności wstecznej
     }
+    // Usunięto finally block z setIsLoading(false) - powodowało re-render
   };
 
   const register = async (userData: RegisterRequest) => {

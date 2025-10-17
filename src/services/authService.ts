@@ -148,7 +148,24 @@ class AuthService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      
+      // Handle different error types with user-friendly messages
+      switch (response.status) {
+        case 400:
+          throw new Error(errorData.message || 'Nieprawidłowy format danych logowania');
+        case 401:
+          throw new Error('Nieprawidłowy email lub hasło');
+        case 404:
+          throw new Error('Nie znaleziono konta z podanym adresem email');
+        case 429:
+          throw new Error('Zbyt wiele prób logowania. Spróbuj ponownie za kilka minut');
+        case 500:
+        case 502:
+        case 503:
+          throw new Error('Problem z serwerem. Spróbuj ponownie za chwilę');
+        default:
+          throw new Error(errorData.message || 'Wystąpił błąd podczas logowania. Spróbuj ponownie');
+      }
     }
 
     const data = await response.json();
@@ -172,6 +189,21 @@ class AuthService {
     // User data will be fetched separately from /api/user/profile endpoint
 
     return data;
+  } catch (error: any) {
+    console.error('Login error:', error);
+    
+    // If it's already our custom error message, re-throw it
+    if (error.message && !error.message.includes('HTTP error!')) {
+      throw error;
+    }
+    
+    // Handle network errors
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Problem z połączeniem internetowym. Sprawdź połączenie i spróbuj ponownie');
+    }
+    
+    // Default fallback
+    throw new Error('Wystąpił błąd podczas logowania. Spróbuj ponownie');
   }
 
   async refreshAccessToken(): Promise<string | null> {
