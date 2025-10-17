@@ -15,7 +15,6 @@ interface RegisterFormProps {
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit,
   onSwitchToLogin,
-  onClose,
   onBackToMenu,
   isLoading = false
 }) => {
@@ -31,6 +30,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     password: false,
     confirmPassword: false
   });
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [validation, setValidation] = useState({
     firstName: { isValid: false, message: '' },
     lastName: { isValid: false, message: '' },
@@ -203,6 +203,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     }));
   };
 
+  const handleFieldFocus = (fieldName: string) => {
+    setFocusedField(fieldName);
+  };
+
+  const handleFieldBlur = () => {
+    setFocusedField(null);
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
@@ -229,6 +237,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
+                  onFocus={() => handleFieldFocus('firstName')}
+                  onBlur={handleFieldBlur}
                   required
                   className={`w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                     formData.firstName && !validation.firstName.isValid 
@@ -249,9 +259,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   </div>
                 )}
               </div>
-              {formData.firstName && !validation.firstName.isValid && (
-                <p className="text-xs text-red-400 mt-1">{validation.firstName.message}</p>
-              )}
             </div>
             <div>
               <div className="relative">
@@ -261,6 +268,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
+                  onFocus={() => handleFieldFocus('lastName')}
+                  onBlur={handleFieldBlur}
                   required
                   className={`w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                     formData.lastName && !validation.lastName.isValid 
@@ -281,9 +290,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   </div>
                 )}
               </div>
-              {formData.lastName && !validation.lastName.isValid && (
-                <p className="text-xs text-red-400 mt-1">{validation.lastName.message}</p>
-              )}
             </div>
           </div>
 
@@ -295,6 +301,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                onFocus={() => handleFieldFocus('email')}
+                onBlur={handleFieldBlur}
                 required
                 className={`w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                   formData.email && !validation.email.isValid 
@@ -315,9 +323,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 </div>
               )}
             </div>
-            {formData.email && !validation.email.isValid && (
-              <p className="text-xs text-red-400 mt-1">{validation.email.message}</p>
-            )}
           </div>
 
           <div>
@@ -328,6 +333,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
+                onFocus={() => handleFieldFocus('password')}
+                onBlur={handleFieldBlur}
                 required
                 className={`w-full pl-10 pr-12 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                   formData.password && !Object.values(validation.password).every(Boolean)
@@ -356,6 +363,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
+                onFocus={() => handleFieldFocus('confirmPassword')}
+                onBlur={handleFieldBlur}
                 required
                 className={`w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                   formData.confirmPassword && !validation.passwordsMatch
@@ -374,14 +383,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 {showPasswords.confirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {formData.confirmPassword && !validation.passwordsMatch && (
-              <p className="text-xs text-red-400 mt-1">
-                {formData.confirmPassword.trim().length === 0 
-                  ? 'Potwierdzenie hasła jest wymagane' 
-                  : 'Hasła nie są identyczne'
-                }
-              </p>
-            )}
           </div>
 
           <div>
@@ -392,6 +393,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
+                onFocus={() => handleFieldFocus('phone')}
+                onBlur={handleFieldBlur}
                 className={`w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                   formData.phone && !validation.phone.isValid 
                     ? 'border-red-500/50' 
@@ -411,13 +414,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 </div>
               )}
             </div>
-            {formData.phone && !validation.phone.isValid && (
-              <p className="text-xs text-red-400 mt-1">{validation.phone.message}</p>
-            )}
           </div>
 
-          {/* Panel wymagań imienia */}
-          {formData.firstName && (
+          {/* Panel wymagań imienia - tylko gdy pole jest aktywne */}
+          {focusedField === 'firstName' && formData.firstName && (
             <div className="mt-2 p-2 bg-gray-800/20 rounded-lg">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
@@ -444,8 +444,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             </div>
           )}
 
-          {/* Panel wymagań nazwiska */}
-          {formData.lastName && (
+          {/* Panel wymagań nazwiska - tylko gdy pole jest aktywne */}
+          {focusedField === 'lastName' && formData.lastName && (
             <div className="mt-2 p-2 bg-gray-800/20 rounded-lg">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
@@ -472,8 +472,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             </div>
           )}
 
-          {/* Panel wymagań email */}
-          {formData.email && (
+          {/* Panel wymagań email - tylko gdy pole jest aktywne */}
+          {focusedField === 'email' && formData.email && (
             <div className="mt-2 p-2 bg-gray-800/20 rounded-lg">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
@@ -500,8 +500,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             </div>
           )}
 
-          {/* Panel wymagań telefonu */}
-          {formData.phone && (
+          {/* Panel wymagań telefonu - tylko gdy pole jest aktywne */}
+          {focusedField === 'phone' && formData.phone && (
             <div className="mt-4 p-3 bg-gray-800/30 rounded-lg border border-gray-600/30">
               <h4 className="text-xs font-medium text-gray-300 mb-2">
                 Wymagania numeru telefonu:
@@ -537,8 +537,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             </div>
           )}
 
-          {/* Panel walidacji hasła */}
-          {formData.password && (
+          {/* Panel walidacji hasła - tylko gdy pole jest aktywne */}
+          {focusedField === 'password' && formData.password && (
             <div className="mt-4 p-3 bg-gray-800/30 rounded-lg border border-gray-600/30">
               <h4 className="text-xs font-medium text-gray-300 mb-2">
                 Wymagania hasła:
@@ -633,7 +633,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-sm text-gray-400 hover:text-green-400 transition-colors duration-200"
+              className="text-sm text-gray-400 hover:text-gray-300 transition-colors duration-200"
             >
               Masz już konto? <span className="text-green-400 hover:text-green-300">Zaloguj się</span>
             </button>

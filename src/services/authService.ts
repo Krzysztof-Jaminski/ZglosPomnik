@@ -15,6 +15,28 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message: string;
+  expiresAt: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+  expiresAt: string;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
@@ -388,6 +410,160 @@ class AuthService {
     } catch (error) {
       console.error('Update user data error:', error);
       throw error;
+    }
+  }
+
+  // Forgot password - send reset email
+  async forgotPassword(email: string): Promise<ForgotPasswordResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/EmailVerification/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'text/plain'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Handle different error types with user-friendly messages
+        switch (response.status) {
+          case 400:
+            throw new Error(errorData.message || 'Nieprawidłowy format email');
+          case 404:
+            throw new Error('Nie znaleziono konta z podanym adresem email');
+          case 429:
+            throw new Error('Zbyt wiele prób. Spróbuj ponownie za kilka minut');
+          case 500:
+          case 502:
+          case 503:
+            throw new Error('Problem z serwerem. Spróbuj ponownie za chwilę');
+          default:
+            throw new Error(errorData.message || 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie');
+        }
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error: any) {
+      console.error('Forgot password error:', error);
+      
+      // If it's already our custom error message, re-throw it
+      if (error.message && !error.message.includes('HTTP error!')) {
+        throw error;
+      }
+      
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Problem z połączeniem internetowym. Sprawdź połączenie i spróbuj ponownie');
+      }
+      
+      // Default fallback
+      throw new Error('Wystąpił błąd podczas wysyłania emaila. Spróbuj ponownie');
+    }
+  }
+
+  // Reset password with token
+  async resetPassword(passwordData: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/EmailVerification/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'text/plain'
+        },
+        body: JSON.stringify(passwordData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Handle different error types with user-friendly messages
+        switch (response.status) {
+          case 400:
+            throw new Error(errorData.message || 'Nieprawidłowe dane. Sprawdź hasło i spróbuj ponownie');
+          case 401:
+            throw new Error('Token resetowania hasła wygasł lub jest nieprawidłowy');
+          case 404:
+            throw new Error('Link do resetowania hasła jest nieprawidłowy lub wygasł');
+          case 500:
+          case 502:
+          case 503:
+            throw new Error('Problem z serwerem. Spróbuj ponownie za chwilę');
+          default:
+            throw new Error(errorData.message || 'Wystąpił błąd podczas resetowania hasła');
+        }
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      
+      // If it's already our custom error message, re-throw it
+      if (error.message && !error.message.includes('HTTP error!')) {
+        throw error;
+      }
+      
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Problem z połączeniem internetowym. Sprawdź połączenie i spróbuj ponownie');
+      }
+      
+      // Default fallback
+      throw new Error('Wystąpił błąd podczas resetowania hasła. Spróbuj ponownie');
+    }
+  }
+
+  // Verify reset password token
+  async verifyResetToken(token: string): Promise<ResetPasswordResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/EmailVerification/reset-password?token=${encodeURIComponent(token)}`, {
+        method: 'GET',
+        headers: {
+          'accept': 'text/plain'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Handle different error types with user-friendly messages
+        switch (response.status) {
+          case 400:
+            throw new Error('Nieprawidłowy token resetowania hasła');
+          case 401:
+            throw new Error('Token resetowania hasła wygasł');
+          case 404:
+            throw new Error('Token resetowania hasła nie został znaleziony');
+          case 500:
+          case 502:
+          case 503:
+            throw new Error('Problem z serwerem. Spróbuj ponownie za chwilę');
+          default:
+            throw new Error(errorData.message || 'Wystąpił błąd podczas weryfikacji tokenu');
+        }
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error: any) {
+      console.error('Verify reset token error:', error);
+      
+      // If it's already our custom error message, re-throw it
+      if (error.message && !error.message.includes('HTTP error!')) {
+        throw error;
+      }
+      
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Problem z połączeniem internetowym. Sprawdź połączenie i spróbuj ponownie');
+      }
+      
+      // Default fallback
+      throw new Error('Wystąpił błąd podczas weryfikacji linku resetowania hasła');
     }
   }
 

@@ -83,6 +83,7 @@ export const LandingPage = () => {
       navigate('/map');
     } catch (error: any) {
       setError(error.message || 'Błąd logowania');
+      // Nie przekierowuj - zostaw modal otwarty z błędem
     }
   };
 
@@ -522,6 +523,7 @@ export const LandingPage = () => {
                           onSwitchToRegister={() => setAuthMode('register')}
                           onClose={closeModal}
                           isLoading={isLoading}
+                          error={error}
                         />
                       ) : (
                         <RegisterForm
