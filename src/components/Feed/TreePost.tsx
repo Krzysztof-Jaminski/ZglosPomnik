@@ -219,12 +219,13 @@ export const TreePost: React.FC<TreePostProps> = ({
                         {/* All Tree Information - One Big Block */}
                         <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-gray-200/50 dark:border-gray-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
                           <div className="space-y-3">
-                            {/* Tree Name - HEADER OVER DESCRIPTION */}
+                            {/* Tree Name - FIRST FIELD ON THE LEFT */}
                             {post.name && (
-                              <div className="text-center mb-2">
-                                <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                              <div>
+                                <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Nazwa drzewa</h3>
+                                <p className="text-xs text-gray-700 dark:text-gray-300">
                                   {post.name}
-                                </h2>
+                                </p>
                               </div>
                             )}
 
