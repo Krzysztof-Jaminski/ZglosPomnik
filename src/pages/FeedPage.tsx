@@ -171,17 +171,18 @@ export const FeedPage: React.FC = () => {
       {/* Posts */}
       <div className="flex-1 overflow-y-auto">
         {/* Search */}
-        <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-3 py-2">
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Szukaj postów..."
-            size="lg"
-            variant="default"
+            size="md"
+            variant="compact"
+            showClearButton={false}
           />
         </div>
 
-        <div className="space-y-8 sm:space-y-12 w-full px-2 py-4">
+        <div className="space-y-4 sm:space-y-6 w-full px-2 py-2">
           {filteredAndSortedPosts.map((post) => (
             <div
               key={post.id}

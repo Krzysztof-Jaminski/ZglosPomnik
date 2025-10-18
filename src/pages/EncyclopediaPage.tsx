@@ -404,13 +404,14 @@ export const EncyclopediaPage: React.FC = () => {
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto">
       {/* Search */}
-      <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-3 py-2">
         <SearchInput
           value={searchQuery}
           onChange={setSearchQuery}
           placeholder="Szukaj gatunku..."
-          size="lg"
-          variant="default"
+          size="md"
+          variant="compact"
+          showClearButton={false}
         />
       </div>
 
