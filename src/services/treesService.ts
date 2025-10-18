@@ -227,6 +227,9 @@ class TreesService {
       console.log('- soil tags:', treeData.soil);
       console.log('- health tags:', treeData.health);
       console.log('- environment tags:', treeData.environment);
+      console.log('- soil length:', treeData.soil?.length || 0);
+      console.log('- health length:', treeData.health?.length || 0);
+      console.log('- environment length:', treeData.environment?.length || 0);
       console.log('Photos count:', photos.length);
       console.log('Request URL:', `${API_BASE_URL}/trees`);
 
@@ -269,20 +272,33 @@ class TreesService {
       }
       
       // Add array fields (soil, health, environment tags)
-      if (treeData.soil && treeData.soil.length > 0) {
+      console.log('Adding array fields to FormData:');
+      if (treeData.soil) {
+        console.log('- Adding soil tags:', treeData.soil);
         treeData.soil.forEach(tag => {
           formData.append('soil', tag);
+          console.log('  - Added soil:', tag);
         });
+      } else {
+        console.log('- No soil tags to add');
       }
-      if (treeData.health && treeData.health.length > 0) {
+      if (treeData.health) {
+        console.log('- Adding health tags:', treeData.health);
         treeData.health.forEach(tag => {
           formData.append('health', tag);
+          console.log('  - Added health:', tag);
         });
+      } else {
+        console.log('- No health tags to add');
       }
-      if (treeData.environment && treeData.environment.length > 0) {
+      if (treeData.environment) {
+        console.log('- Adding environment tags:', treeData.environment);
         treeData.environment.forEach(tag => {
           formData.append('environment', tag);
+          console.log('  - Added environment:', tag);
         });
+      } else {
+        console.log('- No environment tags to add');
       }
       
       // Log FormData contents
@@ -351,6 +367,9 @@ class TreesService {
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       console.log('Tree report submitted successfully:', data);
       console.log('Returned tree images:', data.imageUrls);
+      console.log('Returned soil:', data.soil);
+      console.log('Returned health:', data.health);
+      console.log('Returned environment:', data.environment);
       return data;
     } catch (error) {
       console.error('Submit tree report error:', error);

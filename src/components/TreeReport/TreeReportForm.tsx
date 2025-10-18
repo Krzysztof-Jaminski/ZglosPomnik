@@ -418,6 +418,12 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         // Clear errors if validation passed
         setValidationErrors({});
 
+        // Debug arrays before sending
+        console.log('TreeReportForm: Arrays before sending:');
+        console.log('- soilTags:', soilTags, 'length:', soilTags.length);
+        console.log('- healthTags:', healthTags, 'length:', healthTags.length);
+        console.log('- environmentTags:', environmentTags, 'length:', environmentTags.length);
+
         // Transform data to match API specification
         const apiTreeData: ApiTreeSubmission = {
           speciesId: selectedSpecies.id.toUpperCase(), // Convert to uppercase for backend
@@ -434,9 +440,9 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           },
           circumference: circumferenceValue,
           height: heightValue,
-          soil: soilTags.length > 0 ? soilTags : undefined,
-          health: healthTags.length > 0 ? healthTags : undefined,
-          environment: environmentTags.length > 0 ? environmentTags : undefined,
+          soil: soilTags,
+          health: healthTags,
+          environment: environmentTags,
           isAlive: isAlive,
           estimatedAge: estimatedAgeValue,
           crownSpread: crownSpreadValue,
@@ -444,6 +450,11 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           legend: treeStories,
           isMonument: false // Default to false, can be changed later
         };
+
+        console.log('TreeReportForm: Final apiTreeData arrays:');
+        console.log('- soil:', apiTreeData.soil, 'length:', apiTreeData.soil?.length || 0);
+        console.log('- health:', apiTreeData.health, 'length:', apiTreeData.health?.length || 0);
+        console.log('- environment:', apiTreeData.environment, 'length:', apiTreeData.environment?.length || 0);
 
         // Submit to API with photos and map screenshot
         await treesService.submitTreeReport(apiTreeData, photos, mapScreenshot);

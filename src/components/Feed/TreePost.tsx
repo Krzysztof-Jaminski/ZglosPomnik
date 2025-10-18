@@ -159,26 +159,35 @@ export const TreePost: React.FC<TreePostProps> = ({
                           </div>
                         </div>
 
-            {/* Photos Section - MAIN CONTENT */}
-            {post.imageUrls && post.imageUrls.length > 0 && (
-              <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
-                {/* Photo Grid - LARGER PHOTOS */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                  {post.imageUrls.map((image, index) => (
-                    <div key={index} className="relative aspect-square">
-                      <img
-                        src={image}
-                        crossOrigin={image.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
-                        referrerPolicy="no-referrer"
-                        alt={`Tree photo ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg cursor-pointer shadow-sm"
-                        onClick={() => openPhotoModal(index)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                        {/* Photos Section - MAIN CONTENT */}
+                        {post.imageUrls && post.imageUrls.length > 0 && (
+                          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+                            {/* Photo Grid - LARGER PHOTOS */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                              {post.imageUrls.map((image, index) => {
+                                const isLastImage = index === post.imageUrls.length - 1;
+                                const isOddCount = post.imageUrls.length % 2 !== 0;
+                                const shouldSpanTwo = isLastImage && isOddCount;
+                                
+                                return (
+                                  <div 
+                                    key={index} 
+                                    className={`relative ${shouldSpanTwo ? 'col-span-2 sm:col-span-2 aspect-[2/1]' : 'aspect-square'}`}
+                                  >
+                                    <img
+                                      src={image}
+                                      crossOrigin={image.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                                      referrerPolicy="no-referrer"
+                                      alt={`Tree photo ${index + 1}`}
+                                      className="w-full h-full object-cover rounded-lg cursor-pointer shadow-sm"
+                                      onClick={() => openPhotoModal(index)}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
             {/* Map Screenshot */}
             {post.treeScreenshotUrl && (
