@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TreePine, MapPin, X, Calendar, User, ArrowRight, ZoomIn } from 'lucide-react';
+import { TreePine, MapPin, X, Calendar, User, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { Tree } from '../../types';
@@ -43,7 +43,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
 
   return (
     <div
-      className="fixed top-10 sm:top-12 left-0 right-0 bottom-16 sm:bottom-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed top-10 sm:top-12 left-0 right-0 bottom-16 sm:bottom-0 bg-black/50 flex items-center justify-center z-[9999] p-4"
       onClick={(e) => {
         e.stopPropagation();
         onClose();

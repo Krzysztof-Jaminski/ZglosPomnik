@@ -108,8 +108,9 @@ npm install
 Utwórz plik `.env` w głównym katalogu projektu:
 ```env
 VITE_API_BASE_URL=twoje-api
-VITE_GOOGLE_MAPS_API_KEY=twoj-klucz-google-maps
 ```
+
+**Uwaga:** Aplikacja używa teraz darmowej mapy OpenStreetMap zamiast Google Maps, więc nie potrzebujesz klucza API dla map.
 
 4. **Uruchom aplikację w trybie deweloperskim:**
 ```bash

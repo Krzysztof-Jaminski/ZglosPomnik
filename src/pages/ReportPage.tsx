@@ -3,6 +3,8 @@ import { TreeReportForm } from '../components/TreeReport/TreeReportForm';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GlassButton } from '../components/UI/GlassButton';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 
 interface SavedFormData {
   latitude?: number;
@@ -18,46 +20,128 @@ export const ReportPage: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [mapScreenshot, setMapScreenshot] = useState<File | null>(null);
+  const [isGeneratingMapScreenshot, setIsGeneratingMapScreenshot] = useState(false);
+  const [mapScreenshotCoords, setMapScreenshotCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [showMapScreenshotModal, setShowMapScreenshotModal] = useState(false);
 
-  // Generate map screenshot using Google Maps Static API
+  // Generate map screenshot directly from Leaflet map
   const generateMapScreenshot = useCallback(async (lat: number, lng: number): Promise<File | null> => {
     try {
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      if (!apiKey) {
-        console.error('Google Maps API key not found');
-        return null;
-      }
-
-      // Create Google Maps Static API URL
-      // Using satellite view with maximum zoom and a marker at the tree location
-      const width = 600;
-      const height = 400;
-      const zoom = 20; // Maximum zoom for detailed satellite view
-      const mapType = 'satellite';
+      console.log('Generating map screenshot for coordinates:', lat, lng);
       
-      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
-        `center=${lat},${lng}` +
-        `&zoom=${zoom}` +
-        `&size=${width}x${height}` +
-        `&maptype=${mapType}` +
-        `&markers=color:red%7C${lat},${lng}` +
-        `&key=${apiKey}`;
+      // Create a temporary map container
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.width = '800px';
+      tempContainer.style.height = '600px';
+      tempContainer.style.zIndex = '-1';
+      document.body.appendChild(tempContainer);
 
-      console.log('Generating map screenshot from:', staticMapUrl);
-
-      // Fetch the image
-      const response = await fetch(staticMapUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch map screenshot');
-      }
-
-      const blob = await response.blob();
-      const file = new File([blob], `map_screenshot_${Date.now()}.png`, { type: 'image/png' });
+      // Import Leaflet dynamically
+      const L = await import('leaflet');
       
-      console.log('Map screenshot generated:', file.name, file.size, 'bytes');
-      return file;
+      // Create map instance
+      const map = L.map(tempContainer, {
+        center: [lat, lng],
+        zoom: 19, // Maximum zoom for detailed satellite view
+        zoomControl: false,
+        attributionControl: false
+      });
+
+      // Add satellite tile layer
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Add blue marker at the exact location (same as on the main map)
+      L.circleMarker([lat, lng], {
+        radius: 10,
+        fillColor: '#3b82f6',
+        color: '#ffffff',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.9
+      }).addTo(map);
+
+      // Wait for map to load
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Use html2canvas to capture the map
+      const html2canvas = await import('html2canvas');
+      const canvas = await html2canvas.default(tempContainer, {
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        allowTaint: true,
+        scale: 1
+      });
+
+      // Convert canvas to blob
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+                  const file = new File([blob], `map_localization_${Date.now()}.png`, { type: 'image/png' });
+            console.log('Map screenshot generated:', file.name, file.size, 'bytes');
+            resolve(file);
+          } else {
+            resolve(null);
+          }
+          
+          // Cleanup
+          document.body.removeChild(tempContainer);
+          map.remove();
+        }, 'image/png', 0.9);
+      });
+
     } catch (error) {
       console.error('Error generating map screenshot:', error);
+      
+      // Fallback: create a simple canvas with coordinates
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        // Draw a simple background
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, 800, 600);
+        
+        // Draw blue marker in the center
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(400, 300, 15, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw white border around marker
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        
+        // Draw coordinates text below the marker
+        ctx.fillStyle = '#333';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Współrzędne: ${lat.toFixed(6)}, ${lng.toFixed(6)}`, 400, 350);
+        
+        // Convert canvas to blob
+        return new Promise((resolve) => {
+          canvas.toBlob((blob) => {
+            if (blob) {
+                  const file = new File([blob], `map_localization_${Date.now()}.png`, { type: 'image/png' });
+              console.log('Fallback map screenshot generated:', file.name, file.size, 'bytes');
+              resolve(file);
+            } else {
+              resolve(null);
+            }
+          }, 'image/png');
+        });
+      }
+      
       return null;
     }
   }, []);
@@ -69,15 +153,35 @@ export const ReportPage: React.FC = () => {
 
   // Auto-generate map screenshot when location is selected
   React.useEffect(() => {
-    if (selectedLocation && !mapScreenshot) {
+    if (selectedLocation) {
+      // Check if we already have a screenshot for these coordinates
+      const coordsMatch = mapScreenshotCoords && 
+        Math.abs(mapScreenshotCoords.lat - selectedLocation.lat) < 0.0001 &&
+        Math.abs(mapScreenshotCoords.lng - selectedLocation.lng) < 0.0001;
+      
+      if (coordsMatch && mapScreenshot) {
+        console.log('Using existing map screenshot for same coordinates');
+        return;
+      }
+      
+      // Generate new screenshot for new coordinates
+      setIsGeneratingMapScreenshot(true);
+      setMapScreenshot(null); // Clear previous screenshot
+      
       generateMapScreenshot(selectedLocation.lat, selectedLocation.lng).then(screenshot => {
         if (screenshot) {
           setMapScreenshot(screenshot);
-          console.log('Auto-generated map screenshot');
+          setMapScreenshotCoords(selectedLocation);
+          console.log('Auto-generated map screenshot for new coordinates');
+        } else {
+          console.log('Failed to auto-generate map screenshot');
         }
+        setIsGeneratingMapScreenshot(false);
       });
     }
-  }, [selectedLocation, mapScreenshot, generateMapScreenshot]);
+  }, [selectedLocation, generateMapScreenshot, mapScreenshotCoords, mapScreenshot]);
+
+
 
   // Synchronize photos with form
   const handlePhotosChange = (newPhotos: File[]) => {
@@ -87,6 +191,11 @@ export const ReportPage: React.FC = () => {
 
   // Camera functionality
   const takePhoto = async () => {
+    if (photos.length >= 5) {
+      alert('Możesz dodać maksymalnie 5 zdjęć');
+      return;
+    }
+    
     try {
       const image = await Camera.getPhoto({
         quality: 80,
@@ -109,7 +218,13 @@ export const ReportPage: React.FC = () => {
     }
   };
 
+
   const selectFromGallery = async () => {
+    if (photos.length >= 5) {
+      alert('Możesz dodać maksymalnie 5 zdjęć');
+            return;
+          }
+          
     try {
       // Use HTML file input for multiple selection
       const input = document.createElement('input');
@@ -172,29 +287,51 @@ export const ReportPage: React.FC = () => {
     }
     // Don't automatically get current location - let user click the button
 
-    // Load photos from localStorage
-    const savedData = localStorage.getItem('treeReportFormData');
-    if (savedData) {
-      try {
-        const formData: SavedFormData = JSON.parse(savedData);
-        if (formData.photos && Array.isArray(formData.photos)) {
-          const restoredPhotos = formData.photos.map((base64: string, index: number) => {
-            const arr = base64.split(',');
-            const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-            const bstr = atob(arr[1]);
-            let n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) {
-              u8arr[n] = bstr.charCodeAt(n);
+        // Load photos and map screenshot from localStorage
+        const savedData = localStorage.getItem('treeReportFormData');
+        if (savedData) {
+          try {
+            const formData: SavedFormData = JSON.parse(savedData);
+            
+            // Restore photos
+            if (formData.photos && Array.isArray(formData.photos)) {
+              const restoredPhotos = formData.photos.map((base64: string, index: number) => {
+                const arr = base64.split(',');
+                const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                  u8arr[n] = bstr.charCodeAt(n);
+                }
+                return new File([u8arr], `photo_${index}.jpg`, { type: mime });
+              });
+              setPhotos(restoredPhotos);
             }
-            return new File([u8arr], `photo_${index}.jpg`, { type: mime });
-          });
-          setPhotos(restoredPhotos);
+            
+            // Restore map screenshot
+            if (formData.mapScreenshot) {
+              const base64 = formData.mapScreenshot;
+              const arr = base64.split(',');
+              const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+              const bstr = atob(arr[1]);
+              let n = bstr.length;
+              const u8arr = new Uint8Array(n);
+              while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+              }
+              const restoredScreenshot = new File([u8arr], `map_screenshot.png`, { type: mime });
+              setMapScreenshot(restoredScreenshot);
+              
+              // Restore map screenshot coordinates
+              if (formData.mapScreenshotCoords) {
+                setMapScreenshotCoords(formData.mapScreenshotCoords);
+              }
+            }
+          } catch (error) {
+            console.error('Error loading saved photos and screenshot:', error);
+          }
         }
-      } catch (error) {
-        console.error('Error loading saved photos:', error);
-      }
-    }
   }, [initializeLocation]);
 
   // Save location from navigation state to localStorage
@@ -260,11 +397,24 @@ export const ReportPage: React.FC = () => {
           })
         );
         
+        // Convert map screenshot to base64 for storage
+        let mapScreenshotBase64 = null;
+        if (mapScreenshot) {
+          mapScreenshotBase64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(mapScreenshot);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+          });
+        }
+        
         const updatedFormData = {
           ...formData,
           latitude: selectedLocation?.lat,
           longitude: selectedLocation?.lng,
-          photos: photoBase64s
+          photos: photoBase64s,
+          mapScreenshot: mapScreenshotBase64,
+          mapScreenshotCoords: mapScreenshotCoords
         };
         
         localStorage.setItem('treeReportFormData', JSON.stringify(updatedFormData));
@@ -273,10 +423,10 @@ export const ReportPage: React.FC = () => {
       }
     };
 
-    if (selectedLocation || photos.length > 0) {
+    if (selectedLocation || photos.length > 0 || mapScreenshot) {
       saveToStorage();
     }
-  }, [selectedLocation, photos]);
+  }, [selectedLocation, photos, mapScreenshot, mapScreenshotCoords]);
 
   const getCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -338,6 +488,33 @@ export const ReportPage: React.FC = () => {
   const handleMapSelectionClick = useCallback(() => {
     navigate('/map');
   }, [navigate]);
+
+  // Photo modal functions
+  const openPhotoModal = useCallback((index: number) => {
+    setSelectedPhotoIndex(index);
+    setShowPhotoModal(true);
+  }, []);
+
+  const closePhotoModal = useCallback(() => {
+    setShowPhotoModal(false);
+  }, []);
+
+  const nextPhoto = useCallback(() => {
+    setSelectedPhotoIndex((prev) => (prev + 1) % photos.length);
+  }, [photos.length]);
+
+  const prevPhoto = useCallback(() => {
+    setSelectedPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  }, [photos.length]);
+
+  // Map screenshot modal functions
+  const openMapScreenshotModal = useCallback(() => {
+    setShowMapScreenshotModal(true);
+  }, []);
+
+  const closeMapScreenshotModal = useCallback(() => {
+    setShowMapScreenshotModal(false);
+  }, []);
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
@@ -411,30 +588,72 @@ export const ReportPage: React.FC = () => {
                   </div>
                   
                   {/* Photo Preview */}
-                  {photos.length > 0 && (
-                    <div className="flex gap-1 overflow-x-auto">
+                  <div className="grid grid-cols-5 gap-1">
                       {photos.map((photo, index) => (
-                        <div key={index} className="relative flex-shrink-0">
+                      <div key={index} className="relative aspect-square">
                           <img
                             src={URL.createObjectURL(photo)}
                             alt={`Photo ${index + 1}`}
-                            className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded"
+                          className="w-full h-full object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => openPhotoModal(index)}
                           />
                           <button
                             onClick={() => {
                               const newPhotos = photos.filter((_, i) => i !== index);
                               handlePhotosChange(newPhotos);
                             }}
-                            className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-blue-600 transition-colors"
-                          >
-                            ×
+                          className="absolute top-1 right-1 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-black/70 transition-colors"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                           </button>
                         </div>
                       ))}
+                    {/* Empty slots for remaining photos */}
+                    {Array.from({ length: 5 - photos.length }).map((_, index) => (
+                      <div key={`empty-${index}`} className="aspect-square border-2 border-dashed border-gray-400 dark:border-gray-600 rounded flex items-center justify-center">
+                        <span className="text-gray-400 dark:text-gray-600 text-xs">+</span>
+                        </div>
+                      ))}
                     </div>
+                  
+                  {/* Map Screenshot Preview */}
+                  {selectedLocation && (
+                    <>
+                      {mapScreenshot && !isGeneratingMapScreenshot && (
+                        <div className="relative">
+                          <img
+                            src={URL.createObjectURL(mapScreenshot)}
+                            alt="Map screenshot"
+                            className="w-full h-16 sm:h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={openMapScreenshotModal}
+                          />
+                          <div className="absolute top-1 left-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                            Zdjęcie mapy lokalizacji
+                          </div>
+                        </div>
+                      )}
+                      
+                      {isGeneratingMapScreenshot && (
+                        <div className="w-full h-16 sm:h-20 bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded flex items-center justify-center">
+                          <div className="flex items-center space-x-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 dark:border-blue-400"></div>
+                            <span className="text-xs text-blue-600 dark:text-blue-400">Generowanie screenshotu...</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {!mapScreenshot && !isGeneratingMapScreenshot && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-1">
+                          Generowanie screenshotu mapy...
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -447,19 +666,134 @@ export const ReportPage: React.FC = () => {
             photos={photos}
             setPhotos={handlePhotosChange}
             mapScreenshot={mapScreenshot}
-            onRegenerateScreenshot={() => {
-              if (selectedLocation) {
-                setMapScreenshot(null); // Clear current screenshot to trigger regeneration
-                generateMapScreenshot(selectedLocation.lat, selectedLocation.lng).then(screenshot => {
-                  if (screenshot) {
-                    setMapScreenshot(screenshot);
-                  }
-                });
-              }
-            }}
           />
         </div>
       </div>
+
+      {/* Photo Preview Modal */}
+      <AnimatePresence>
+        {showPhotoModal && photos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] p-4"
+            onClick={closePhotoModal}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-5xl max-h-[90vh] w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closePhotoModal}
+                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
+              >
+                <X className="w-8 h-8" />
+              </button>
+
+              {/* Photo counter */}
+              <div className="absolute -top-12 left-0 text-white text-lg font-medium z-10">
+                {selectedPhotoIndex + 1} / {photos.length}
+              </div>
+
+              {/* Main photo */}
+              <img
+                src={URL.createObjectURL(photos[selectedPhotoIndex])}
+                alt={`Photo ${selectedPhotoIndex + 1}`}
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+
+              {/* Navigation arrows */}
+              {photos.length > 1 && (
+                <>
+                  <button
+                    onClick={prevPhoto}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 transition-colors rounded-full p-2"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={nextPhoto}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 transition-colors rounded-full p-2"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
+
+              {/* Thumbnail strip */}
+              {photos.length > 1 && (
+                <div className="flex gap-2 bg-black/50 rounded-lg p-2 mt-4">
+                  {photos.map((photo, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedPhotoIndex(index)}
+                      className={`w-12 h-12 rounded overflow-hidden transition-opacity ${
+                        index === selectedPhotoIndex ? 'opacity-100 ring-2 ring-white' : 'opacity-60 hover:opacity-80'
+                      }`}
+                    >
+                      <img
+                        src={URL.createObjectURL(photo)}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Map Screenshot Preview Modal */}
+      <AnimatePresence>
+        {showMapScreenshotModal && mapScreenshot && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] p-4"
+            onClick={closeMapScreenshotModal}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-5xl max-h-[90vh] w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closeMapScreenshotModal}
+                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
+              >
+                <X className="w-8 h-8" />
+              </button>
+
+              {/* Title */}
+              <div className="absolute -top-12 left-0 text-white text-lg font-medium z-10">
+                Screenshot mapy lokalizacji
+              </div>
+
+              {/* Main screenshot */}
+              <img
+                src={URL.createObjectURL(mapScreenshot)}
+                alt="Map screenshot"
+                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-lg"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

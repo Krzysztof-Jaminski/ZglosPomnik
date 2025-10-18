@@ -5,7 +5,6 @@ import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useHapticFeedback } from '../hooks/useHapticFeedback';
-import { UserValidation, validateField as validateFieldUtil } from '../utils/validationRules';
 
 interface AdditionalUserData {
   phone: string;
@@ -165,35 +164,6 @@ export const ProfilePage: React.FC = () => {
       updateData.address = editData.address === 'Nie podano' ? '' : editData.address;
       updateData.city = editData.city === 'Nie podano' ? '' : editData.city;
       updateData.postalCode = editData.postalCode === 'Nie podano' ? '' : editData.postalCode;
-
-      // Validate data against centralized rules
-      const validationErrors: string[] = [];
-
-      if (updateData.phone) {
-        const phoneError = validateFieldUtil(updateData.phone, UserValidation.phone, 'Telefon');
-        if (phoneError) validationErrors.push(phoneError);
-      }
-
-      if (updateData.address) {
-        const addressError = validateFieldUtil(updateData.address, UserValidation.address, 'Adres');
-        if (addressError) validationErrors.push(addressError);
-      }
-
-      if (updateData.city) {
-        const cityError = validateFieldUtil(updateData.city, UserValidation.city, 'Miasto');
-        if (cityError) validationErrors.push(cityError);
-      }
-
-      if (updateData.postalCode) {
-        const postalCodeError = validateFieldUtil(updateData.postalCode, UserValidation.postalCode, 'Kod pocztowy');
-        if (postalCodeError) validationErrors.push(postalCodeError);
-      }
-
-      if (validationErrors.length > 0) {
-        alert('Błędy walidacji:\n' + validationErrors.join('\n'));
-        setIsSaving(false);
-        return;
-      }
 
       console.log('ProfilePage: Preparing update data:', updateData);
       console.log('ProfilePage: Original editData:', editData);

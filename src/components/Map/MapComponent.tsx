@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import L from 'leaflet';
 import { Tree } from '../../types';
 import { treesService } from '../../services/treesService';
 import { api } from '../../services/api';
@@ -22,16 +22,15 @@ export interface MapComponentRef {
 
 export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onGoToFeed, onTreeSelect }, ref) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<any>(null);
+  const [map, setMap] = useState<L.Map | null>(null);
   const [trees, setTrees] = useState<Tree[]>([]);
   const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
   const [error, setError] = useState<string | null>(null);
-  const [currentInfoWindow, setCurrentInfoWindow] = useState<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const markersRef = useRef<L.CircleMarker[]>([]);
+  const clickMarkerRef = useRef<L.CircleMarker | null>(null);
 
   const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
   const [showTreePopup, setShowTreePopup] = useState(false);
-  const [currentClickMarker, setCurrentClickMarker] = useState<any>(null);
   const onTreeSelectRef = useRef(onTreeSelect);
   const authContext = useContext(AuthContext);
   const isAuthenticated = authContext?.isAuthenticated || false;
@@ -43,15 +42,14 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
 
   useImperativeHandle(ref, () => ({
     clearClickMarker: () => {
-      if (currentClickMarker) {
-        currentClickMarker.setMap(null);
-        setCurrentClickMarker(null);
+      if (clickMarkerRef.current) {
+        map?.removeLayer(clickMarkerRef.current);
+        clickMarkerRef.current = null;
       }
     },
     centerOnLocation: (lat: number, lng: number) => {
       if (map) {
-        map.setCenter({ lat, lng });
-        map.setZoom(16); // Zoom in to show the new tree
+        map.setView([lat, lng], 16);
       }
     }
   }));
@@ -60,102 +58,220 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
     const initMap = async () => {
       if (!mapRef.current) return;
 
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-      const loader = new Loader({
-        apiKey: apiKey,
-        version: 'weekly',
-        libraries: ['places']
-      });
-
       try {
-        await loader.load();
+        // Ensure Leaflet CSS is loaded
+        if (!document.querySelector('link[href*="leaflet"]')) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css';
+          document.head.appendChild(link);
+        }
+
+        // Completely disable default markers by overriding the icon
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+          iconUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+          shadowUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        });
+
+        // Clear any existing map completely
+        if (map) {
+          map.remove();
+          setMap(null);
+        }
         
-        const mapInstance = new (window as any).google.maps.Map(mapRef.current, {
-          center: { lat: 50.041187, lng: 21.999121 }, // Rzeszów center
+        // Clear the container
+        if (mapRef.current) {
+          mapRef.current.innerHTML = '';
+        }
+        
+        // Clear any existing map ID
+        if ((mapRef.current as any)._leaflet_id) {
+          (mapRef.current as any)._leaflet_id = null;
+        }
+
+        const mapInstance = L.map(mapRef.current, {
+          center: [50.041187, 21.999121], // Rzeszów center
           zoom: 13,
-          mapTypeId: mapType,
-          styles: [
-            {
-              featureType: 'poi',
-              elementType: 'labels',
-              stylers: [{ visibility: 'off' }]
-            }
-          ],
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          gestureHandling: 'greedy',
           zoomControl: false,
-          scrollwheel: true,
-          disableDoubleClickZoom: true,
-          clickableIcons: false
+          attributionControl: false,
+          dragging: true,
+          touchZoom: true,
+          doubleClickZoom: true,
+          scrollWheelZoom: true,
+          boxZoom: true,
+          keyboard: true
+        });
+
+        // Add tile layer based on map type
+        const tileLayer = mapType === 'satellite' 
+          ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+              attribution: '© Esri',
+              maxZoom: 19
+            })
+          : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors',
+              maxZoom: 19
+            });
+
+        tileLayer.addTo(mapInstance);
+
+        // Add click listener for adding new trees
+        mapInstance.on('click', (e) => {
+          if (onTreeSelectRef.current) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            
+            // Check if click was on existing tree marker
+            const clickedMarker = markersRef.current.find(marker => {
+              const markerPos = marker.getLatLng();
+              const distance = mapInstance.distance(e.latlng, markerPos);
+              return distance < 30; // 30 meters tolerance for divIcon markers
+            });
+            
+            if (clickedMarker) {
+              console.log('Clicked on existing tree marker, not adding new marker');
+              return; // Don't add new marker if clicking on existing tree
+            }
+            
+            // Remove previous click marker if exists
+            if (clickMarkerRef.current) {
+              mapInstance.removeLayer(clickMarkerRef.current);
+            }
+            
+            // Close any existing tree popup
+            setShowTreePopup(false);
+            
+            // Add blue marker at clicked location
+            console.log('Adding blue click marker at:', lat, lng);
+            const clickMarker = L.circleMarker([lat, lng], {
+              radius: 10,
+              fillColor: '#3b82f6',
+              color: '#ffffff',
+              weight: 3,
+              opacity: 1,
+              fillOpacity: 0.9,
+              className: 'custom-marker'
+            }).addTo(mapInstance);
+
+            clickMarkerRef.current = clickMarker;
+
+            // Call the callback with the exact coordinates
+            if (onTreeSelectRef.current) {
+              onTreeSelectRef.current(lat, lng);
+            }
+          }
         });
 
         setMap(mapInstance);
-
-        // Add click listener for adding new trees
-        if (onTreeSelectRef.current) {
-          mapInstance.addListener('click', (event: any) => {
-            if (event.latLng) {
-              const lat = event.latLng.lat();
-              const lng = event.latLng.lng();
-              
-              // Remove previous click marker if exists
-              if (currentClickMarker) {
-                currentClickMarker.setMap(null);
-              }
-              
-              // Close any existing tree popup
-              setShowTreePopup(false);
-              
-              // Add blue marker at clicked location
-              const clickMarker = new (window as any).google.maps.Marker({
-                position: event.latLng,
-                map: mapInstance,
-                title: 'Nowe zgłoszenie',
-                icon: {
-                  path: (window as any).google.maps.SymbolPath.CIRCLE,
-                  scale: 12,
-                  fillColor: '#3b82f6',
-                  fillOpacity: 0.9,
-                  strokeColor: '#ffffff',
-                  strokeWeight: 3
-                }
-              });
-
-              // Close previous info window if exists
-              if (currentInfoWindow) {
-                currentInfoWindow.close();
-                setCurrentInfoWindow(null);
-              }
-
-              // Store the new marker
-              setCurrentClickMarker(clickMarker);
-
-              // Call the callback with the exact coordinates
-              if (onTreeSelectRef.current) {
-                onTreeSelectRef.current(lat, lng);
-              }
-            }
-          });
-        }
-
         setError(null);
+
+        // Add custom styles for z-index
+        const addCustomMarkerStyles = () => {
+          const style = document.createElement('style');
+          style.textContent = `
+            .leaflet-control-container {
+              z-index: 1000 !important;
+            }
+            .leaflet-popup {
+              z-index: 1001 !important;
+            }
+            .leaflet-marker-icon {
+              z-index: 9999 !important;
+              position: relative !important;
+            }
+            .leaflet-div-icon {
+              background: transparent !important;
+              border: none !important;
+              z-index: 9999 !important;
+            }
+            .leaflet-interactive {
+              cursor: pointer !important;
+            }
+            .leaflet-circle-marker {
+              pointer-events: auto !important;
+              z-index: 9999 !important;
+            }
+            .custom-marker, .tree-marker {
+              pointer-events: auto !important;
+              z-index: 9999 !important;
+              position: relative !important;
+            }
+            .custom-marker div, .tree-marker div {
+              pointer-events: auto !important;
+              cursor: pointer !important;
+              z-index: 9999 !important;
+              position: relative !important;
+            }
+            .leaflet-marker-shadow {
+              display: none !important;
+            }
+            .leaflet-default-icon-path {
+              display: none !important;
+            }
+            .leaflet-marker-icon:not(.custom-marker):not(.tree-marker) {
+              display: none !important;
+            }
+            img[src*="marker-icon"] {
+              display: none !important;
+            }
+            .leaflet-marker-icon[src*="marker-icon"] {
+              display: none !important;
+            }
+            .leaflet-marker-icon[src*="marker-icon.png"] {
+              display: none !important;
+            }
+            .leaflet-marker-icon[src*="marker-icon-2x.png"] {
+              display: none !important;
+            }
+            .leaflet-marker-icon[src*="marker-shadow.png"] {
+              display: none !important;
+            }
+            /* Hide all default marker images */
+            .leaflet-marker-icon img {
+              display: none !important;
+            }
+            /* Show only our custom markers */
+            .custom-marker, .tree-marker {
+              display: block !important;
+            }
+            .custom-marker div, .tree-marker div {
+              display: block !important;
+            }
+            .leaflet-marker-pane {
+              z-index: 9999 !important;
+            }
+            .leaflet-overlay-pane {
+              z-index: 9999 !important;
+            }
+          `;
+          document.head.appendChild(style);
+        };
+
+        addCustomMarkerStyles();
+
+        // Force map to invalidate size after a short delay
+        setTimeout(() => {
+          mapInstance.invalidateSize();
+        }, 100);
+
       } catch (error) {
-        console.error('Error loading Google Maps:', error);
+        console.error('Error loading Leaflet map:', error);
         setError('Nie udało się załadować mapy. Sprawdź połączenie internetowe.');
       }
     };
 
     initMap();
-  }, []); // Remove onTreeSelect to prevent map restart
-
-  useEffect(() => {
-    if (map) {
-      map.setMapTypeId(mapType);
-    }
-  }, [map, mapType]);
+    
+    // Cleanup function
+    return () => {
+      if (map) {
+        map.remove();
+        setMap(null);
+      }
+    };
+  }, [mapType]); // Add mapType as dependency
 
   useEffect(() => {
     const loadTrees = async () => {
@@ -186,41 +302,36 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         
         if (map) {
           // Clear existing markers
-          markersRef.current.forEach(marker => marker.setMap(null));
+          markersRef.current.forEach(marker => map.removeLayer(marker));
           markersRef.current = [];
 
           // Add markers for trees
-          treesData.forEach(tree => {
-            const marker = new (window as any).google.maps.Marker({
-              position: { lat: tree.location.lat, lng: tree.location.lng },
-              map: map,
-              title: `${tree.species} (${tree.speciesLatin})`,
-              icon: {
-                path: (window as any).google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: getMarkerColor(),
-                fillOpacity: 0.8,
-                strokeColor: '#ffffff',
-                strokeWeight: 2
-              }
-            });
+          console.log('Adding markers for', treesData.length, 'trees');
+          treesData.forEach((tree, index) => {
+            console.log(`Adding marker ${index + 1} at:`, tree.location.lat, tree.location.lng);
+            
+            // Create custom marker using circleMarker instead
+            const marker = L.circleMarker([tree.location.lat, tree.location.lng], {
+              radius: 10,
+              fillColor: '#10b981',
+              color: '#ffffff',
+              weight: 3,
+              opacity: 1,
+              fillOpacity: 0.9,
+              className: 'tree-marker'
+            }).addTo(map);
 
-            marker.addListener('click', (event: any) => {
+            marker.on('click', (e) => {
               // Prevent event bubbling to map click
-              event.stop();
-              
-              // Close previous info window
-              if (currentInfoWindow) {
-                currentInfoWindow.close();
-              }
+              e.originalEvent.stopPropagation();
               
               // Close any existing tree popup
               setShowTreePopup(false);
               
               // Clear any existing click marker
-              if (currentClickMarker) {
-                currentClickMarker.setMap(null);
-                setCurrentClickMarker(null);
+              if (clickMarkerRef.current) {
+                map.removeLayer(clickMarkerRef.current);
+                clickMarkerRef.current = null;
               }
               
               // Small delay to prevent double-click issues
@@ -248,20 +359,14 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
     }
   }, [map, isAuthenticated]);
 
-  const getMarkerColor = () => {
-    // All trees are now considered approved/green
-    return '#10b981'; // Green for all trees
-  };
-
-
 
   const handleTreePopupClose = () => {
     setShowTreePopup(false);
     setSelectedTree(null);
     // Clear click marker when popup is closed
-    if (currentClickMarker) {
-      currentClickMarker.setMap(null);
-      setCurrentClickMarker(null);
+    if (clickMarkerRef.current) {
+      map?.removeLayer(clickMarkerRef.current);
+      clickMarkerRef.current = null;
     }
   };
 
@@ -290,7 +395,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       <div ref={mapRef} className="h-full w-full min-h-0" style={{ minHeight: '100%' }} />
       
       {/* Map controls */}
-      <div className="absolute top-2 right-2 flex flex-col space-y-2">
+      <div className="absolute top-2 right-2 flex flex-col space-y-2 z-[1000]">
         <GlassButton
           onClick={() => setMapType(mapType === 'roadmap' ? 'satellite' : 'roadmap')}
           title={mapType === 'roadmap' ? 'Przełącz na widok satelitarny' : 'Przełącz na mapę drogową'}
@@ -305,7 +410,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       </div>
 
       {/* Tree count indicator and Legend - Left side */}
-      <div className="absolute bottom-2 left-2 sm:bottom-2 sm:left-2 space-y-2">
+      <div className="absolute bottom-2 left-2 sm:bottom-2 sm:left-2 space-y-2 z-[1000]">
         {/* Tree count indicator */}
         <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm px-2 py-1 sm:px-5 sm:py-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50">
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">

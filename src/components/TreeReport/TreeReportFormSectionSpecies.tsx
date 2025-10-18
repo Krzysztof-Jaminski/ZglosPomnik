@@ -362,33 +362,6 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
           </div>
         </div>
 
-        {/* Map Screenshot Preview */}
-        {mapScreenshot && (
-          <div className="mt-3">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Screenshot mapy:
-            </label>
-            <div className="relative">
-              <img
-                src={URL.createObjectURL(mapScreenshot)}
-                alt="Map screenshot"
-                className="w-full h-32 sm:h-40 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
-              />
-              {onRegenerateScreenshot && (
-                <button
-                  type="button"
-                  onClick={onRegenerateScreenshot}
-                  className="absolute bottom-2 right-2 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-lg"
-                >
-                  🔄 Regeneruj
-                </button>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Widok satelitarny lokalizacji drzewa
-            </p>
-          </div>
-        )}
 
       </div>
     </div>
