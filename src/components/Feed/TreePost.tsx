@@ -106,18 +106,10 @@ export const TreePost: React.FC<TreePostProps> = ({
                         {/* Header with user info and actions */}
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
-                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center overflow-hidden">
-                              {post.userData.avatar ? (
-                                <img 
-                                  src={post.userData.avatar} 
-                                  alt={post.userData.userName}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <span className="text-green-600 dark:text-green-400 font-semibold text-sm">
-                                  {post.userData.userName.charAt(0).toUpperCase()}
-                                </span>
-                              )}
+                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                              <span className="text-green-600 dark:text-green-400 font-semibold text-sm">
+                                {post.userData.userName.charAt(0).toUpperCase()}
+                              </span>
                             </div>
                             <div>
                               <div className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">

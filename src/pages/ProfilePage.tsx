@@ -25,7 +25,6 @@ export const ProfilePage: React.FC = () => {
   const userData = fullUserData ? {
     name: fullUserData.name,
     email: fullUserData.email,
-    avatar: fullUserData.avatar,
     registrationDate: fullUserData.registrationDate,
     submissionsCount: fullUserData.statistics.submissionCount,
     applicationsCount: fullUserData.statistics.applicationCount
@@ -41,8 +40,6 @@ export const ProfilePage: React.FC = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(additionalData);
-  const [editAvatar, setEditAvatar] = useState('');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -110,7 +107,6 @@ export const ProfilePage: React.FC = () => {
           postalCode: userData.postalCode || 'Nie podano'
         });
         
-        setEditAvatar(userData.avatar || '');
 
         // Zapisz zaktualizowane dane do localStorage
         localStorage.setItem('user_data', JSON.stringify(userData));
@@ -174,8 +170,7 @@ export const ProfilePage: React.FC = () => {
         phone: updateData.phone,
         address: updateData.address,
         city: updateData.city,
-        postalCode: updateData.postalCode,
-        avatarFile: avatarFile || undefined // Przekazujemy plik bezpośrednio
+        postalCode: updateData.postalCode
       });
       
       setFullUserData(updatedUserData);
@@ -202,8 +197,6 @@ export const ProfilePage: React.FC = () => {
   const handleCancelEdit = () => {
     triggerLightHaptic();
     setEditData(additionalData);
-    setEditAvatar(fullUserData?.avatar || '');
-    setAvatarFile(null);
     setIsEditing(false);
   };
 
@@ -214,33 +207,6 @@ export const ProfilePage: React.FC = () => {
     }));
   };
 
-  const handleAvatarFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Sprawdź czy to obraz
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        alert('Proszę wybrać plik obrazu (JPEG, PNG, GIF, WebP)');
-        return;
-      }
-      
-      // Sprawdź rozmiar pliku (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        alert('Plik jest za duży. Maksymalny rozmiar to 5MB');
-        return;
-      }
-      
-      setAvatarFile(file);
-      
-      // Utwórz podgląd
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setEditAvatar(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleLogout = () => {
     triggerMediumHaptic();
@@ -461,16 +427,8 @@ export const ProfilePage: React.FC = () => {
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center overflow-hidden">
-                  {userData.avatar ? (
-                    <img 
-                      src={userData.avatar} 
-                      alt={userData.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
-                  )}
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
                   <h2 className="font-semibold text-gray-900 dark:text-white text-base">
@@ -508,41 +466,6 @@ export const ProfilePage: React.FC = () => {
                 
                 {/* Name and email are no longer editable according to new API */}
                 
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
-                    Avatar
-                  </label>
-                  <div className="space-y-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarFileChange}
-                      className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Obsługiwane formaty: JPEG, PNG, GIF, WebP. Maksymalny rozmiar: 5MB
-                    </p>
-                    {editAvatar && (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Podgląd:</p>
-                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
-                          <img 
-                            src={editAvatar} 
-                            alt="Avatar preview"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              const nextElement = target.nextElementSibling as HTMLElement;
-                              target.style.display = 'none';
-                              if (nextElement) nextElement.style.display = 'flex';
-                            }}
-                          />
-                          <User className="w-6 h-6 text-gray-400 hidden" />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
                 
                 <div>
                   <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">

@@ -341,8 +341,6 @@ class AuthService {
     address?: string;
     city?: string;
     postalCode?: string;
-    avatar?: string;
-    avatarFile?: File;
   }): Promise<User> {
     const token = this.getToken();
     if (!token) {
@@ -366,13 +364,6 @@ class AuthService {
       formData.append('Address', userData.address || '');
       formData.append('City', userData.city || '');
       formData.append('PostalCode', userData.postalCode || '');
-      
-      // Always send image field - null if not provided
-      if (userData.avatarFile) {
-        formData.append('image', userData.avatarFile);
-      } else {
-        formData.append('image', 'null');
-      }
 
       console.log('Updating user data with FormData:');
       for (let [key, value] of formData.entries()) {
