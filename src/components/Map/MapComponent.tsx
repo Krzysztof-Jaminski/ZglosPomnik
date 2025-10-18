@@ -401,6 +401,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           title={mapType === 'roadmap' ? 'Przełącz na widok satelitarny' : 'Przełącz na mapę drogową'}
           variant="primary"
           size="xs"
+          icon={mapType === 'roadmap' ? Satellite : MapIcon}
         >
           <span className="sr-only">
             {mapType === 'roadmap' ? 'Przełącz na widok satelitarny' : 'Przełącz na mapę drogową'}
