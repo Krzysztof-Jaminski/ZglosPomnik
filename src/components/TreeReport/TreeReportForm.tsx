@@ -633,7 +633,6 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             size="sm"
             disabled={isSubmitting || !selectedSpecies || photos.length === 0 || !treeName.trim()}
             className="flex-1 sm:flex-none text-sm"
-            icon={TreePine}
           >
             {isSubmitting ? 'Zapisywanie...' : 'Zgłoś drzewo'}
           </GlassButton>

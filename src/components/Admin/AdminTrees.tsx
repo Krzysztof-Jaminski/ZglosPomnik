@@ -84,7 +84,6 @@ export const AdminTrees: React.FC<AdminTreesProps> = ({ trees, onDeleteTree }) =
                   <GlassButton 
                     size="sm" 
                     variant="danger"
-                    icon={Trash2}
                     onClick={() => onDeleteTree(tree.id)}
                     title="Usuń drzewo"
                   >

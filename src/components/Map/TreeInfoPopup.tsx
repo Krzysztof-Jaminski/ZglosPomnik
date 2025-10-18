@@ -247,7 +247,6 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
               variant="primary" 
               size="xs" 
               className="flex-1"
-              icon={ArrowRight}
             >
               Zobacz
             </GlassButton>

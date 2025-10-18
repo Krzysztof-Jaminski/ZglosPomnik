@@ -606,7 +606,6 @@ export const ApplicationsPage: React.FC = () => {
                   disabled={isLoading}
                   variant="primary"
                   size="sm"
-                  icon={isLoading ? Loader2 : ArrowRight}
                   className="w-full text-sm"
                 >
                   {isLoading ? 'Ładowanie wniosku...' : 'Kontynuuj poprzedni wniosek'}
@@ -842,7 +841,6 @@ export const ApplicationsPage: React.FC = () => {
                   variant="primary"
                   size="sm"
                   className="w-full"
-                  icon={ExternalLink}
                 >
                   Przejdź do ePUAP
                 </GlassButton>
@@ -861,7 +859,6 @@ export const ApplicationsPage: React.FC = () => {
                   variant="secondary"
                   size="sm"
                   className="w-full"
-                  icon={Download}
                 >
                   Pobierz PDF
                 </GlassButton>

@@ -84,7 +84,6 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ users, onDeleteUser }) =
                 <GlassButton 
                   size="sm" 
                   variant="danger" 
-                  icon={Trash2}
                   onClick={() => onDeleteUser(user.id)}
                   title="Usuń użytkownika"
                 >

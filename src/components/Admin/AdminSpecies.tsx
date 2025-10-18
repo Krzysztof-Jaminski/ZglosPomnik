@@ -32,7 +32,6 @@ export const AdminSpecies: React.FC<AdminSpeciesProps> = ({
               onClick={onAddSpecies}
               variant="primary"
               size="sm"
-              icon={Plus}
             >
               <span className="text-sm">Dodaj gatunek</span>
             </GlassButton>
@@ -60,7 +59,6 @@ export const AdminSpecies: React.FC<AdminSpeciesProps> = ({
             onClick={onAddSpecies}
             variant="primary"
             size="sm"
-            icon={Plus}
           >
             <span className="text-sm">Dodaj gatunek</span>
           </GlassButton>
@@ -105,7 +103,6 @@ export const AdminSpecies: React.FC<AdminSpeciesProps> = ({
                   <GlassButton 
                     size="sm" 
                     variant="secondary"
-                    icon={Edit}
                     onClick={() => onEditSpecies(spec)}
                     title="Edytuj gatunek"
                   >
@@ -114,7 +111,6 @@ export const AdminSpecies: React.FC<AdminSpeciesProps> = ({
                   <GlassButton 
                     size="sm" 
                     variant="danger"
-                    icon={Trash2}
                     onClick={() => onDeleteSpecies(spec.id)}
                     title="Usuń gatunek"
                   >

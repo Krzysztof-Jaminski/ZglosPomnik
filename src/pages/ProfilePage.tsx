@@ -440,15 +440,14 @@ export const ProfilePage: React.FC = () => {
                 </div>
               </div>
               
-              <GlassButton
-                onClick={() => {
-                  triggerLightHaptic();
-                  setIsEditing(!isEditing);
-                }}
-                variant="secondary"
-                size="sm"
-                icon={isEditing ? X : Edit}
-              >
+                <GlassButton
+                  onClick={() => {
+                    triggerLightHaptic();
+                    setIsEditing(!isEditing);
+                  }}
+                  variant="secondary"
+                  size="sm"
+                >
                 <span className="text-sm">
                   {isEditing ? 'Anuluj' : 'Edytuj'}
                 </span>
@@ -531,7 +530,6 @@ export const ProfilePage: React.FC = () => {
                     variant="primary"
                     size="sm"
                     className="flex-1"
-                    icon={Save}
                     disabled={isSaving}
                   >
                     <span className="text-sm">
@@ -635,7 +633,6 @@ export const ProfilePage: React.FC = () => {
                 variant="secondary"
                 size="xs"
                 className="w-full text-left py-1"
-                icon={Key}
               >
                 <span className="text-gray-700 dark:text-gray-300 text-xs">
                   Zmień hasło
@@ -650,7 +647,6 @@ export const ProfilePage: React.FC = () => {
                 variant="secondary"
                 size="xs"
                 className="w-full text-left py-1"
-                icon={Shield}
               >
                 <span className="text-gray-700 dark:text-gray-300 text-xs">
                   Panel administratora
@@ -662,7 +658,6 @@ export const ProfilePage: React.FC = () => {
                 variant="danger"
                 size="xs"
                 className="w-full text-left py-1"
-                icon={LogOut}
               >
                 <span className="text-gray-700 dark:text-gray-300 text-xs">
                   Wyloguj się
@@ -852,7 +847,6 @@ export const ProfilePage: React.FC = () => {
                   variant="primary"
                   size="sm"
                   className="flex-1"
-                  icon={Save}
                   disabled={isChangingPassword}
                 >
                   <span className="text-sm">
@@ -895,7 +889,6 @@ export const ProfilePage: React.FC = () => {
                   variant="danger"
                   size="sm"
                   className="flex-1"
-                  icon={LogOut}
                 >
                   <span className="text-xs">Wyloguj się</span>
                 </GlassButton>

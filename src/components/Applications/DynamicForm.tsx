@@ -629,7 +629,6 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
               disabled={!isFormValid || isSubmitting}
               variant="primary"
               size="sm"
-              icon={isSubmitting ? Loader2 : FileText}
               className={`w-full text-sm ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {isSubmitting ? 'Generowanie PDF...' : 'Wygeneruj PDF'}
