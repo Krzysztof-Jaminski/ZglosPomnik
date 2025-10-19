@@ -21,13 +21,17 @@ export interface MapComponentRef {
 }
 
 export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ onGoToFeed, onTreeSelect }, ref) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<L.Map | null>(null);
+  const roadmapMapRef = useRef<HTMLDivElement>(null);
+  const satelliteMapRef = useRef<HTMLDivElement>(null);
+  const [roadmapMap, setRoadmapMap] = useState<L.Map | null>(null);
+  const [satelliteMap, setSatelliteMap] = useState<L.Map | null>(null);
   const [trees, setTrees] = useState<Tree[]>([]);
   const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
   const [error, setError] = useState<string | null>(null);
-  const markersRef = useRef<L.CircleMarker[]>([]);
+  const roadmapMarkersRef = useRef<L.CircleMarker[]>([]);
+  const satelliteMarkersRef = useRef<L.CircleMarker[]>([]);
   const clickMarkerRef = useRef<L.CircleMarker | null>(null);
+  const lastClickTimeRef = useRef<number>(0);
 
   const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
   const [showTreePopup, setShowTreePopup] = useState(false);
@@ -43,22 +47,32 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
   useImperativeHandle(ref, () => ({
     clearClickMarker: () => {
       if (clickMarkerRef.current) {
-        map?.removeLayer(clickMarkerRef.current);
+        const currentMap = mapType === 'roadmap' ? roadmapMap : satelliteMap;
+        currentMap?.removeLayer(clickMarkerRef.current);
         clickMarkerRef.current = null;
       }
     },
     centerOnLocation: (lat: number, lng: number) => {
-      if (map) {
-        map.setView([lat, lng], 16);
+      const currentMap = mapType === 'roadmap' ? roadmapMap : satelliteMap;
+      if (currentMap) {
+        currentMap.setView([lat, lng], 16);
+        // Sync both maps to the same location
+        if (roadmapMap && satelliteMap) {
+          roadmapMap.setView([lat, lng], 16);
+          satelliteMap.setView([lat, lng], 16);
+        }
       }
     }
   }));
 
+  // Initialize both maps once
   useEffect(() => {
-    const initMap = async () => {
-      if (!mapRef.current) return;
+    const initMaps = async () => {
+      if (!roadmapMapRef.current || !satelliteMapRef.current || roadmapMap || satelliteMap) return;
 
       try {
+        console.log('Initializing both maps...');
+        
         // Ensure Leaflet CSS is loaded
         if (!document.querySelector('link[href*="leaflet"]')) {
           const link = document.createElement('link');
@@ -67,7 +81,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           document.head.appendChild(link);
         }
 
-        // Completely disable default markers by overriding the icon
+        // Disable default markers
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
@@ -75,24 +89,9 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           shadowUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
         });
 
-        // Clear any existing map completely
-        if (map) {
-          map.remove();
-          setMap(null);
-        }
-        
-        // Clear the container
-        if (mapRef.current) {
-          mapRef.current.innerHTML = '';
-        }
-        
-        // Clear any existing map ID
-        if ((mapRef.current as any)._leaflet_id) {
-          (mapRef.current as any)._leaflet_id = null;
-        }
-
-        const mapInstance = L.map(mapRef.current, {
-          center: [50.041187, 21.999121], // Rzeszów center
+        // Create roadmap map in its own container
+        const roadmapInstance = L.map(roadmapMapRef.current, {
+          center: [50.041187, 21.999121],
           zoom: 13,
           zoomControl: false,
           attributionControl: false,
@@ -104,35 +103,161 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           keyboard: true
         });
 
-        // Add tile layer based on map type
-        const tileLayer = mapType === 'satellite' 
-          ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-              attribution: '© Esri',
-              maxZoom: 19
-            })
-          : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Create satellite map in its own container with better settings
+        const satelliteInstance = L.map(satelliteMapRef.current, {
+          center: [50.041187, 21.999121],
+          zoom: 13,
+          zoomControl: false,
+          attributionControl: false,
+          dragging: true,
+          touchZoom: true,
+          doubleClickZoom: true,
+          scrollWheelZoom: true,
+          boxZoom: true,
+          keyboard: true,
+          fadeAnimation: true,
+          zoomAnimation: true,
+          markerZoomAnimation: true
+        });
+
+        // Add tile layers
+        const roadmapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '© OpenStreetMap contributors',
               maxZoom: 19
             });
 
-        tileLayer.addTo(mapInstance);
+        const satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: '© Esri',
+          maxZoom: 19,
+          minZoom: 1,
+          tileSize: 256,
+          zoomOffset: 0,
+          crossOrigin: true,
+          updateWhenZooming: true,
+          updateWhenIdle: true,
+          keepBuffer: 2,
+          maxNativeZoom: 19
+        });
 
-        // Add click listener for adding new trees
+        roadmapTiles.addTo(roadmapInstance);
+        satelliteTiles.addTo(satelliteInstance);
+
+        // Add synchronization between maps with loop prevention
+        let isSyncing = false;
+        
+        const syncMaps = (sourceMap: L.Map, targetMap: L.Map) => {
+          sourceMap.on('moveend', () => {
+            if (isSyncing) return; // Prevent infinite loop
+            
+            isSyncing = true;
+            const center = sourceMap.getCenter();
+            const zoom = sourceMap.getZoom();
+            targetMap.setView([center.lat, center.lng], zoom, { animate: false });
+            
+            // Reset flag after a short delay
+            setTimeout(() => {
+              isSyncing = false;
+            }, 100);
+          });
+        };
+
+        syncMaps(roadmapInstance, satelliteInstance);
+        syncMaps(satelliteInstance, roadmapInstance);
+
+        setRoadmapMap(roadmapInstance);
+        setSatelliteMap(satelliteInstance);
+
+        console.log('Both maps initialized successfully');
+      } catch (error) {
+        console.error('Error initializing maps:', error);
+        setError('Nie udało się załadować mapy. Sprawdź połączenie internetowe.');
+      }
+    };
+
+    initMaps();
+  }, []); // Run only once
+
+  // Switch map visibility when mapType changes
+  useEffect(() => {
+    if (!roadmapMapRef.current || !satelliteMapRef.current) return;
+
+    console.log('Switching map visibility to:', mapType);
+    
+    if (mapType === 'roadmap') {
+      roadmapMapRef.current.style.display = 'block';
+      satelliteMapRef.current.style.display = 'none';
+    } else {
+      roadmapMapRef.current.style.display = 'none';
+      satelliteMapRef.current.style.display = 'block';
+      
+      // Force refresh satellite map when switching to it
+      setTimeout(() => {
+        if (satelliteMap) {
+          satelliteMap.invalidateSize();
+          console.log('Satellite map refreshed');
+        }
+      }, 100);
+    }
+
+    // Sync both maps to the same view
+    const activeMap = mapType === 'roadmap' ? roadmapMap : satelliteMap;
+    const inactiveMap = mapType === 'roadmap' ? satelliteMap : roadmapMap;
+    
+    if (activeMap && inactiveMap) {
+      const center = activeMap.getCenter();
+      const zoom = activeMap.getZoom();
+      inactiveMap.setView([center.lat, center.lng], zoom);
+    }
+  }, [mapType, roadmapMap, satelliteMap]);
+
+  // Cleanup function
+  useEffect(() => {
+    return () => {
+      if (roadmapMap) {
+        roadmapMap.remove();
+      }
+      if (satelliteMap) {
+        satelliteMap.remove();
+      }
+    };
+  }, [roadmapMap, satelliteMap]);
+
+  // Add click listeners to both maps
+  useEffect(() => {
+    if (!roadmapMap || !satelliteMap) return;
+
+    const addClickListeners = (mapInstance: L.Map) => {
+      // Remove any existing click listeners first
+      mapInstance.off('click');
+      
+      // Add click listener for adding new trees with debouncing
         mapInstance.on('click', (e) => {
           if (onTreeSelectRef.current) {
+          const now = Date.now();
+          const timeSinceLastClick = now - lastClickTimeRef.current;
+          
+          // Debounce clicks - ignore clicks within 500ms
+          if (timeSinceLastClick < 500) {
+            console.log('Click ignored due to debouncing');
+            return;
+          }
+          
+          lastClickTimeRef.current = now;
+          
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
             
             // Check if click was on existing tree marker
-            const clickedMarker = markersRef.current.find(marker => {
+          const currentMarkers = mapType === 'roadmap' ? roadmapMarkersRef.current : satelliteMarkersRef.current;
+          const clickedMarker = currentMarkers.find(marker => {
               const markerPos = marker.getLatLng();
               const distance = mapInstance.distance(e.latlng, markerPos);
-              return distance < 30; // 30 meters tolerance for divIcon markers
+            return distance < 30; // 30 meters tolerance
             });
             
             if (clickedMarker) {
               console.log('Clicked on existing tree marker, not adding new marker');
-              return; // Don't add new marker if clicking on existing tree
+            return;
             }
             
             // Remove previous click marker if exists
@@ -163,116 +288,13 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
             }
           }
         });
-
-        setMap(mapInstance);
-        setError(null);
-
-        // Add custom styles for z-index
-        const addCustomMarkerStyles = () => {
-          const style = document.createElement('style');
-          style.textContent = `
-            .leaflet-control-container {
-              z-index: 1000 !important;
-            }
-            .leaflet-popup {
-              z-index: 1001 !important;
-            }
-            .leaflet-marker-icon {
-              z-index: 9999 !important;
-              position: relative !important;
-            }
-            .leaflet-div-icon {
-              background: transparent !important;
-              border: none !important;
-              z-index: 9999 !important;
-            }
-            .leaflet-interactive {
-              cursor: pointer !important;
-            }
-            .leaflet-circle-marker {
-              pointer-events: auto !important;
-              z-index: 9999 !important;
-            }
-            .custom-marker, .tree-marker {
-              pointer-events: auto !important;
-              z-index: 9999 !important;
-              position: relative !important;
-            }
-            .custom-marker div, .tree-marker div {
-              pointer-events: auto !important;
-              cursor: pointer !important;
-              z-index: 9999 !important;
-              position: relative !important;
-            }
-            .leaflet-marker-shadow {
-              display: none !important;
-            }
-            .leaflet-default-icon-path {
-              display: none !important;
-            }
-            .leaflet-marker-icon:not(.custom-marker):not(.tree-marker) {
-              display: none !important;
-            }
-            img[src*="marker-icon"] {
-              display: none !important;
-            }
-            .leaflet-marker-icon[src*="marker-icon"] {
-              display: none !important;
-            }
-            .leaflet-marker-icon[src*="marker-icon.png"] {
-              display: none !important;
-            }
-            .leaflet-marker-icon[src*="marker-icon-2x.png"] {
-              display: none !important;
-            }
-            .leaflet-marker-icon[src*="marker-shadow.png"] {
-              display: none !important;
-            }
-            /* Hide all default marker images */
-            .leaflet-marker-icon img {
-              display: none !important;
-            }
-            /* Show only our custom markers */
-            .custom-marker, .tree-marker {
-              display: block !important;
-            }
-            .custom-marker div, .tree-marker div {
-              display: block !important;
-            }
-            .leaflet-marker-pane {
-              z-index: 9999 !important;
-            }
-            .leaflet-overlay-pane {
-              z-index: 9999 !important;
-            }
-          `;
-          document.head.appendChild(style);
-        };
-
-        addCustomMarkerStyles();
-
-        // Force map to invalidate size after a short delay
-        setTimeout(() => {
-          mapInstance.invalidateSize();
-        }, 100);
-
-      } catch (error) {
-        console.error('Error loading Leaflet map:', error);
-        setError('Nie udało się załadować mapy. Sprawdź połączenie internetowe.');
-      }
     };
 
-    initMap();
-    
-    // Cleanup function
-    return () => {
-      if (map) {
-        map.remove();
-        setMap(null);
-      }
-    };
-  }, [mapType]); // Add mapType as dependency
+    addClickListeners(roadmapMap);
+    addClickListeners(satelliteMap);
+  }, [roadmapMap, satelliteMap, mapType]);
 
+  // Load trees and add markers to both maps
   useEffect(() => {
     const loadTrees = async () => {
       try {
@@ -282,36 +304,31 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         console.log('isAuthenticated:', isAuthenticated);
         
         if (isAuthenticated) {
-          // Użyj prawdziwego API dla zalogowanych użytkowników
           console.log('Loading trees from API...');
           treesData = await treesService.getTrees();
           console.log('API returned trees:', treesData.length);
         } else {
-          // Użyj mock data dla niezalogowanych użytkowników
           console.log('Loading mock trees...');
           treesData = await api.getTrees();
           console.log('Mock returned trees:', treesData.length);
         }
         
-        console.log('Final trees data:', treesData);
-        console.log('First tree details:', treesData[0]);
-        if (treesData[0]) {
-          console.log('First tree images:', treesData[0].imageUrls);
-        }
         setTrees(treesData);
         
-        if (map) {
-          // Clear existing markers
-          markersRef.current.forEach(marker => map.removeLayer(marker));
-          markersRef.current = [];
+        if (roadmapMap && satelliteMap) {
+          // Clear existing markers from both maps
+          roadmapMarkersRef.current.forEach(marker => roadmapMap.removeLayer(marker));
+          satelliteMarkersRef.current.forEach(marker => satelliteMap.removeLayer(marker));
+          roadmapMarkersRef.current = [];
+          satelliteMarkersRef.current = [];
 
-          // Add markers for trees
+          // Add markers to both maps
           console.log('Adding markers for', treesData.length, 'trees');
           treesData.forEach((tree, index) => {
             console.log(`Adding marker ${index + 1} at:`, tree.location.lat, tree.location.lng);
             
-            // Create custom marker using circleMarker instead
-            const marker = L.circleMarker([tree.location.lat, tree.location.lng], {
+            // Create markers for both maps
+            const roadmapMarker = L.circleMarker([tree.location.lat, tree.location.lng], {
               radius: 10,
               fillColor: '#10b981',
               color: '#ffffff',
@@ -319,53 +336,61 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
               opacity: 1,
               fillOpacity: 0.9,
               className: 'tree-marker'
-            }).addTo(map);
+            }).addTo(roadmapMap);
 
+            const satelliteMarker = L.circleMarker([tree.location.lat, tree.location.lng], {
+              radius: 10,
+              fillColor: '#10b981',
+              color: '#ffffff',
+              weight: 3,
+              opacity: 1,
+              fillOpacity: 0.9,
+              className: 'tree-marker'
+            }).addTo(satelliteMap);
+
+            // Add click handlers to both markers
+            const addMarkerClickHandler = (marker: L.CircleMarker, mapInstance: L.Map) => {
             marker.on('click', (e) => {
-              // Prevent event bubbling to map click
               e.originalEvent.stopPropagation();
               
-              // Close any existing tree popup
               setShowTreePopup(false);
               
-              // Clear any existing click marker
               if (clickMarkerRef.current) {
-                map.removeLayer(clickMarkerRef.current);
+                  mapInstance.removeLayer(clickMarkerRef.current);
                 clickMarkerRef.current = null;
               }
               
-              // Small delay to prevent double-click issues
               setTimeout(() => {
                 setSelectedTree(tree);
                 setShowTreePopup(true);
               }, 50);
             });
+            };
 
-            markersRef.current.push(marker);
+            addMarkerClickHandler(roadmapMarker, roadmapMap);
+            addMarkerClickHandler(satelliteMarker, satelliteMap);
+
+            roadmapMarkersRef.current.push(roadmapMarker);
+            satelliteMarkersRef.current.push(satelliteMarker);
           });
         }
       } catch (error) {
         console.error('Error loading trees:', error);
-        console.log('Error details:', {
-          message: error instanceof Error ? error.message : 'Unknown error',
-          isAuthenticated,
-          error
-        });
       }
     };
 
-    if (map) {
+    if (roadmapMap && satelliteMap) {
       loadTrees();
     }
-  }, [map, isAuthenticated]);
-
+  }, [roadmapMap, satelliteMap, isAuthenticated]);
 
   const handleTreePopupClose = () => {
     setShowTreePopup(false);
     setSelectedTree(null);
     // Clear click marker when popup is closed
     if (clickMarkerRef.current) {
-      map?.removeLayer(clickMarkerRef.current);
+      const currentMap = mapType === 'roadmap' ? roadmapMap : satelliteMap;
+      currentMap?.removeLayer(clickMarkerRef.current);
       clickMarkerRef.current = null;
     }
   };
@@ -392,7 +417,19 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      <div ref={mapRef} className="h-full w-full min-h-0" style={{ minHeight: '100%' }} />
+      {/* Roadmap container */}
+      <div 
+        ref={roadmapMapRef} 
+        className="h-full w-full min-h-0" 
+        style={{ minHeight: '100%', display: mapType === 'roadmap' ? 'block' : 'none' }} 
+      />
+      
+      {/* Satellite container */}
+      <div 
+        ref={satelliteMapRef} 
+        className="h-full w-full min-h-0" 
+        style={{ minHeight: '100%', display: mapType === 'satellite' ? 'block' : 'none' }} 
+      />
       
       {/* Map controls */}
       <div className="absolute top-2 right-2 flex flex-col space-y-2 z-[1000]">
