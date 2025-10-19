@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Edit, X, Calendar, MapPin, Building, Hash, Check, X as XIcon } from 'lucide-react';
+import { User, Mail, Phone, Edit, X, Calendar, MapPin, Building, Hash, Check, X as XIcon, Building2 } from 'lucide-react';
 import { GlassButton } from '../UI/GlassButton';
 
 interface AdditionalUserData {
@@ -9,6 +9,15 @@ interface AdditionalUserData {
   postalCode: string;
 }
 
+interface OrganizationData {
+  name: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  phone: string;
+  email: string;
+}
+
 interface ProfileInfoProps {
   userData: {
     name: string;
@@ -16,11 +25,14 @@ interface ProfileInfoProps {
     registrationDate: string;
   };
   additionalData: AdditionalUserData;
+  organizationData?: OrganizationData;
   isEditing: boolean;
   editData: AdditionalUserData;
+  editOrganizationData?: OrganizationData;
   isSaving: boolean;
   onEditToggle: () => void;
   onInputChange: (field: keyof AdditionalUserData, value: string) => void;
+  onOrganizationInputChange?: (field: keyof OrganizationData, value: string) => void;
   onSave: () => void;
   onCancel: () => void;
   className?: string;
@@ -31,16 +43,23 @@ interface ValidationState {
   address: { isValid: boolean; message: string };
   city: { isValid: boolean; message: string };
   postalCode: { isValid: boolean; message: string };
+  organizationPhone: { isValid: boolean; message: string };
+  organizationAddress: { isValid: boolean; message: string };
+  organizationCity: { isValid: boolean; message: string };
+  organizationPostalCode: { isValid: boolean; message: string };
 }
 
 export const ProfileInfo: React.FC<ProfileInfoProps> = ({
   userData,
   additionalData,
+  organizationData,
   isEditing,
   editData,
+  editOrganizationData,
   isSaving,
   onEditToggle,
   onInputChange,
+  onOrganizationInputChange,
   onSave,
   onCancel,
   className = ''
@@ -50,7 +69,11 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
     phone: { isValid: true, message: '' },
     address: { isValid: true, message: '' },
     city: { isValid: true, message: '' },
-    postalCode: { isValid: true, message: '' }
+    postalCode: { isValid: true, message: '' },
+    organizationPhone: { isValid: true, message: '' },
+    organizationAddress: { isValid: true, message: '' },
+    organizationCity: { isValid: true, message: '' },
+    organizationPostalCode: { isValid: true, message: '' }
   });
 
   const validateField = (fieldName: keyof AdditionalUserData, value: string) => {
@@ -114,9 +137,77 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
     }
   };
 
+  const validateOrganizationField = (fieldName: keyof OrganizationData, value: string) => {
+    switch (fieldName) {
+      case 'phone':
+        // Telefon organizacji - te same wymagania co dla użytkownika
+        const phoneRegex = /^(\+48\s?)?(\d{3}\s?){2}\d{3}$|^\d{9}$|^(\+\d{1,3}\s?)?\d{3,4}\s?\d{3,4}\s?\d{3,4}$/;
+        const phoneValid = value === '' || (phoneRegex.test(value) && value.length <= 20);
+        
+        let phoneMessage = '';
+        if (value && !phoneValid) {
+          if (value.length > 20) {
+            phoneMessage = 'Numer telefonu nie może mieć więcej niż 20 znaków';
+          } else if (!phoneRegex.test(value)) {
+            phoneMessage = 'Nieprawidłowy format numeru telefonu';
+          }
+        }
+        
+        setValidation(prev => ({
+          ...prev,
+          organizationPhone: {
+            isValid: phoneValid,
+            message: phoneMessage
+          }
+        }));
+        break;
+        
+      case 'address':
+        const addressValid = value.length <= 100;
+        setValidation(prev => ({
+          ...prev,
+          organizationAddress: {
+            isValid: addressValid,
+            message: addressValid ? '' : 'Adres nie może mieć więcej niż 100 znaków'
+          }
+        }));
+        break;
+        
+      case 'city':
+        const cityValid = value.length <= 50;
+        setValidation(prev => ({
+          ...prev,
+          organizationCity: {
+            isValid: cityValid,
+            message: cityValid ? '' : 'Miasto nie może mieć więcej niż 50 znaków'
+          }
+        }));
+        break;
+        
+      case 'postalCode':
+        const postalCodeRegex = /^\d{2}-\d{3}$|^\d{5}$/;
+        const postalCodeValid = value === '' || postalCodeRegex.test(value);
+        setValidation(prev => ({
+          ...prev,
+          organizationPostalCode: {
+            isValid: postalCodeValid,
+            message: postalCodeValid ? '' : 'Nieprawidłowy format kodu pocztowego (np. 12-345 lub 12345)'
+          }
+        }));
+        break;
+    }
+  };
+
   const handleInputChange = (field: keyof AdditionalUserData, value: string) => {
     onInputChange(field, value);
     validateField(field, value);
+  };
+
+  const handleOrganizationInputChange = (field: keyof OrganizationData, value: string) => {
+    if (onOrganizationInputChange) {
+      onOrganizationInputChange(field, value);
+    }
+    validateOrganizationField(field, value);
   };
 
   const handleFieldFocus = (fieldName: string) => {
@@ -378,6 +469,156 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
               </div>
             )}
             
+            {/* Sekcja edycji organizacji */}
+            {editOrganizationData && onOrganizationInputChange && (
+              <div className="mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Building2 className="w-5 h-5 text-blue-400" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                    Edycja organizacji
+                  </h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={editOrganizationData.name}
+                        onChange={(e) => onOrganizationInputChange('name', e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200"
+                        placeholder="Nazwa organizacji"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={editOrganizationData.address}
+                        onChange={(e) => onOrganizationInputChange('address', e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200"
+                        placeholder="Adres organizacji"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          value={editOrganizationData.city}
+                          onChange={(e) => onOrganizationInputChange('city', e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200"
+                          placeholder="Miasto"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="relative">
+                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          value={editOrganizationData.postalCode}
+                          onChange={(e) => onOrganizationInputChange('postalCode', e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200"
+                          placeholder="12-345"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="tel"
+                          value={editOrganizationData.phone}
+                          onChange={(e) => handleOrganizationInputChange('phone', e.target.value)}
+                          onFocus={() => handleFieldFocus('organizationPhone')}
+                          onBlur={handleFieldBlur}
+                          className={`w-full pl-10 pr-4 py-3 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 ${
+                            editOrganizationData.phone && !validation.organizationPhone.isValid 
+                              ? 'border-red-500/50' 
+                              : editOrganizationData.phone && validation.organizationPhone.isValid 
+                                ? 'border-green-500/50' 
+                                : 'border-gray-600/50'
+                          }`}
+                          placeholder="+48 123 456 789"
+                        />
+                        {editOrganizationData.phone && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            {validation.organizationPhone.isValid ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <XIcon className="w-4 h-4 text-red-500" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="email"
+                          value={editOrganizationData.email}
+                          onChange={(e) => onOrganizationInputChange('email', e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200"
+                          placeholder="email@organizacja.pl"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Panel walidacji telefonu organizacji - tylko gdy pole jest aktywne */}
+            {focusedField === 'organizationPhone' && editOrganizationData?.phone && (
+              <div className="mt-4 p-3 bg-gray-800/30 rounded-lg border border-gray-600/30">
+                <h4 className="text-xs font-medium text-gray-300 mb-2">
+                  Wymagania numeru telefonu organizacji:
+                </h4>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <Check className="w-3 h-3 text-green-500" />
+                    <span className="text-xs text-green-400">
+                      Pole opcjonalne (można zostawić puste)
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {editOrganizationData.phone.length <= 20 ? (
+                      <Check className="w-3 h-3 text-green-500" />
+                    ) : (
+                      <XIcon className="w-3 h-3 text-red-500" />
+                    )}
+                    <span className={`text-xs ${editOrganizationData.phone.length <= 20 ? 'text-green-400' : 'text-red-400'}`}>
+                      Maksymalnie 20 znaków
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {/^(\+48\s?)?(\d{3}\s?){2}\d{3}$|^\d{9}$|^(\+\d{1,3}\s?)?\d{3,4}\s?\d{3,4}\s?\d{3,4}$/.test(editOrganizationData.phone) ? (
+                      <Check className="w-3 h-3 text-green-500" />
+                    ) : (
+                      <XIcon className="w-3 h-3 text-red-500" />
+                    )}
+                    <span className={`text-xs ${/^(\+48\s?)?(\d{3}\s?){2}\d{3}$|^\d{9}$|^(\+\d{1,3}\s?)?\d{3,4}\s?\d{3,4}\s?\d{3,4}$/.test(editOrganizationData.phone) ? 'text-green-400' : 'text-red-400'}`}>
+                      Prawidłowy format: +48 123 456 789, 123456789, +1 234 567 890
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="flex space-x-3 pt-4">
               <GlassButton
                 onClick={onCancel}
@@ -440,6 +681,56 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
                 Dołączył: {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
               </span>
             </div>
+            
+            {/* Sekcja organizacji */}
+            {organizationData && (
+              <div className="mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Building2 className="w-5 h-5 text-blue-400" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                    Organizacja
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3">
+                    <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Nazwa: {organizationData.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Adres: {organizationData.address}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Building className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Miasto: {organizationData.city}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Hash className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Kod pocztowy: {organizationData.postalCode}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Telefon: {organizationData.phone}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-300 text-base">
+                      Email: {organizationData.email}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

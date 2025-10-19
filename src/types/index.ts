@@ -88,12 +88,27 @@ export interface User {
   email: string;
   name: string;
   avatar: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  postalCode: string | null;
   registrationDate: string;
   role: string;
+  organization: Organization | null;
   statistics: {
     submissionCount: number;
     applicationCount: number;
   };
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  postalCode: string | null;
+  phone: string | null;
+  email: string | null;
 }
 
 

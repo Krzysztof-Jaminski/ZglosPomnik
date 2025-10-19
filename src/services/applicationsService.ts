@@ -130,16 +130,16 @@ export const applicationsService = {
   },
 
   // Create application
-  async createApplication(templateId: string, treeSubmissionId: string, title: string): Promise<Application> {
+  async createApplication(templateId: string, treeSubmissionId: string, isOrganization: boolean = false): Promise<Application> {
     console.log('API Call: POST /api/Applications');
     console.log('Template ID:', templateId);
     console.log('Tree Submission ID:', treeSubmissionId);
-    console.log('Title:', title);
+    console.log('Is Organization:', isOrganization);
     
     const requestBody = {
       treeSubmissionId,
       applicationTemplateId: templateId,
-      title
+      IsOrganization: isOrganization
     };
     
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
@@ -178,16 +178,47 @@ export const applicationsService = {
     console.log(`API Call: POST /api/Applications/${applicationId}/submit`);
     console.log('Submission data:', submission);
     
+    // Konwertuj dane formularza - null na puste stringi, PoBox na 0
+    const processedFormData = this.processFormData(submission.formData);
+    const processedSubmission = {
+      ...submission,
+      formData: processedFormData
+    };
+    
+    console.log('Processed submission data:', processedSubmission);
+    
     const response = await fetch(`${API_BASE_URL}/Applications/${applicationId}/submit`, {
       method: 'POST',
       headers: createHeaders(),
-      body: JSON.stringify(submission)
+      body: JSON.stringify(processedSubmission)
     });
     
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || `Failed to submit application: ${response.statusText}`);
     }
+  },
+
+  // Process form data to convert null values to empty strings and PoBox to 0
+  processFormData(formData: Record<string, any>): Record<string, any> {
+    const processed: Record<string, any> = {};
+    
+    Object.keys(formData).forEach(key => {
+      const value = formData[key];
+      
+      if (value === null || value === undefined) {
+        // Dla PoBox (int) wysyłamy 0, dla reszty puste stringi
+        if (key.toLowerCase().includes('pobox') || key.toLowerCase().includes('po_box')) {
+          processed[key] = 0;
+        } else {
+          processed[key] = '';
+        }
+      } else {
+        processed[key] = value;
+      }
+    });
+    
+    return processed;
   },
 
   // Generate PDF

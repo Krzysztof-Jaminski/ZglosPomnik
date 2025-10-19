@@ -1,6 +1,8 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 console.log('AuthService API_BASE_URL:', API_BASE_URL);
 
+import { User } from '../types';
+
 export interface RegisterRequest {
   firstName: string;
   lastName: string;
@@ -42,22 +44,6 @@ export interface AuthResponse {
   token: string;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  phone: string | null;
-  address: string | null;
-  city: string | null;
-  postalCode: string | null;
-  avatar: string | null;
-  registrationDate: string;
-  role: string;
-  statistics: {
-    submissionCount: number;
-    applicationCount: number;
-  };
-}
 
 class AuthService {
   private token: string | null = null;
@@ -341,6 +327,14 @@ class AuthService {
     address?: string;
     city?: string;
     postalCode?: string;
+    organization?: {
+      name?: string;
+      address?: string;
+      city?: string;
+      postalCode?: string;
+      phone?: string;
+      email?: string;
+    };
   }): Promise<User> {
     const token = this.getToken();
     if (!token) {
@@ -364,6 +358,16 @@ class AuthService {
       formData.append('Address', userData.address || '');
       formData.append('City', userData.city || '');
       formData.append('PostalCode', userData.postalCode || '');
+      
+      // Add organization fields if provided
+      if (userData.organization) {
+        formData.append('Organization.Name', userData.organization.name || '');
+        formData.append('Organization.Address', userData.organization.address || '');
+        formData.append('Organization.City', userData.organization.city || '');
+        formData.append('Organization.PostalCode', userData.organization.postalCode || '');
+        formData.append('Organization.Phone', userData.organization.phone || '');
+        formData.append('Organization.Email', userData.organization.email || '');
+      }
 
       console.log('Updating user data with FormData:');
       for (let [key, value] of formData.entries()) {

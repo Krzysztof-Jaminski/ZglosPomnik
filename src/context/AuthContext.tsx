@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { authService, User, LoginRequest, RegisterRequest } from '../services/authService';
+import { authService, LoginRequest, RegisterRequest } from '../services/authService';
+import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -145,6 +146,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 avatar: null,
                 registrationDate: new Date().toISOString(),
                 role: 'User',
+                organization: null,
                 statistics: {
                   submissionCount: 0,
                   applicationCount: 0

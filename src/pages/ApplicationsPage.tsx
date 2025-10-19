@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Loader2, X, ArrowRight, CheckCircle, Download, ExternalLink } from 'lucide-react';
+import { Plus, Loader2, X, CheckCircle } from 'lucide-react';
 import { Tree, ApplicationTemplate, Commune, Application, FormSchema } from '../types';
 import { applicationsService } from '../services/applicationsService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -365,7 +365,7 @@ export const ApplicationsPage: React.FC = () => {
       const application = await applicationsService.createApplication(
         selectedTemplate.id,
         selectedTree.id,
-        `Wniosek dla drzewa ${selectedTree.species}`
+        false // IsOrganization - domyślnie false, będzie ustawione w formularzu
       );
       setCurrentApplication(application);
       

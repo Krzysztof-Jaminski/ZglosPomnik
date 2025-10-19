@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FormField, FormSchema, Tree, Commune, ApplicationTemplate } from '../../types';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
-import { ArrowLeft, FileText, Bot, Loader2, X } from 'lucide-react';
+import { ArrowLeft, Bot, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { applicationsService } from '../../services/applicationsService';
 import { DynamicFormFieldsValidation, ValidationPatterns, UserValidation } from '../../utils/validationRules';
@@ -33,6 +33,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [isFormValid, setIsFormValid] = useState(false);
   const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [isOrganization, setIsOrganization] = useState(false);
 
   // Auto-resize textarea function
   const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
@@ -107,6 +108,12 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       autoResizeTextarea(textarea as HTMLTextAreaElement);
     });
   }, [formData]);
+
+  // Validate form whenever formData or isOrganization changes
+  useEffect(() => {
+    const isValid = validateForm();
+    setIsFormValid(isValid);
+  }, [formData, isOrganization, user?.organization]);
 
   // Save form data to localStorage whenever it changes
   useEffect(() => {
@@ -248,6 +255,12 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     const newErrors: Record<string, string> = {};
     let isValid = true;
 
+    // Walidacja pola IsOrganization
+    if (isOrganization && !user?.organization) {
+      newErrors.organization = 'Nie możesz składać wniosku w imieniu organizacji, ponieważ nie masz przypisanej organizacji w profilu.';
+      isValid = false;
+    }
+
     schema.requiredFields.forEach(field => {
       const error = validateField(field, formData[field.name]);
       if (error) {
@@ -376,7 +389,12 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      // Dodaj parametr IsOrganization do danych formularza
+      const formDataWithOrganization = {
+        ...formData,
+        IsOrganization: isOrganization
+      };
+      onSubmit(formDataWithOrganization);
       // DON'T clear saved form data - allow multiple PDF generations
       // localStorage.removeItem('applicationFormData');
     }
@@ -622,6 +640,101 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             </div>
           )}
 
+          {/* Organization Selection */}
+          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-purple-200/50 dark:border-purple-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+            <div className="space-y-2">
+              {/* Osobisty wniosek */}
+              <label className={`flex items-center p-2 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                !isOrganization 
+                  ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+              }`}>
+                <div className="relative">
+                  <input
+                    type="radio"
+                    name="applicationType"
+                    checked={!isOrganization}
+                    onChange={() => setIsOrganization(false)}
+                    className="sr-only"
+                  />
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                    !isOrganization
+                      ? 'border-green-500 bg-green-500'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}>
+                    {!isOrganization && (
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                </div>
+                <div className="ml-2">
+                  <div className="text-xs font-medium text-gray-900 dark:text-white">
+                    Wniosek w imieniu własnym
+                  </div>
+                </div>
+              </label>
+              
+              {/* Organizacyjny wniosek */}
+              <label className={`flex items-center p-2 rounded-lg border-2 transition-all duration-200 ${
+                !user?.organization 
+                  ? 'cursor-not-allowed opacity-50' 
+                  : isOrganization 
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 cursor-pointer' 
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 cursor-pointer'
+              }`}>
+                <div className="relative">
+                  <input
+                    type="radio"
+                    name="applicationType"
+                    checked={isOrganization}
+                    onChange={() => setIsOrganization(true)}
+                    disabled={!user?.organization}
+                    className="sr-only"
+                  />
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                    isOrganization
+                      ? 'border-blue-500 bg-blue-500'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}>
+                    {isOrganization && (
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                </div>
+                <div className="ml-2 flex-1">
+                  <div className={`text-xs font-medium ${
+                    !user?.organization 
+                      ? 'text-gray-400 dark:text-gray-500' 
+                      : 'text-gray-900 dark:text-white'
+                  }`}>
+                    Wniosek w imieniu organizacji
+                  </div>
+                </div>
+                {!user?.organization && (
+                  <div className="ml-1">
+                    <div className="w-4 h-4 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                    </div>
+                  </div>
+                )}
+              </label>
+            </div>
+            
+            {/* Błąd walidacji organizacji */}
+            {errors.organization && (
+              <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mr-2">
+                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                  </div>
+                  <p className="text-xs text-red-700 dark:text-red-300">
+                    {errors.organization}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Submit Button - Full width at bottom */}
           <div className="w-full pt-2">
             <GlassButton
@@ -631,7 +744,14 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
               size="sm"
               className={`w-full text-sm ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {isSubmitting ? 'Generowanie PDF...' : 'Wygeneruj PDF'}
+              <div className="flex items-center justify-center space-x-2">
+                {isSubmitting && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
+                <span>
+                  {isSubmitting ? 'Generowanie PDF...' : 'Wygeneruj PDF'}
+                </span>
+              </div>
             </GlassButton>
           </div>
         </form>

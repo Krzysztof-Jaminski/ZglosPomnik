@@ -18,6 +18,15 @@ interface AdditionalUserData {
   postalCode: string;
 }
 
+interface OrganizationData {
+  name: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  phone: string;
+  email: string;
+}
+
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -44,8 +53,19 @@ export const ProfilePage: React.FC = () => {
     postalCode: fullUserData?.postalCode || 'Nie podano'
   });
   
+  // Dane organizacji z API
+  const [organizationData, setOrganizationData] = useState({
+    name: fullUserData?.organization?.name || 'Nie podano',
+    address: fullUserData?.organization?.address || 'Nie podano',
+    city: fullUserData?.organization?.city || 'Nie podano',
+    postalCode: fullUserData?.organization?.postalCode || 'Nie podano',
+    phone: fullUserData?.organization?.phone || 'Nie podano',
+    email: fullUserData?.organization?.email || 'Nie podano'
+  });
+  
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(additionalData);
+  const [editOrganizationData, setEditOrganizationData] = useState(organizationData);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -113,12 +133,32 @@ export const ProfilePage: React.FC = () => {
           postalCode: userData.postalCode || 'Nie podano'
         });
         
+        // Aktualizuj dane organizacji - dla wyświetlania używamy "Nie podano" jeśli puste
+        setOrganizationData({
+          name: userData.organization?.name || 'Nie podano',
+          address: userData.organization?.address || 'Nie podano',
+          city: userData.organization?.city || 'Nie podano',
+          postalCode: userData.organization?.postalCode || 'Nie podano',
+          phone: userData.organization?.phone || 'Nie podano',
+          email: userData.organization?.email || 'Nie podano'
+        });
+        
         // Dla edycji używamy pustych stringów jeśli dane są puste
         setEditData({
           phone: userData.phone || '',
           address: userData.address || '',
           city: userData.city || '',
           postalCode: userData.postalCode || ''
+        });
+        
+        // Dla edycji organizacji używamy pustych stringów jeśli dane są puste
+        setEditOrganizationData({
+          name: userData.organization?.name || '',
+          address: userData.organization?.address || '',
+          city: userData.organization?.city || '',
+          postalCode: userData.organization?.postalCode || '',
+          phone: userData.organization?.phone || '',
+          email: userData.organization?.email || ''
         });
         
 
@@ -177,9 +217,22 @@ export const ProfilePage: React.FC = () => {
       updateData.address = editData.address;
       updateData.city = editData.city;
       updateData.postalCode = editData.postalCode;
+      
+      // Dodaj dane organizacji jeśli są dostępne
+      if (fullUserData?.organization) {
+        updateData.organization = {
+          name: editOrganizationData.name,
+          address: editOrganizationData.address,
+          city: editOrganizationData.city,
+          postalCode: editOrganizationData.postalCode,
+          phone: editOrganizationData.phone,
+          email: editOrganizationData.email
+        };
+      }
 
       console.log('ProfilePage: Preparing update data:', updateData);
       console.log('ProfilePage: Original editData:', editData);
+      console.log('ProfilePage: Original editOrganizationData:', editOrganizationData);
 
       // Use the new API endpoint for updating user data
       const { authService } = await import('../services/authService');
@@ -187,7 +240,8 @@ export const ProfilePage: React.FC = () => {
         phone: updateData.phone,
         address: updateData.address,
         city: updateData.city,
-        postalCode: updateData.postalCode
+        postalCode: updateData.postalCode,
+        organization: updateData.organization
       });
       
       setFullUserData(updatedUserData);
@@ -198,6 +252,18 @@ export const ProfilePage: React.FC = () => {
         city: editData.city || 'Nie podano',
         postalCode: editData.postalCode || 'Nie podano'
       });
+      
+      // Aktualizuj organizationData z "Nie podano" dla pustych pól
+      if (updatedUserData.organization) {
+        setOrganizationData({
+          name: editOrganizationData.name || 'Nie podano',
+          address: editOrganizationData.address || 'Nie podano',
+          city: editOrganizationData.city || 'Nie podano',
+          postalCode: editOrganizationData.postalCode || 'Nie podano',
+          phone: editOrganizationData.phone || 'Nie podano',
+          email: editOrganizationData.email || 'Nie podano'
+        });
+      }
       
       // Zapisz do localStorage
       localStorage.setItem('user_data', JSON.stringify(updatedUserData));
@@ -226,11 +292,29 @@ export const ProfilePage: React.FC = () => {
       city: fullUserData?.city || '',
       postalCode: fullUserData?.postalCode || ''
     });
+    
+    // Resetuj dane organizacji
+    setEditOrganizationData({
+      name: fullUserData?.organization?.name || '',
+      address: fullUserData?.organization?.address || '',
+      city: fullUserData?.organization?.city || '',
+      postalCode: fullUserData?.organization?.postalCode || '',
+      phone: fullUserData?.organization?.phone || '',
+      email: fullUserData?.organization?.email || ''
+    });
+    
     setIsEditing(false);
   };
 
   const handleInputChange = (field: keyof AdditionalUserData, value: string) => {
     setEditData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleOrganizationInputChange = (field: keyof OrganizationData, value: string) => {
+    setEditOrganizationData(prev => ({
       ...prev,
       [field]: value
     }));
@@ -440,14 +524,17 @@ export const ProfilePage: React.FC = () => {
         <ProfileInfo
           userData={userData}
           additionalData={additionalData}
+          organizationData={organizationData}
           isEditing={isEditing}
           editData={editData}
+          editOrganizationData={editOrganizationData}
           isSaving={isSaving}
           onEditToggle={() => {
                    triggerLightHaptic();
                    setIsEditing(!isEditing);
                  }}
           onInputChange={handleInputChange}
+          onOrganizationInputChange={handleOrganizationInputChange}
           onSave={handleSaveData}
           onCancel={handleCancelEdit}
         />
