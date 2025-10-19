@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Edit, Trash2, X, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TreePost as TreePostType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DeleteConfirmationModal } from '../UI/DeleteConfirmationModal';
@@ -269,8 +269,7 @@ export const TreePost: React.FC<TreePostProps> = ({
 
                 {/* Location */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
-                    <MapPin className="w-3 h-3 mr-2" />
+                  <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
                     Lokalizacja
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -328,7 +327,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                             {post.soil.map((tag, index) => (
                               <span
                                 key={`soil-${index}`}
-                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border border-orange-200 dark:border-orange-700"
                               >
                                 {tag}
                               </span>
