@@ -126,10 +126,10 @@ export const TreePost: React.FC<TreePostProps> = ({
                             {/* Edit button */}
                             {canEditPost && (
                               <button
-                                className="p-2 text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center"
+                                className="p-2 text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center min-h-[32px] min-w-[32px]"
                                 title="Edytuj post"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-4 h-4 box-border relative -top-px" style={{ lineHeight: 1, fontSize: '16px' }} />
                               </button>
                             )}
                             
@@ -145,10 +145,10 @@ export const TreePost: React.FC<TreePostProps> = ({
                                   });
                                   setShowDeleteModal(true);
                                 }}
-                                className="p-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center"
+                                className="p-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center min-h-[32px] min-w-[32px]"
                                 title="Usuń post"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 box-border" style={{ lineHeight: 1, fontSize: '16px' }} />
                               </button>
                             )}
                           </div>
