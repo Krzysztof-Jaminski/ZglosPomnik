@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Settings, Edit, Save, X, LogOut, Calendar, BarChart3, Key, Shield, Eye, EyeOff, Check, X as XIcon, MapPin, Building, Hash } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { User } from 'lucide-react';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useHapticFeedback } from '../hooks/useHapticFeedback';
+import { ProfileHeader } from '../components/Profile/ProfileHeader';
+import { ProfileInfo } from '../components/Profile/ProfileInfo';
+import { ProfileStatistics } from '../components/Profile/ProfileStatistics';
+import { ProfileSettings } from '../components/Profile/ProfileSettings';
+import { PasswordChangeModal } from '../components/Profile/PasswordChangeModal';
+import { LogoutModal } from '../components/Profile/LogoutModal';
 
 interface AdditionalUserData {
   phone: string;
@@ -92,7 +97,7 @@ export const ProfilePage: React.FC = () => {
         
         setFullUserData(userData);
         
-        // Aktualizuj dodatkowe dane
+        // Aktualizuj dodatkowe dane - dla wyświetlania używamy "Nie podano" jeśli puste
         setAdditionalData({
           phone: userData.phone || 'Nie podano',
           address: userData.address || 'Nie podano',
@@ -100,11 +105,12 @@ export const ProfilePage: React.FC = () => {
           postalCode: userData.postalCode || 'Nie podano'
         });
         
+        // Dla edycji używamy pustych stringów jeśli dane są puste
         setEditData({
-          phone: userData.phone || 'Nie podano',
-          address: userData.address || 'Nie podano',
-          city: userData.city || 'Nie podano',
-          postalCode: userData.postalCode || 'Nie podano'
+          phone: userData.phone || '',
+          address: userData.address || '',
+          city: userData.city || '',
+          postalCode: userData.postalCode || ''
         });
         
 
@@ -124,10 +130,10 @@ export const ProfilePage: React.FC = () => {
         });
         
         setEditData({
-          phone: user.phone || 'Nie podano',
-          address: user.address || 'Nie podano',
-          city: user.city || 'Nie podano',
-          postalCode: user.postalCode || 'Nie podano'
+          phone: user.phone || '',
+          address: user.address || '',
+          city: user.city || '',
+          postalCode: user.postalCode || ''
         });
       } finally {
         setIsLoadingProfile(false);
@@ -155,11 +161,10 @@ export const ProfilePage: React.FC = () => {
       const updateData: any = {};
       
       // Zawsze wysyłaj wszystkie pola, nawet jeśli są puste
-      // Konwertuj "Nie podano" na pusty string
-      updateData.phone = editData.phone === 'Nie podano' ? '' : editData.phone;
-      updateData.address = editData.address === 'Nie podano' ? '' : editData.address;
-      updateData.city = editData.city === 'Nie podano' ? '' : editData.city;
-      updateData.postalCode = editData.postalCode === 'Nie podano' ? '' : editData.postalCode;
+      updateData.phone = editData.phone;
+      updateData.address = editData.address;
+      updateData.city = editData.city;
+      updateData.postalCode = editData.postalCode;
 
       console.log('ProfilePage: Preparing update data:', updateData);
       console.log('ProfilePage: Original editData:', editData);
@@ -174,7 +179,13 @@ export const ProfilePage: React.FC = () => {
       });
       
       setFullUserData(updatedUserData);
-      setAdditionalData(editData);
+      // Aktualizuj additionalData z "Nie podano" dla pustych pól
+      setAdditionalData({
+        phone: editData.phone || 'Nie podano',
+        address: editData.address || 'Nie podano',
+        city: editData.city || 'Nie podano',
+        postalCode: editData.postalCode || 'Nie podano'
+      });
       
       // Zapisz do localStorage
       localStorage.setItem('user_data', JSON.stringify(updatedUserData));
@@ -196,7 +207,13 @@ export const ProfilePage: React.FC = () => {
 
   const handleCancelEdit = () => {
     triggerLightHaptic();
-    setEditData(additionalData);
+    // Resetuj do pustych stringów zamiast "Nie podano"
+    setEditData({
+      phone: fullUserData?.phone || '',
+      address: fullUserData?.address || '',
+      city: fullUserData?.city || '',
+      postalCode: fullUserData?.postalCode || ''
+    });
     setIsEditing(false);
   };
 
@@ -404,418 +421,55 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
+    <div className="h-full bg-gray-900 py-4 overflow-y-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-2 sm:mb-4"
-        >
-          <div className="flex items-center space-x-3 mb-2">
-            <User className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-            <h1 className="text-lg sm:text-xl font-bold text-green-900 dark:text-white">
-              Profil użytkownika
-            </h1>
-          </div>
-          <p className="text-sm sm:text-base text-green-800 dark:text-gray-400">
-            Zarządzaj swoim kontem i ustawieniami
-          </p>
-        </motion.div>
+        <ProfileHeader />
 
-        {/* User Info Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-gray-900 dark:text-white text-base">
-                    {userData.name}
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    Członek od {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
-                  </p>
-                </div>
-              </div>
-              
-               <GlassButton
-                 onClick={() => {
+        <ProfileInfo
+          userData={userData}
+          additionalData={additionalData}
+          isEditing={isEditing}
+          editData={editData}
+          isSaving={isSaving}
+          onEditToggle={() => {
                    triggerLightHaptic();
                    setIsEditing(!isEditing);
                  }}
-                 variant="secondary"
-                 size="sm"
-                 icon={isEditing ? X : Edit}
-               >
-                 <span className="text-sm">
-                   {isEditing ? 'Anuluj' : 'Edytuj'}
-                 </span>
-               </GlassButton>
-            </div>
+          onInputChange={handleInputChange}
+          onSave={handleSaveData}
+          onCancel={handleCancelEdit}
+        />
 
-            {isEditing ? (
-              <div className="space-y-4">
-                <div className="p-4 py-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-                    <strong>Informacja:</strong> Możesz edytować wszystkie swoje dane. 
-                    Zmiany są zapisywane na serwerze.
-                  </p>
-                </div>
-                
-                {/* Name and email are no longer editable according to new API */}
-                
-                
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
-                    Telefon
-                  </label>
-                  <input
-                    type="tel"
-                    value={editData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
-                    Adres
-                  </label>
-                  <input
-                    type="text"
-                    value={editData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
-                      Miasto
-                    </label>
-                    <input
-                      type="text"
-                      value={editData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">
-                      Kod pocztowy
-                    </label>
-                    <input
-                      type="text"
-                      value={editData.postalCode}
-                      onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                      className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex space-x-3 pt-4">
-                  <GlassButton
-                    onClick={handleCancelEdit}
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <span className="text-sm">Anuluj</span>
-                  </GlassButton>
-                  <GlassButton
-                    onClick={handleSaveData}
-                    variant="primary"
-                    size="sm"
-                    className="flex-1"
-                    disabled={isSaving}
-                  >
-                    <span className="text-sm">
-                      {isSaving ? 'Zapisywanie...' : 'Zapisz'}
-                    </span>
-                  </GlassButton>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">
-                    {userData.email}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">
-                    {additionalData.phone}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                    <span className="text-gray-700 dark:text-gray-300 text-base">
-                      Adres: {additionalData.address}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Building className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                    <span className="text-gray-700 dark:text-gray-300 text-base">
-                      Miasto: {additionalData.city}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Hash className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                    <span className="text-gray-700 dark:text-gray-300 text-base">
-                      Kod pocztowy: {additionalData.postalCode}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">
-                    Dołączył: {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <ProfileStatistics
+          submissionsCount={userData.submissionsCount}
+          applicationsCount={userData.applicationsCount}
+        />
 
-        {/* User Statistics */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-4 sm:mb-6">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <BarChart3 className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                Statystyki
-              </h3>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {userData.submissionsCount}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Zgłoszeń
-                </div>
-              </div>
-              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {userData.applicationsCount}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Wniosków
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-          <div className="p-2 sm:p-3">
-            <div className="flex items-center space-x-2 mb-2">
-              <Settings className="w-4 h-4 text-green-600" />
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
-                Ustawienia konta
-              </h3>
-            </div>
-            
-            <div className="space-y-1">
-               <GlassButton
-                 onClick={() => {
+        <ProfileSettings
+          onPasswordChange={() => {
                    triggerLightHaptic();
                    setShowChangePasswordModal(true);
                  }}
-                 variant="secondary"
-                 size="xs"
-                 className="w-full text-left py-1"
-                 icon={Key}
-               >
-                 <span className="text-gray-700 dark:text-gray-300 text-xs">
-                   Zmień hasło
-                 </span>
-               </GlassButton>
-              
-               <GlassButton
-                 onClick={() => {
+          onAdminPanel={() => {
                    triggerLightHaptic();
                    navigate('/admin');
                  }}
-                 variant="secondary"
-                 size="xs"
-                 className="w-full text-left py-1"
-                 icon={Shield}
-               >
-                 <span className="text-gray-700 dark:text-gray-300 text-xs">
-                   Panel administratora
-                 </span>
-               </GlassButton>
-              
-               <GlassButton
-                 onClick={handleLogout}
-                 variant="danger"
-                 size="xs"
-                 className="w-full text-left py-1"
-                 icon={LogOut}
-               >
-                 <span className="text-gray-700 dark:text-gray-300 text-xs">
-                   Wyloguj się
-                 </span>
-               </GlassButton>
-            </div>
-          </div>
-        </div>
+          onLogout={handleLogout}
+        />
 
-
-
-        {/* Change Password Modal */}
-        {showChangePasswordModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
-            >
-              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
-                Zmień hasło
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
-                Wprowadź nowe hasło dla swojego konta.
-              </p>
-              <div className="space-y-4">
-                {/* Aktualne hasło */}
-                <div className="relative">
-                  <input
-                    type={showPasswords.current ? "text" : "password"}
-                    placeholder="Aktualne hasło"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility('current')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-
-                {/* Nowe hasło */}
-                <div className="relative">
-                  <input
-                    type={showPasswords.new ? "text" : "password"}
-                    placeholder="Nowe hasło"
-                    value={passwordData.newPassword}
-                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility('new')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-
-                {/* Potwierdzenie hasła */}
-                <div className="relative">
-                  <input
-                    type={showPasswords.confirm ? "text" : "password"}
-                    placeholder="Potwierdź nowe hasło"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base" 
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility('confirm')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-
-                {/* Wymagania hasła */}
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                    Wymagania hasła:
-                  </h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        {passwordValidation.minLength ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XIcon className="w-4 h-4 text-red-500" />
-                        )}
-                        <span className={`text-sm ${passwordValidation.minLength ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          Co najmniej 8 znaków
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {passwordValidation.hasUppercase ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XIcon className="w-4 h-4 text-red-500" />
-                        )}
-                        <span className={`text-sm ${passwordValidation.hasUppercase ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          Co najmniej jedna wielka litera
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {passwordValidation.hasLowercase ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XIcon className="w-4 h-4 text-red-500" />
-                        )}
-                        <span className={`text-sm ${passwordValidation.hasLowercase ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          Co najmniej jedna mała litera
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {passwordValidation.hasNumber ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XIcon className="w-4 h-4 text-red-500" />
-                        )}
-                        <span className={`text-sm ${passwordValidation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          Co najmniej jedna cyfra
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {passwordValidation.hasSpecialChar ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XIcon className="w-4 h-4 text-red-500" />
-                        )}
-                        <span className={`text-sm ${passwordValidation.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          Co najmniej jeden znak specjalny
-                        </span>
-                      </div>
-                      {passwordData.confirmPassword && (
-                        <div className="flex items-center space-x-2">
-                          {passwordValidation.passwordsMatch ? (
-                            <Check className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <XIcon className="w-4 h-4 text-red-500" />
-                          )}
-                          <span className={`text-sm ${passwordValidation.passwordsMatch ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            Hasła są identyczne
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-              </div>
-              <div className="flex space-x-3 mt-6">
-                <GlassButton
-                  onClick={() => {
+        <PasswordChangeModal
+          isOpen={showChangePasswordModal}
+          passwordData={passwordData}
+          showPasswords={showPasswords}
+          passwordValidation={passwordValidation}
+          isChanging={isChangingPassword}
+          onPasswordChange={(field: string, value: string) => handlePasswordChange(field as keyof typeof passwordData, value)}
+          onTogglePasswordVisibility={(field: string) => togglePasswordVisibility(field as keyof typeof showPasswords)}
+          onSave={() => {
+            triggerMediumHaptic();
+            handleChangePassword();
+          }}
+          onCancel={() => {
                     triggerLightHaptic();
                     setPasswordData({
                       currentPassword: '',
@@ -837,69 +491,16 @@ export const ProfilePage: React.FC = () => {
                     });
                     setShowChangePasswordModal(false);
                   }}
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1"
-                >
-                  <span className="text-sm">Anuluj</span>
-                </GlassButton>
-                <GlassButton
-                  onClick={() => {
-                    triggerMediumHaptic();
-                    handleChangePassword();
-                  }}
-                  variant="primary"
-                  size="sm"
-                  className="flex-1"
-                  disabled={isChangingPassword}
-                >
-                  <span className="text-sm">
-                    {isChangingPassword ? 'Zmienianie...' : 'Zapisz'}
-                  </span>
-                </GlassButton>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        />
 
-        {/* Logout Confirmation Modal */}
-        {showLogoutModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-700"
-            >
-              <h3 className="text-gray-900 dark:text-white mb-3 font-semibold text-lg">
-                Potwierdź wylogowanie
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4 text-base">
-                Czy na pewno chcesz się wylogować?
-              </p>
-              <div className="flex space-x-3">
-                <GlassButton
-                  onClick={() => {
+        <LogoutModal
+          isOpen={showLogoutModal}
+          onConfirm={confirmLogout}
+          onCancel={() => {
                     triggerLightHaptic();
                     setShowLogoutModal(false);
                   }}
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1"
-                >
-                  <span className="text-sm">Anuluj</span>
-                </GlassButton>
-                <GlassButton
-                  onClick={confirmLogout}
-                  variant="danger"
-                  size="sm"
-                  className="flex-1"
-                >
-                  <span className="text-xs">Wyloguj się</span>
-                </GlassButton>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        />
       </div>
     </div>
   );
