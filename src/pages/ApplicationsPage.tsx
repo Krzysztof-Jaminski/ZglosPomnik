@@ -68,6 +68,7 @@ export const ApplicationsPage: React.FC = () => {
   });
   const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [isCreatingApplication, setIsCreatingApplication] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
@@ -118,8 +119,15 @@ export const ApplicationsPage: React.FC = () => {
         return;
       }
 
+      // Pokaż animację ładowania tylko po 500ms
+      let loadingTimeout: NodeJS.Timeout | undefined;
+
       try {
         setIsLoading(true);
+        
+        loadingTimeout = setTimeout(() => {
+          setShowLoadingAnimation(true);
+        }, 500);
         
         // Check if user is returning from report page
         const lastActivePage = localStorage.getItem('lastActivePage');
@@ -166,6 +174,10 @@ export const ApplicationsPage: React.FC = () => {
             return;
           }
         } finally {
+          if (loadingTimeout) {
+            clearTimeout(loadingTimeout);
+          }
+          setShowLoadingAnimation(false);
           setIsLoading(false);
         }
       };
@@ -465,6 +477,23 @@ export const ApplicationsPage: React.FC = () => {
   const canShowTemplateSelection = selectedTree !== null && selectedCommune !== null;
   const canShowForm = currentApplication !== null && formSchema !== null;
     
+  // Show loading screen if loading and animation should be shown
+  if (isLoading && showLoadingAnimation) {
+    return (
+      <div className="h-full bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <h2 className="text-lg font-semibold text-white mb-2">
+            Ładowanie wniosków...
+          </h2>
+          <p className="text-gray-300">
+            Pobieranie danych aplikacji
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
       <div className="w-full px-3 sm:px-4">

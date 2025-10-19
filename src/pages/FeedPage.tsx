@@ -10,6 +10,7 @@ export const FeedPage: React.FC = () => {
   const [allPosts, setAllPosts] = useState<TreePostType[]>([]);
   const [displayedPosts, setDisplayedPosts] = useState<TreePostType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
@@ -24,6 +25,11 @@ export const FeedPage: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // Pokaż animację ładowania tylko po 500ms
+      const loadingTimeout = setTimeout(() => {
+        setShowLoadingAnimation(true);
+      }, 500);
+      
       // Load trees from API
       const treesData = await treesService.getTrees();
       
@@ -47,6 +53,8 @@ export const FeedPage: React.FC = () => {
       setHasMorePosts(allPostsData.length > POSTS_PER_PAGE);
       setCurrentPage(0);
 
+      clearTimeout(loadingTimeout);
+      setShowLoadingAnimation(false);
     } catch (error) {
       console.error('Error loading trees:', error);
       // Fallback to mock data if API fails
@@ -155,12 +163,17 @@ export const FeedPage: React.FC = () => {
       return new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime();
     });
 
-  if (isLoading) {
+  if (isLoading && showLoadingAnimation) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="h-full bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300 text-sm">Ładowanie feed'a...</p>
+          <h2 className="text-lg font-semibold text-white mb-2">
+            Ładowanie feed'a...
+          </h2>
+          <p className="text-gray-300">
+            Pobieranie postów
+          </p>
         </div>
       </div>
     );

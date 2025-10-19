@@ -22,11 +22,18 @@ export const EncyclopediaPage: React.FC = () => {
   const [isImageViewerOpen, setIsImageViewerOpen] = useUIState('encyclopedia', 'isImageViewerOpen', false);
   
   const [isLoading, setIsLoading] = useState(true);
+  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
 
   useEffect(() => {
     const loadSpecies = async () => {
       try {
         console.log('EncyclopediaPage: Loading species...');
+        
+        // Pokaż animację ładowania tylko po 500ms
+        const loadingTimeout = setTimeout(() => {
+          setShowLoadingAnimation(true);
+        }, 500);
+        
         const data = await speciesService.getSpecies();
         console.log('EncyclopediaPage: Loaded species count:', data.length);
         console.log('EncyclopediaPage: Species data:', data);
@@ -49,6 +56,9 @@ export const EncyclopediaPage: React.FC = () => {
           }
         } else {
         }
+        
+        clearTimeout(loadingTimeout);
+        setShowLoadingAnimation(false);
       } catch (error) {
         console.error('Error loading species:', error);
       } finally {
@@ -135,12 +145,17 @@ export const EncyclopediaPage: React.FC = () => {
     }
   }, [isImageViewerOpen, selectedSpecies]);
 
-  if (isLoading) {
+  if (isLoading && showLoadingAnimation) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-full bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Ładowanie encyklopedii...</p>
+          <h2 className="text-lg font-semibold text-white mb-2">
+            Ładowanie encyklopedii...
+          </h2>
+          <p className="text-gray-300">
+            Pobieranie danych gatunków
+          </p>
         </div>
       </div>
     );

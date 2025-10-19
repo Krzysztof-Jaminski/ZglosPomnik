@@ -24,6 +24,7 @@ export const ProfilePage: React.FC = () => {
   const { triggerLightHaptic, triggerMediumHaptic, triggerNotificationHaptic } = useHapticFeedback();
   const [fullUserData, setFullUserData] = useState(user);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   // Dane użytkownika z API (dostępne)
@@ -72,8 +73,15 @@ export const ProfilePage: React.FC = () => {
     const fetchUserData = async () => {
       if (!user) return;
       
+      // Pokaż animację ładowania tylko po 500ms
+      let loadingTimeout: NodeJS.Timeout | undefined;
+      
       try {
         setIsLoadingProfile(true);
+        
+        loadingTimeout = setTimeout(() => {
+          setShowLoadingAnimation(true);
+        }, 500);
         
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -136,6 +144,10 @@ export const ProfilePage: React.FC = () => {
           postalCode: user.postalCode || ''
         });
       } finally {
+        if (loadingTimeout) {
+          clearTimeout(loadingTimeout);
+        }
+        setShowLoadingAnimation(false);
         setIsLoadingProfile(false);
       }
     };
@@ -403,16 +415,16 @@ export const ProfilePage: React.FC = () => {
     );
   }
 
-  // Jeśli ładujemy dane profilu
-  if (isLoadingProfile) {
+  // Jeśli ładujemy dane profilu i minęło wystarczająco czasu
+  if (isLoadingProfile && showLoadingAnimation) {
     return (
-      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="h-full bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             Ładowanie profilu...
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-300">
             Pobieranie danych użytkownika
           </p>
         </div>
