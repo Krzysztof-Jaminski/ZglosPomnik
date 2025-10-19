@@ -16,11 +16,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-gray-700/50 ${className}`}>
+    <div className={`bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 ${className}`}>
       <div className="p-2 sm:p-3">
         <div className="flex items-center space-x-2 mb-2">
           <Settings className="w-4 h-4 text-green-400" />
-          <h3 className="font-semibold text-white text-sm">
+          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
             Ustawienia konta
           </h3>
         </div>
@@ -33,7 +33,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             className="w-full text-left py-1"
             icon={Key}
           >
-            <span className="text-gray-300 text-xs">
+            <span className="text-gray-700 dark:text-gray-300 text-xs">
               Zmień hasło
             </span>
           </GlassButton>
@@ -45,7 +45,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             className="w-full text-left py-1"
             icon={Shield}
           >
-            <span className="text-gray-300 text-xs">
+            <span className="text-gray-700 dark:text-gray-300 text-xs">
               Panel administratora
             </span>
           </GlassButton>
@@ -57,7 +57,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             className="w-full text-left py-1"
             icon={LogOut}
           >
-            <span className="text-gray-300 text-xs">
+            <span className="text-gray-700 dark:text-gray-300 text-xs">
               Wyloguj się
             </span>
           </GlassButton>

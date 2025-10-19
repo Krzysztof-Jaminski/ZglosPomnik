@@ -127,18 +127,18 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
     setFocusedField(null);
   };
   return (
-    <div className={`bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg mb-4 sm:mb-6 border border-gray-700/50 ${className}`}>
+    <div className={`bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg mb-4 sm:mb-6 border border-gray-200/50 dark:border-gray-700/50 ${className}`}>
       <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-900/30 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 sm:w-6 sm:h-6 text-green-400" />
             </div>
             <div>
-              <h2 className="font-semibold text-white text-base">
+              <h2 className="font-semibold text-gray-900 dark:text-white text-base">
                 {userData.name}
               </h2>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
                 Członek od {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
               </p>
             </div>
@@ -404,39 +404,39 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-              <span className="text-gray-300 text-base">
+              <span className="text-gray-700 dark:text-gray-300 text-base">
                 {userData.email}
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-              <span className="text-gray-300 text-base">
+              <span className="text-gray-700 dark:text-gray-300 text-base">
                 {additionalData.phone}
               </span>
             </div>
             <div className="space-y-2">
               <div className="flex items-center space-x-3">
                 <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                <span className="text-gray-300 text-base">
+                <span className="text-gray-700 dark:text-gray-300 text-base">
                   Adres: {additionalData.address}
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <Building className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                <span className="text-gray-300 text-base">
+                <span className="text-gray-700 dark:text-gray-300 text-base">
                   Miasto: {additionalData.city}
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <Hash className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                <span className="text-gray-300 text-base">
+                <span className="text-gray-700 dark:text-gray-300 text-base">
                   Kod pocztowy: {additionalData.postalCode}
                 </span>
               </div>
             </div>
             <div className="flex items-center space-x-3">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-              <span className="text-gray-300 text-base">
+              <span className="text-gray-700 dark:text-gray-300 text-base">
                 Dołączył: {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
               </span>
             </div>

@@ -433,7 +433,7 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-900 py-4 overflow-y-auto">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <ProfileHeader />
 

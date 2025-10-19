@@ -129,7 +129,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                                 className="p-2 text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center min-h-[32px] min-w-[32px]"
                                 title="Edytuj post"
                               >
-                                <Edit className="w-4 h-4 box-border relative -top-px" style={{ lineHeight: 1, fontSize: '16px' }} />
+                                <Edit className="w-4 h-4 box-border" style={{ lineHeight: 1, fontSize: '16px' }} />
                               </button>
                             )}
                             
