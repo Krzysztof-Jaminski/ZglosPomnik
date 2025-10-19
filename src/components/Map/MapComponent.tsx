@@ -44,6 +44,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
     onTreeSelectRef.current = onTreeSelect;
   }, [onTreeSelect]);
 
+
   useImperativeHandle(ref, () => ({
     clearClickMarker: () => {
       if (clickMarkerRef.current) {
@@ -120,12 +121,23 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           markerZoomAnimation: true
         });
 
-        // Add tile layers
+        // Add tile layers with optimized settings for API limits
         const roadmapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors',
-              maxZoom: 19
-            });
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19,
+          minZoom: 1,
+          tileSize: 256,
+          zoomOffset: 0,
+          crossOrigin: true,
+          updateWhenZooming: false, // Reduce API calls during zoom
+          updateWhenIdle: true,
+          keepBuffer: 2,
+          maxNativeZoom: 19,
+          bounds: [[49.0, 14.0], [55.0, 24.0]], // Limit to Poland area
+          noWrap: true
+        });
 
+        // Primary satellite tiles with fallback
         const satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
           attribution: '© Esri',
           maxZoom: 19,
@@ -133,36 +145,90 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           tileSize: 256,
           zoomOffset: 0,
           crossOrigin: true,
-          updateWhenZooming: true,
+          updateWhenZooming: false, // Reduce API calls during zoom
           updateWhenIdle: true,
           keepBuffer: 2,
-          maxNativeZoom: 19
+          maxNativeZoom: 19,
+          bounds: [[49.0, 14.0], [55.0, 24.0]], // Limit to Poland area
+          noWrap: true,
+          errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        });
+
+        // Fallback satellite tiles (OpenStreetMap)
+        const satelliteFallback = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19,
+          minZoom: 1,
+          tileSize: 256,
+          zoomOffset: 0,
+          crossOrigin: true,
+          updateWhenZooming: false,
+          updateWhenIdle: true,
+          keepBuffer: 2,
+          maxNativeZoom: 19,
+          bounds: [[49.0, 14.0], [55.0, 24.0]],
+          noWrap: true
         });
 
         roadmapTiles.addTo(roadmapInstance);
         satelliteTiles.addTo(satelliteInstance);
-
-        // Add synchronization between maps with loop prevention
-        let isSyncing = false;
         
-        const syncMaps = (sourceMap: L.Map, targetMap: L.Map) => {
+        // Add fallback handling for satellite tiles
+        satelliteTiles.on('tileerror', () => {
+          console.warn('Satellite tile error, switching to fallback');
+          satelliteInstance.removeLayer(satelliteTiles);
+          satelliteFallback.addTo(satelliteInstance);
+        });
+
+        // Add synchronization between maps with loop prevention and debouncing
+        let isSyncing = false;
+        let syncTimeout: NodeJS.Timeout | null = null;
+        
+        const syncMaps = (sourceMap: L.Map, targetMap: L.Map, sourceType: 'roadmap' | 'satellite') => {
+          let isUserInteracting = false;
+          let lastSyncTime = 0;
+          
+          // Track user interaction start
+          sourceMap.on('movestart', () => {
+            isUserInteracting = true;
+          });
+          
+          // Sync only when user finishes interaction
           sourceMap.on('moveend', () => {
-            if (isSyncing) return; // Prevent infinite loop
+            if (isSyncing || !isUserInteracting) return;
             
-            isSyncing = true;
-            const center = sourceMap.getCenter();
-            const zoom = sourceMap.getZoom();
-            targetMap.setView([center.lat, center.lng], zoom, { animate: false });
+            // Clear existing timeout
+            if (syncTimeout) {
+              clearTimeout(syncTimeout);
+            }
             
-            // Reset flag after a short delay
-            setTimeout(() => {
-              isSyncing = false;
-            }, 100);
+            // Debounce synchronization - wait 500ms after user stops interacting
+            syncTimeout = setTimeout(() => {
+              isUserInteracting = false;
+              
+              // Rate limiting ONLY for synchronization (not for normal map usage)
+              const now = Date.now();
+              if (now - lastSyncTime < 1000) { // Max 1 sync per second
+                console.log(`Sync rate limit: Too many ${sourceType} synchronization calls`);
+                return;
+              }
+              
+              lastSyncTime = now;
+              isSyncing = true;
+              const center = sourceMap.getCenter();
+              const zoom = sourceMap.getZoom();
+              targetMap.setView([center.lat, center.lng], zoom, { animate: false });
+              
+              // Reset flag after a short delay
+              setTimeout(() => {
+                isSyncing = false;
+              }, 100);
+            }, 500); // Wait 500ms after user stops interacting
           });
         };
 
-        syncMaps(roadmapInstance, satelliteInstance);
-        syncMaps(satelliteInstance, roadmapInstance);
+        syncMaps(roadmapInstance, satelliteInstance, 'roadmap');
+        syncMaps(satelliteInstance, roadmapInstance, 'satellite');
 
         setRoadmapMap(roadmapInstance);
         setSatelliteMap(satelliteInstance);
