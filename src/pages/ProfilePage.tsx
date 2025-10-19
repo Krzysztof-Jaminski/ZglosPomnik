@@ -440,18 +440,19 @@ export const ProfilePage: React.FC = () => {
                 </div>
               </div>
               
-                <GlassButton
-                  onClick={() => {
-                    triggerLightHaptic();
-                    setIsEditing(!isEditing);
-                  }}
-                  variant="secondary"
-                  size="sm"
-                >
-                <span className="text-sm">
-                  {isEditing ? 'Anuluj' : 'Edytuj'}
-                </span>
-              </GlassButton>
+               <GlassButton
+                 onClick={() => {
+                   triggerLightHaptic();
+                   setIsEditing(!isEditing);
+                 }}
+                 variant="secondary"
+                 size="sm"
+                 icon={isEditing ? X : Edit}
+               >
+                 <span className="text-sm">
+                   {isEditing ? 'Anuluj' : 'Edytuj'}
+                 </span>
+               </GlassButton>
             </div>
 
             {isEditing ? (
@@ -625,44 +626,47 @@ export const ProfilePage: React.FC = () => {
             </div>
             
             <div className="space-y-1">
-              <GlassButton
-                onClick={() => {
-                  triggerLightHaptic();
-                  setShowChangePasswordModal(true);
-                }}
-                variant="secondary"
-                size="xs"
-                className="w-full text-left py-1"
-              >
-                <span className="text-gray-700 dark:text-gray-300 text-xs">
-                  Zmień hasło
-                </span>
-              </GlassButton>
+               <GlassButton
+                 onClick={() => {
+                   triggerLightHaptic();
+                   setShowChangePasswordModal(true);
+                 }}
+                 variant="secondary"
+                 size="xs"
+                 className="w-full text-left py-1"
+                 icon={Key}
+               >
+                 <span className="text-gray-700 dark:text-gray-300 text-xs">
+                   Zmień hasło
+                 </span>
+               </GlassButton>
               
-              <GlassButton
-                onClick={() => {
-                  triggerLightHaptic();
-                  navigate('/admin');
-                }}
-                variant="secondary"
-                size="xs"
-                className="w-full text-left py-1"
-              >
-                <span className="text-gray-700 dark:text-gray-300 text-xs">
-                  Panel administratora
-                </span>
-              </GlassButton>
+               <GlassButton
+                 onClick={() => {
+                   triggerLightHaptic();
+                   navigate('/admin');
+                 }}
+                 variant="secondary"
+                 size="xs"
+                 className="w-full text-left py-1"
+                 icon={Shield}
+               >
+                 <span className="text-gray-700 dark:text-gray-300 text-xs">
+                   Panel administratora
+                 </span>
+               </GlassButton>
               
-              <GlassButton
-                onClick={handleLogout}
-                variant="danger"
-                size="xs"
-                className="w-full text-left py-1"
-              >
-                <span className="text-gray-700 dark:text-gray-300 text-xs">
-                  Wyloguj się
-                </span>
-              </GlassButton>
+               <GlassButton
+                 onClick={handleLogout}
+                 variant="danger"
+                 size="xs"
+                 className="w-full text-left py-1"
+                 icon={LogOut}
+               >
+                 <span className="text-gray-700 dark:text-gray-300 text-xs">
+                   Wyloguj się
+                 </span>
+               </GlassButton>
             </div>
           </div>
         </div>
