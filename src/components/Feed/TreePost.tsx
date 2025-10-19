@@ -69,6 +69,7 @@ export const TreePost: React.FC<TreePostProps> = ({
   // TODO: In the future, this should be: user && post.userData.userId && post.userData.userId === user.id
   // TODO: API should include userId in post.userData for proper security validation
   const canDeletePost = true; // Always show delete button for now
+  const canEditPost = true; // Always show edit button for now
 
   // Photo modal functions
   const openPhotoModal = useCallback((index: number) => {
@@ -123,12 +124,14 @@ export const TreePost: React.FC<TreePostProps> = ({
                           
                           <div className="flex items-center space-x-2">
                             {/* Edit button */}
-                            <button
-                              className="p-2 text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                              title="Edytuj post"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
+                            {canEditPost && (
+                              <button
+                                className="p-2 text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center"
+                                title="Edytuj post"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            )}
                             
                             {/* Delete button */}
                             {canDeletePost && (
@@ -142,7 +145,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                                   });
                                   setShowDeleteModal(true);
                                 }}
-                                className="p-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                                className="p-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center"
                                 title="Usuń post"
                               >
                                 <Trash2 className="w-4 h-4" />
