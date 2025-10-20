@@ -9,7 +9,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
-  phone: string;
+  phone: string | null; // Telefon może być null jeśli jest pusty
 }
 
 export interface LoginRequest {
@@ -40,8 +40,12 @@ export interface ResetPasswordResponse {
 }
 
 export interface AuthResponse {
-  user: User;
-  token: string;
+  user?: User;
+  token?: string;
+  message?: string;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  requiresEmailVerification?: boolean;
 }
 
 
@@ -106,6 +110,20 @@ class AuthService {
     }
 
     const data = await response.json();
+    console.log('Registration response:', data);
+    
+    // Check if email verification is required
+    if (data.requiresEmailVerification) {
+      // Don't save tokens if email verification is required
+      return {
+        message: data.message,
+        accessToken: null,
+        refreshToken: null,
+        requiresEmailVerification: true
+      };
+    }
+    
+    // Normal registration with tokens
     const accessToken = data.accessToken;
     const refreshToken = data.refreshToken;
     
@@ -116,8 +134,6 @@ class AuthService {
         localStorage.setItem('refresh_token', refreshToken);
       }
     }
-
-    // User data will be fetched separately from /api/user/profile endpoint
 
     return data;
   }
@@ -440,6 +456,88 @@ class AuthService {
     }
   }
 
+  // Resend email verification
+  async resendEmailVerification(email: string): Promise<ForgotPasswordResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/EmailVerification/resend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'text/plain'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      if (!response.ok) {
+        // Try to get error message as text first (since API returns text/plain)
+        const errorText = await response.text();
+        console.error('Resend email verification error response:', errorText);
+        
+        // Try to parse error as JSON to get specific error message
+        let errorMessage = '';
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (parseError) {
+          // If it's not JSON, use the text as is
+          errorMessage = errorText;
+        }
+        
+        // Handle different error types with user-friendly messages
+        switch (response.status) {
+          case 400:
+            throw new Error(errorMessage || 'Nieprawidłowy format email');
+          case 404:
+            throw new Error(errorMessage || 'Nie znaleziono konta z podanym adresem email');
+          case 429:
+            throw new Error(errorMessage || 'Zbyt wiele prób. Spróbuj ponownie za kilka minut');
+          case 500:
+          case 502:
+          case 503:
+            throw new Error(errorMessage || 'Problem z serwerem. Spróbuj ponownie za chwilę');
+          default:
+            throw new Error(errorMessage || 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie');
+        }
+      }
+
+      // API returns text/plain, so we need to parse it as text first
+      const responseText = await response.text();
+      console.log('Resend email verification response text:', responseText);
+      
+      // Try to parse as JSON
+      try {
+        const data = JSON.parse(responseText);
+        return data;
+      } catch (parseError) {
+        // If it's not JSON, return a success response
+        return {
+          success: true,
+          message: responseText || 'Email weryfikacyjny został ponownie wysłany',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+        };
+      }
+    } catch (error: any) {
+      console.error('Resend email verification error:', error);
+      
+      // If it's already our custom error message, re-throw it
+      if (error.message && !error.message.includes('HTTP error!')) {
+        throw error;
+      }
+      
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Problem z połączeniem internetowym. Sprawdź połączenie i spróbuj ponownie');
+      }
+      
+      // Default fallback
+      throw new Error('Wystąpił błąd podczas ponownego wysyłania emaila. Spróbuj ponownie');
+    }
+  }
+
   // Forgot password - send reset email
   async forgotPassword(email: string): Promise<ForgotPasswordResponse> {
     try {
@@ -453,27 +551,61 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        // Try to get error message as text first (since API returns text/plain)
+        const errorText = await response.text();
+        console.error('Forgot password error response:', errorText);
+        
+        // Try to parse error as JSON to get specific error message
+        let errorMessage = '';
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (parseError) {
+          // If it's not JSON, use the text as is
+          errorMessage = errorText;
+        }
         
         // Handle different error types with user-friendly messages
         switch (response.status) {
           case 400:
-            throw new Error(errorData.message || 'Nieprawidłowy format email');
+            throw new Error(errorMessage || 'Nieprawidłowy format email');
           case 404:
-            throw new Error('Nie znaleziono konta z podanym adresem email');
+            throw new Error(errorMessage || 'Nie znaleziono konta z podanym adresem email');
           case 429:
-            throw new Error('Zbyt wiele prób. Spróbuj ponownie za kilka minut');
+            throw new Error(errorMessage || 'Zbyt wiele prób. Spróbuj ponownie za kilka minut');
           case 500:
           case 502:
           case 503:
-            throw new Error('Problem z serwerem. Spróbuj ponownie za chwilę');
+            // Check if it's a specific error message (like email not found)
+            if (errorMessage && (errorMessage.includes('nie zostało znalezione') || errorMessage.includes('EMAIL_NOT_FOUND'))) {
+              throw new Error('Nie znaleziono konta z podanym adresem email');
+            }
+            throw new Error(errorMessage || 'Problem z serwerem. Spróbuj ponownie za chwilę');
           default:
-            throw new Error(errorData.message || 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie');
+            throw new Error(errorMessage || 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie');
         }
       }
 
-      const data = await response.json();
-      return data;
+      // API returns text/plain, so we need to parse it as text first
+      const responseText = await response.text();
+      console.log('Forgot password response text:', responseText);
+      
+      // Try to parse as JSON
+      try {
+        const data = JSON.parse(responseText);
+        return data;
+      } catch (parseError) {
+        // If it's not JSON, return a success response
+        return {
+          success: true,
+          message: responseText || 'Email z linkiem do resetowania hasła został wysłany',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+        };
+      }
     } catch (error: any) {
       console.error('Forgot password error:', error);
       
@@ -505,12 +637,14 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        // Try to get error message as text first (since API returns text/plain)
+        const errorText = await response.text();
+        console.error('Reset password error response:', errorText);
         
         // Handle different error types with user-friendly messages
         switch (response.status) {
           case 400:
-            throw new Error(errorData.message || 'Nieprawidłowe dane. Sprawdź hasło i spróbuj ponownie');
+            throw new Error('Nieprawidłowe dane. Sprawdź hasło i spróbuj ponownie');
           case 401:
             throw new Error('Token resetowania hasła wygasł lub jest nieprawidłowy');
           case 404:
@@ -520,12 +654,26 @@ class AuthService {
           case 503:
             throw new Error('Problem z serwerem. Spróbuj ponownie za chwilę');
           default:
-            throw new Error(errorData.message || 'Wystąpił błąd podczas resetowania hasła');
+            throw new Error('Wystąpił błąd podczas resetowania hasła');
         }
       }
 
-      const data = await response.json();
-      return data;
+      // API returns text/plain, so we need to parse it as text first
+      const responseText = await response.text();
+      console.log('Reset password response text:', responseText);
+      
+      // Try to parse as JSON
+      try {
+        const data = JSON.parse(responseText);
+        return data;
+      } catch (parseError) {
+        // If it's not JSON, return a success response
+        return {
+          success: true,
+          message: responseText || 'Hasło zostało pomyślnie zresetowane',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+        };
+      }
     } catch (error: any) {
       console.error('Reset password error:', error);
       
@@ -555,7 +703,9 @@ class AuthService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        // Try to get error message as text first (since API returns text/plain)
+        const errorText = await response.text();
+        console.error('Verify reset token error response:', errorText);
         
         // Handle different error types with user-friendly messages
         switch (response.status) {
@@ -570,12 +720,26 @@ class AuthService {
           case 503:
             throw new Error('Problem z serwerem. Spróbuj ponownie za chwilę');
           default:
-            throw new Error(errorData.message || 'Wystąpił błąd podczas weryfikacji tokenu');
+            throw new Error('Wystąpił błąd podczas weryfikacji tokenu');
         }
       }
 
-      const data = await response.json();
-      return data;
+      // API returns text/plain, so we need to parse it as text first
+      const responseText = await response.text();
+      console.log('Verify reset token response text:', responseText);
+      
+      // Try to parse as JSON
+      try {
+        const data = JSON.parse(responseText);
+        return data;
+      } catch (parseError) {
+        // If it's not JSON, return a success response
+        return {
+          success: true,
+          message: responseText || 'Token jest prawidłowy',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+        };
+      }
     } catch (error: any) {
       console.error('Verify reset token error:', error);
       

@@ -12,11 +12,12 @@ export const MobileLandingPage = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
   
   // Ref do przechowania stanu modala podczas błędów
   const showAuthModalRef = useRef(false);
   
-  const { login, register, isLoading } = useAuth();
+  const { login, register, resendEmailVerification, isLoading } = useAuth();
   useSystemTheme('dark');
 
   // Debug: monitoruj zmiany w showAuthModal
@@ -29,6 +30,11 @@ export const MobileLandingPage = () => {
   useEffect(() => {
     console.log('MobileLandingPage: error changed to:', error);
   }, [error]);
+
+  // Debug: monitoruj zmiany w showEmailConfirmation
+  useEffect(() => {
+    console.log('MobileLandingPage: showEmailConfirmation changed to:', showEmailConfirmation);
+  }, [showEmailConfirmation]);
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
     try {
@@ -62,11 +68,27 @@ export const MobileLandingPage = () => {
 
   const handleRegister = async (userData: any) => {
     try {
+      console.log('MobileLandingPage: Starting registration...');
       setError(null);
-      await register(userData);
-      setShowAuthModal(false);
-      setShowEmailConfirmation(true);
+      const response = await register(userData);
+      console.log('MobileLandingPage: Registration response:', response);
+      
+      // Check if email verification is required
+      if (response && response.requiresEmailVerification) {
+        console.log('MobileLandingPage: Email verification required, showing modal');
+        setUserEmail(userData.email); // Save user email for resend functionality
+        setShowAuthModal(false);
+        setShowEmailConfirmation(true);
+        // Don't redirect - user needs to verify email first
+        console.log('MobileLandingPage: Modal should be shown now');
+      } else {
+        console.log('MobileLandingPage: Normal registration, redirecting to map');
+        // Normal registration - redirect to map (this should rarely happen)
+        setShowAuthModal(false);
+        navigate('/map');
+      }
     } catch (error: any) {
+      console.error('MobileLandingPage: Registration error:', error);
       setError('Sprawdź dane rejestracji'); // Ogólny komunikat dla bezpieczeństwa
     }
   };
@@ -151,7 +173,9 @@ export const MobileLandingPage = () => {
 
       <EmailConfirmationModal
         showEmailConfirmation={showEmailConfirmation}
+        email={userEmail}
         onClose={closeEmailConfirmation}
+        onResendEmail={resendEmailVerification}
       />
     </div>
   );

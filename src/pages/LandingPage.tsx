@@ -15,6 +15,7 @@ export const LandingPage = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
   const [isScrolled, setIsScrolled] = useState(false);
   // Check if mobile immediately (SSR safe)
   const [isMobile, setIsMobile] = useState(() => {
@@ -24,7 +25,7 @@ export const LandingPage = () => {
     return false;
   });
   
-  const { login, register, isLoading } = useAuth();
+  const { login, register, resendEmailVerification, isLoading } = useAuth();
   useSystemTheme('dark');
 
   // Check if mobile
@@ -89,11 +90,27 @@ export const LandingPage = () => {
 
   const handleRegister = async (userData: any) => {
     try {
+      console.log('LandingPage: Starting registration...');
       setError(null);
-      await register(userData);
-      setShowAuthModal(false);
-      setShowEmailConfirmation(true);
+      const response = await register(userData);
+      console.log('LandingPage: Registration response:', response);
+      
+      // Check if email verification is required
+      if (response && response.requiresEmailVerification) {
+        console.log('LandingPage: Email verification required, showing modal');
+        setUserEmail(userData.email); // Save user email for resend functionality
+        setShowAuthModal(false);
+        setShowEmailConfirmation(true);
+        // Don't redirect - user needs to verify email first
+        console.log('LandingPage: Modal should be shown now');
+      } else {
+        console.log('LandingPage: Normal registration, redirecting to map');
+        // Normal registration - redirect to map (this should rarely happen)
+        setShowAuthModal(false);
+        navigate('/map');
+      }
     } catch (error: any) {
+      console.error('LandingPage: Registration error:', error);
       setError('Sprawdź dane rejestracji'); // Ogólny komunikat dla bezpieczeństwa
     }
   };
@@ -471,16 +488,18 @@ export const LandingPage = () => {
         authMode={authMode}
         error={error}
         isLoading={isLoading}
-        onClose={closeModal}
+                          onClose={closeModal}
         onLogin={handleLogin}
         onRegister={handleRegister}
-        onSwitchToLogin={() => setAuthMode('login')}
+                          onSwitchToLogin={() => setAuthMode('login')}
         onSwitchToRegister={() => setAuthMode('register')}
       />
 
       <EmailConfirmationModal
         showEmailConfirmation={showEmailConfirmation}
+        email={userEmail}
         onClose={closeEmailConfirmation}
+        onResendEmail={resendEmailVerification}
       />
 
     </div>

@@ -1,16 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DarkGlassButton } from '../UI/DarkGlassButton';
 
 interface EmailConfirmationModalProps {
   showEmailConfirmation: boolean;
+  email?: string;
   onClose: () => void;
+  onResendEmail?: (email: string) => Promise<void>;
 }
 
 export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
   showEmailConfirmation,
-  onClose
+  email,
+  onClose,
+  onResendEmail
 }) => {
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+
+  const handleResendEmail = async () => {
+    if (!email || !onResendEmail) return;
+    
+    try {
+      setIsResending(true);
+      setResendMessage(null);
+      await onResendEmail(email);
+      setResendMessage('Email został ponownie wysłany!');
+    } catch (error: any) {
+      setResendMessage(error.message || 'Wystąpił błąd podczas wysyłania emaila');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {showEmailConfirmation && (
@@ -35,7 +57,29 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
                     Wysłaliśmy Ci maila z linkiem potwierdzającym. 
                     Kliknij w link, aby aktywować konto i rozpocząć korzystanie z aplikacji.
                   </p>
+                  
+                  {resendMessage && (
+                    <div className={`mb-4 p-3 rounded-lg ${
+                      resendMessage.includes('błąd') 
+                        ? 'bg-red-900/30 text-red-400 border border-red-500/30' 
+                        : 'bg-green-900/30 text-green-400 border border-green-500/30'
+                    }`}>
+                      {resendMessage}
+                    </div>
+                  )}
+                  
                   <div className="space-y-3">
+                    {email && onResendEmail && (
+                      <DarkGlassButton
+                        onClick={handleResendEmail}
+                        variant="secondary"
+                        size="lg"
+                        className="w-full"
+                        disabled={isResending}
+                      >
+                        {isResending ? 'Wysyłanie...' : 'Wyślij ponownie'}
+                      </DarkGlassButton>
+                    )}
                     <DarkGlassButton
                       onClick={onClose}
                       variant="primary"

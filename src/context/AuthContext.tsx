@@ -8,7 +8,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<void>;
+  register: (userData: RegisterRequest) => Promise<any>;
+  resendEmailVerification: (email: string) => Promise<any>;
   logout: (isManual?: boolean) => void;
   handleAuthError: (error: any) => void;
 }
@@ -31,6 +32,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Debug: monitoruj zmiany w user
+  useEffect(() => {
+    console.log('AuthContext: user changed to:', user ? 'User logged in' : 'No user');
+  }, [user]);
 
   
   // Funkcja do czyszczenia lokalnego stanu użytkownika (tylko przy ręcznym wylogowaniu)
@@ -200,10 +206,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: RegisterRequest) => {
     try {
       setIsLoading(true);
-      await authService.register(userData);
+      console.log('AuthContext: Starting registration...');
+      const response = await authService.register(userData);
+      console.log('AuthContext: Registration response:', response);
       
-      // Fetch user data from API
+      // Check if email verification is required
+      if (response && response.requiresEmailVerification) {
+        // Don't try to fetch user profile if email verification is required
+        console.log('Email verification required:', response.message);
+        console.log('AuthContext: Returning response without setting user');
+        return response; // Return the response with verification info
+      }
+      
+      console.log('AuthContext: Normal registration - fetching user profile...');
+      // Normal registration - fetch user data from API
       const userDataFromAPI = await authService.getUserProfile();
+      console.log('AuthContext: User profile fetched:', userDataFromAPI);
       setUser(userDataFromAPI);
       
       // Initialize default location in localStorage if not exists
@@ -219,8 +237,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Token is automatically saved by authService
       console.log('User data from API:', userDataFromAPI);
+      return response;
     } catch (error) {
       console.error('Registration failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resendEmailVerification = async (email: string) => {
+    try {
+      setIsLoading(true);
+      const response = await authService.resendEmailVerification(email);
+      return response;
+    } catch (error) {
+      console.error('Resend email verification failed:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -255,6 +287,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAdmin,
     login,
     register,
+    resendEmailVerification,
     logout,
     handleAuthError
   };

@@ -25,8 +25,18 @@ export const AuthPage: React.FC = () => {
   const handleRegister = async (userData: any) => {
     try {
       setError(null);
-      await register(userData);
-      navigate('/map');
+      const response = await register(userData);
+      
+      // Check if email verification is required
+      if (response && response.requiresEmailVerification) {
+        // Show success message instead of redirecting
+        setError(null);
+        alert('Konto zostało utworzone! Sprawdź email w celu weryfikacji konta.');
+        // Stay on the same page - user needs to verify email first
+      } else {
+        // Normal registration - redirect to map
+        navigate('/map');
+      }
     } catch (error: any) {
       setError(error.message || 'Błąd rejestracji');
     }

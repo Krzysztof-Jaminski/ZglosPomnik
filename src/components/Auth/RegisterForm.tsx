@@ -81,7 +81,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       email: formData.email.trim(),
       password: formData.password,
       confirmPassword: formData.confirmPassword,
-      phone: formData.phone.trim()
+      phone: formData.phone.trim() || null // Jeśli pusty string, wyślij null
     };
     
     onSubmit(userData);
@@ -207,6 +207,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       ...prev,
       [field]: !prev[field]
     }));
+    
+    // Show validation panel when toggling password visibility
+    if (field === 'password' && formData.password) {
+      setFocusedField('password');
+    }
   };
 
   const handleFieldFocus = (fieldName: string) => {
