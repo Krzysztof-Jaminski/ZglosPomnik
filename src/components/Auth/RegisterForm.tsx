@@ -37,7 +37,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     firstName: { isValid: false, message: '' },
     lastName: { isValid: false, message: '' },
     email: { isValid: false, message: '' },
-    phone: { isValid: false, message: '' },
+    phone: { isValid: true, message: '' }, // Telefon jest opcjonalny, więc domyślnie true
     password: {
       minLength: false,
       hasUppercase: false,
@@ -189,7 +189,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         hasUppercase: /[A-Z]/.test(password),
         hasLowercase: /[a-z]/.test(password),
         hasNumber: /\d/.test(password),
-        hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        hasSpecialChar: true // Wyłączone - nie wymagamy znaków specjalnych
       }
     }));
   };
@@ -586,16 +586,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   )}
                   <span className={`text-xs ${validation.password.hasNumber ? 'text-green-400' : 'text-red-400'}`}>
                     Co najmniej jedna cyfra
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {validation.password.hasSpecialChar ? (
-                    <Check className="w-3 h-3 text-green-500" />
-                  ) : (
-                    <XIcon className="w-3 h-3 text-red-500" />
-                  )}
-                  <span className={`text-xs ${validation.password.hasSpecialChar ? 'text-green-400' : 'text-red-400'}`}>
-                    Co najmniej jeden znak specjalny
                   </span>
                 </div>
                 {formData.confirmPassword && (

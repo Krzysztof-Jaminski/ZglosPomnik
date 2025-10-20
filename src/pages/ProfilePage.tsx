@@ -349,11 +349,11 @@ export const ProfilePage: React.FC = () => {
   const validatePassword = (password: string) => {
     setPasswordValidation(prev => ({
       ...prev,
-      minLength: password.length >= 8,
+      minLength: password.length >= 6 && password.length <= 100,
       hasUppercase: /[A-Z]/.test(password),
       hasLowercase: /[a-z]/.test(password),
       hasNumber: /\d/.test(password),
-      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+      hasSpecialChar: true // Wyłączone - nie wymagamy znaków specjalnych
     }));
   };
 
@@ -383,8 +383,8 @@ export const ProfilePage: React.FC = () => {
       return;
     }
     
-    if (passwordData.newPassword.length < 8) {
-      alert('Nowe hasło musi mieć co najmniej 8 znaków');
+    if (passwordData.newPassword.length < 6 || passwordData.newPassword.length > 100) {
+      alert('Nowe hasło musi mieć od 6 do 100 znaków');
       return;
     }
     

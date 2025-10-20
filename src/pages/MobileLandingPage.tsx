@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
 import { useAuth } from '../context/AuthContext';
-import { LoginForm } from '../components/Auth/LoginForm';
-import { RegisterForm } from '../components/Auth/RegisterForm';
 import { useSystemTheme } from '../hooks/useSystemTheme';
+import { AuthModal } from '../components/Auth/AuthModal';
+import { EmailConfirmationModal } from '../components/Auth/EmailConfirmationModal';
 
 export const MobileLandingPage = () => {
   const navigate = useNavigate();
@@ -17,7 +16,7 @@ export const MobileLandingPage = () => {
   // Ref do przechowania stanu modala podczas błędów
   const showAuthModalRef = useRef(false);
   
-  const { login, register } = useAuth();
+  const { login, register, isLoading } = useAuth();
   useSystemTheme('dark');
 
   // Debug: monitoruj zmiany w showAuthModal
@@ -138,108 +137,22 @@ export const MobileLandingPage = () => {
         </div>
       </div>
 
-      {/* Auth Modal */}
-      <AnimatePresence>
-        {showAuthModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative max-w-md w-full"
-            >
-              <div className="relative rounded-xl p-1 shadow-lg" style={{
-                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3))',
-                padding: '2px'
-              }}>
-                <div className="bg-gray-900 rounded-lg">
-                  <div className="p-4 sm:p-6">
-                    <div className="flex justify-between items-center mb-6">
-                      <div className="flex items-center gap-4">
-                        <img 
-                          src="/logo.png" 
-                          alt="ZgłośPomnik" 
-                          className="w-10 h-10 sm:w-12 sm:h-12"
-                        />
-                        <h2 className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif' }}>
-                          <span className="text-blue-600 dark:text-blue-500">Zgłoś</span><span className="text-green-600 dark:text-green-400">Pomnik</span>
-                        </h2>
-                      </div>
-                      <button
-                        onClick={closeModal}
-                        className="text-green-400 hover:text-green-300 transition-colors duration-200 p-2 hover:bg-green-900/30 rounded-lg"
-                      >
-                        ✕
-                      </button>
-                    </div>
+      <AuthModal
+        showAuthModal={showAuthModal}
+        authMode={authMode}
+        error={error}
+        isLoading={isLoading}
+        onClose={closeModal}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onSwitchToLogin={() => setAuthMode('login')}
+        onSwitchToRegister={() => setAuthMode('register')}
+      />
 
-
-                    <div className="space-y-4">
-                      {authMode === 'login' ? (
-                        <LoginForm
-                          onSubmit={handleLogin}
-                          onSwitchToRegister={() => setAuthMode('register')}
-                          onClose={closeModal}
-                          error={error}
-                        />
-                      ) : (
-                        <RegisterForm
-                          onSubmit={handleRegister}
-                          onSwitchToLogin={() => setAuthMode('login')}
-                          onClose={closeModal}
-                          error={error}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Email Confirmation Modal */}
-      <AnimatePresence>
-        {showEmailConfirmation && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative max-w-md w-full"
-            >
-              <div className="relative rounded-xl p-1 shadow-lg" style={{
-                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3))',
-                padding: '2px'
-              }}>
-                <div className="bg-gray-900 rounded-lg">
-                  <div className="p-6 text-center">
-                    <div className="text-6xl mb-4">📧</div>
-                    <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif' }}>
-                      Sprawdź swoją skrzynkę!
-                    </h2>
-                    <p className="text-gray-300 mb-6 leading-relaxed">
-                      Wysłaliśmy Ci maila z linkiem potwierdzającym. 
-                      Kliknij w link, aby aktywować konto i rozpocząć korzystanie z aplikacji.
-                    </p>
-                    <div className="space-y-3">
-                      <DarkGlassButton
-                        onClick={closeEmailConfirmation}
-                        variant="primary"
-                        size="lg"
-                        className="w-full"
-                      >
-                        Rozumiem
-                      </DarkGlassButton>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <EmailConfirmationModal
+        showEmailConfirmation={showEmailConfirmation}
+        onClose={closeEmailConfirmation}
+      />
     </div>
   );
 };
