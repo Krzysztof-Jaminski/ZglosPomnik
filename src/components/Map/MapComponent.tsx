@@ -517,7 +517,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         {/* Tree count indicator */}
           <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm px-2 py-1 sm:px-5 sm:py-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50">
             <p className="text-gray-600 dark:text-gray-300" style={{ fontSize: '13px' }}>
-              Zgłoszone drzewa: <span className="font-black text-green-600" style={{ fontSize: '13px' }}>{trees.length}</span>
+              Zgłoszone drzewa: <span className="font-semibold text-green-500" style={{ fontSize: '13px' }}>{trees.length}</span>
             </p>
           </div>
         
