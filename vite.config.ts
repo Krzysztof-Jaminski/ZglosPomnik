@@ -45,13 +45,25 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          maps: ['@googlemaps/js-api-loader'],
-          ui: ['framer-motion', '@headlessui/react', 'lucide-react']
+          maps: ['@googlemaps/js-api-loader', 'leaflet'],
+          ui: ['framer-motion', '@headlessui/react', 'lucide-react'],
+          utils: ['html2canvas']
         },
         // Add timestamp to filenames for cache busting
         entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
         chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
         assetFileNames: `assets/[name]-[hash]-${Date.now()}.[ext]`
+      }
+    },
+    // Increase chunk size limits for better performance
+    chunkSizeWarningLimit: 1000,
+    // Optimize for better loading
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
       }
     }
   }

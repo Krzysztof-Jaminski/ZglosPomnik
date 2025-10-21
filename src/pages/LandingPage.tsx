@@ -98,10 +98,18 @@ export const LandingPage = () => {
       // Check if email verification is required
       if (response && response.requiresEmailVerification) {
         console.log('LandingPage: Email verification required, showing modal');
+        console.log('LandingPage: Current showEmailConfirmation:', showEmailConfirmation);
         setUserEmail(userData.email); // Save user email for resend functionality
-        setShowAuthModal(false);
-        setShowEmailConfirmation(true);
-        // Don't redirect - user needs to verify email first
+        
+        // Use setTimeout to ensure state updates happen after current render
+        setTimeout(() => {
+          console.log('LandingPage: Setting showAuthModal to false');
+          setShowAuthModal(false);
+          console.log('LandingPage: Setting showEmailConfirmation to true');
+          setShowEmailConfirmation(true);
+          console.log('LandingPage: State updates queued');
+        }, 0);
+        
         console.log('LandingPage: Modal should be shown now');
       } else {
         console.log('LandingPage: Normal registration, redirecting to map');

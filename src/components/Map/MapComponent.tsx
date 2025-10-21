@@ -131,7 +131,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           crossOrigin: true,
           updateWhenZooming: false, // Reduce API calls during zoom
           updateWhenIdle: true,
-          keepBuffer: 2,
+          keepBuffer: 4, // Increased buffer for better performance
           maxNativeZoom: 19,
           bounds: [[49.0, 14.0], [55.0, 24.0]], // Limit to Poland area
           noWrap: true
@@ -147,7 +147,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           crossOrigin: true,
           updateWhenZooming: false, // Reduce API calls during zoom
           updateWhenIdle: true,
-          keepBuffer: 2,
+          keepBuffer: 4, // Increased buffer for better performance
           maxNativeZoom: 19,
           bounds: [[49.0, 14.0], [55.0, 24.0]], // Limit to Poland area
           noWrap: true,
@@ -164,7 +164,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           crossOrigin: true,
           updateWhenZooming: false,
           updateWhenIdle: true,
-          keepBuffer: 2,
+          keepBuffer: 4, // Increased buffer for better performance
           maxNativeZoom: 19,
           bounds: [[49.0, 14.0], [55.0, 24.0]],
           noWrap: true
@@ -337,12 +337,12 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
             // Add blue marker at clicked location
             console.log('Adding blue click marker at:', lat, lng);
             const clickMarker = L.circleMarker([lat, lng], {
-              radius: 10,
+              radius: 8, // Smaller radius
               fillColor: '#3b82f6',
               color: '#ffffff',
-              weight: 3,
-              opacity: 1,
-              fillOpacity: 0.9,
+              weight: 2, // Thinner border
+              opacity: 0.6, // 60% opacity
+              fillOpacity: 0.6, // 60% fill opacity
               className: 'custom-marker'
             }).addTo(mapInstance);
 
@@ -395,22 +395,22 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
             
             // Create markers for both maps
             const roadmapMarker = L.circleMarker([tree.location.lat, tree.location.lng], {
-              radius: 10,
+              radius: 8, // Smaller radius
               fillColor: '#10b981',
               color: '#ffffff',
-              weight: 3,
-              opacity: 1,
-              fillOpacity: 0.9,
+              weight: 2, // Thinner border
+              opacity: 0.6, // 60% opacity
+              fillOpacity: 0.6, // 60% fill opacity
               className: 'tree-marker'
             }).addTo(roadmapMap);
 
             const satelliteMarker = L.circleMarker([tree.location.lat, tree.location.lng], {
-              radius: 10,
+              radius: 8, // Smaller radius
               fillColor: '#10b981',
               color: '#ffffff',
-              weight: 3,
-              opacity: 1,
-              fillOpacity: 0.9,
+              weight: 2, // Thinner border
+              opacity: 0.6, // 60% opacity
+              fillOpacity: 0.6, // 60% fill opacity
               className: 'tree-marker'
             }).addTo(satelliteMap);
 
@@ -515,29 +515,29 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       {/* Tree count indicator and Legend - Left side */}
       <div className="absolute bottom-2 left-2 sm:bottom-2 sm:left-2 space-y-2 z-[1000]">
         {/* Tree count indicator */}
-        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm px-2 py-1 sm:px-5 sm:py-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            Zgłoszenia: <span className="font-bold text-green-600">{trees.length}</span>
-          </p>
-        </div>
+          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm px-2 py-1 sm:px-5 sm:py-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+            <p className="text-gray-600 dark:text-gray-300" style={{ fontSize: '13px' }}>
+              Zgłoszone drzewa: <span className="font-black text-green-600" style={{ fontSize: '13px' }}>{trees.length}</span>
+            </p>
+          </div>
         
         {/* Legend */}
-        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-2 sm:p-3 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 max-w-40 sm:max-w-60">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">Legenda:</div>
-          <div className="space-y-1 sm:space-y-2 text-sm">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500"></div>
-              <span className="text-gray-600 dark:text-gray-400">Uznane</span>
+        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-3 sm:p-4 rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 max-w-44 sm:max-w-64">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">Legenda:</div>
+            <div className="space-y-2 sm:space-y-3 text-sm">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500"></div>
+                <span className="text-gray-600 dark:text-gray-400">Uznane</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-500"></div>
+                <span className="text-gray-600 dark:text-gray-400">Nowe</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-amber-500"></div>
+                <span className="text-gray-600 dark:text-gray-400">Inne zgłoszenia</span>
+              </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-500"></div>
-              <span className="text-gray-600 dark:text-gray-400">Własne zgłoszenia</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-amber-500"></div>
-              <span className="text-gray-600 dark:text-gray-400">Inne zgłoszenia</span>
-            </div>
-          </div>
         </div>
       </div>
 
