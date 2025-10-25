@@ -53,23 +53,26 @@ export const ReportPage: React.FC = () => {
       });
 
       // Add satellite tile layer
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      const tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: '© Esri',
         maxZoom: 19
       }).addTo(map);
 
-      // Add blue marker at the exact location (same as on the main map)
-      L.circleMarker([lat, lng], {
-        radius: 10,
-        fillColor: '#3b82f6',
-        color: '#ffffff',
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 0.9
-      }).addTo(map);
+      // Wait for tiles to load first - both timeout and tile load event
+      await Promise.race([
+        new Promise(resolve => setTimeout(resolve, 3000)), // max 3 seconds
+        new Promise(resolve => {
+          tileLayer.on('load', resolve);
+          setTimeout(resolve, 2500); // fallback after 2.5s
+        })
+      ]);
 
-      // Wait for map to load
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Force map to invalidate size and re-center
+      map.invalidateSize();
+      map.setView([lat, lng], 19);
+
+      // Wait for map to fully render (no marker needed here - we'll add it to canvas)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Use html2canvas to capture the map
       const html2canvas = await import('html2canvas');
@@ -80,9 +83,48 @@ export const ReportPage: React.FC = () => {
         scale: 1
       });
 
-      // Convert canvas to blob
+      // Create new canvas and combine map + marker
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = canvas.width;
+      finalCanvas.height = canvas.height;
+      const finalCtx = finalCanvas.getContext('2d');
+      
+      console.log('Final canvas context:', finalCtx, 'Canvas size:', finalCanvas.width, 'x', finalCanvas.height);
+      
+      if (finalCtx) {
+        // First draw the map screenshot
+        finalCtx.drawImage(canvas, 0, 0);
+        
+        // Then draw the marker on top
+        const centerX = finalCanvas.width / 2;
+        const centerY = finalCanvas.height / 2;
+        console.log('Drawing marker at center:', centerX, centerY);
+        
+        // Draw green marker circle at center with proper transparency (same as main map)
+        finalCtx.save(); // Save current state
+        
+        // Fill circle with proper transparency
+        finalCtx.globalAlpha = 0.5; // Match fillOpacity from main map
+        finalCtx.fillStyle = '#10b981';
+        finalCtx.beginPath();
+        finalCtx.arc(centerX, centerY, 8, 0, 2 * Math.PI); // Match radius from main map
+        finalCtx.fill();
+        
+        // Draw white border with proper transparency
+        finalCtx.globalAlpha = 0.5; // Match opacity from main map
+        finalCtx.strokeStyle = '#ffffff';
+        finalCtx.lineWidth = 2; // Match weight from main map
+        finalCtx.stroke();
+        
+        finalCtx.restore(); // Restore state
+        console.log('Marker drawn successfully on final canvas');
+      } else {
+        console.log('No final canvas context available');
+      }
+
+      // Convert final canvas to blob
       return new Promise((resolve) => {
-        canvas.toBlob((blob) => {
+        finalCanvas.toBlob((blob) => {
           if (blob) {
                   const file = new File([blob], `map_localization_${Date.now()}.png`, { type: 'image/png' });
             console.log('Map screenshot generated:', file.name, file.size, 'bytes');
@@ -111,15 +153,15 @@ export const ReportPage: React.FC = () => {
         ctx.fillStyle = '#f0f0f0';
         ctx.fillRect(0, 0, 800, 600);
         
-        // Draw blue marker in the center
-        ctx.fillStyle = '#3b82f6';
+        // Draw green marker in the center
+        ctx.fillStyle = '#10b981';
         ctx.beginPath();
-        ctx.arc(400, 300, 15, 0, 2 * Math.PI);
+        ctx.arc(400, 300, 12, 0, 2 * Math.PI);
         ctx.fill();
         
         // Draw white border around marker
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.stroke();
         
         // Draw coordinates text below the marker
@@ -156,8 +198,8 @@ export const ReportPage: React.FC = () => {
     if (selectedLocation) {
       // Check if we already have a screenshot for these coordinates
       const coordsMatch = mapScreenshotCoords && 
-        Math.abs(mapScreenshotCoords.lat - selectedLocation.lat) < 0.0001 &&
-        Math.abs(mapScreenshotCoords.lng - selectedLocation.lng) < 0.0001;
+        Math.abs(mapScreenshotCoords.lat - selectedLocation.lat) < 0.00001 &&
+        Math.abs(mapScreenshotCoords.lng - selectedLocation.lng) < 0.00001;
       
       if (coordsMatch && mapScreenshot) {
         console.log('Using existing map screenshot for same coordinates');

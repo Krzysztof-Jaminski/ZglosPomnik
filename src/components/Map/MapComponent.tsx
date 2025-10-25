@@ -81,8 +81,8 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
             fillColor: '#3b82f6',
             color: '#ffffff',
             weight: 2,
-            opacity: 0.8,
-            fillOpacity: 0.8
+            opacity: 0.5,
+            fillOpacity: 0.5
           });
           
           marker.addTo(currentMap);
@@ -379,8 +379,8 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         mapInstance.on('click', (e) => {
           if (onTreeSelectRef.current) {
           
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
+            const lat = parseFloat(e.latlng.lat.toFixed(8)); // Higher precision
+            const lng = parseFloat(e.latlng.lng.toFixed(8)); // Higher precision
             
             // Check if click was on existing tree marker
           const currentMarkers = mapType === 'roadmap' ? roadmapMarkersRef.current : satelliteMarkersRef.current;
@@ -410,8 +410,8 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
               fillColor: '#3b82f6',
               color: '#ffffff',
               weight: 2, // Thinner border
-              opacity: 0.6, // 60% opacity
-              fillOpacity: 0.6, // 60% fill opacity
+              opacity: 0.5, // 50% opacity
+              fillOpacity: 0.5, // 50% fill opacity
               className: 'custom-marker'
             }).addTo(mapInstance);
 
@@ -471,8 +471,8 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
               fillColor: '#10b981',
               color: '#ffffff',
               weight: 2, // Thinner border
-              opacity: 0.6, // 60% opacity
-              fillOpacity: 0.6, // 60% fill opacity
+              opacity: 0.5, // 50% opacity
+              fillOpacity: 0.5, // 50% fill opacity
               className: 'tree-marker'
             }).addTo(roadmapMap);
 
@@ -481,8 +481,8 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
               fillColor: '#10b981',
               color: '#ffffff',
               weight: 2, // Thinner border
-              opacity: 0.6, // 60% opacity
-              fillOpacity: 0.6, // 60% fill opacity
+              opacity: 0.5, // 50% opacity
+              fillOpacity: 0.5, // 50% fill opacity
               className: 'tree-marker'
             }).addTo(satelliteMap);
 
