@@ -37,7 +37,7 @@ export const ReportPage: React.FC = () => {
       tempContainer.style.top = '-9999px';
       tempContainer.style.left = '-9999px';
       tempContainer.style.width = '800px';
-      tempContainer.style.height = '600px';
+      tempContainer.style.height = '800px';
       tempContainer.style.zIndex = '-1';
       document.body.appendChild(tempContainer);
 
@@ -90,6 +90,7 @@ export const ReportPage: React.FC = () => {
       const finalCtx = finalCanvas.getContext('2d');
       
       console.log('Final canvas context:', finalCtx, 'Canvas size:', finalCanvas.width, 'x', finalCanvas.height);
+      console.log('Original html2canvas size:', canvas.width, 'x', canvas.height);
       
       if (finalCtx) {
         // First draw the map screenshot
@@ -126,7 +127,7 @@ export const ReportPage: React.FC = () => {
       return new Promise((resolve) => {
         finalCanvas.toBlob((blob) => {
           if (blob) {
-                  const file = new File([blob], `map_localization_${Date.now()}.png`, { type: 'image/png' });
+                  const file = new File([blob], `Mapa_Lokalizacji_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`, { type: 'image/png' });
             console.log('Map screenshot generated:', file.name, file.size, 'bytes');
             resolve(file);
           } else {
@@ -145,18 +146,18 @@ export const ReportPage: React.FC = () => {
       // Fallback: create a simple canvas with coordinates
       const canvas = document.createElement('canvas');
       canvas.width = 800;
-      canvas.height = 600;
+      canvas.height = 800;
       const ctx = canvas.getContext('2d');
       
       if (ctx) {
         // Draw a simple background
         ctx.fillStyle = '#f0f0f0';
-        ctx.fillRect(0, 0, 800, 600);
+        ctx.fillRect(0, 0, 800, 800);
         
         // Draw green marker in the center
         ctx.fillStyle = '#10b981';
         ctx.beginPath();
-        ctx.arc(400, 300, 12, 0, 2 * Math.PI);
+        ctx.arc(400, 400, 12, 0, 2 * Math.PI);
         ctx.fill();
         
         // Draw white border around marker
@@ -168,13 +169,13 @@ export const ReportPage: React.FC = () => {
         ctx.fillStyle = '#333';
         ctx.font = '20px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`Współrzędne: ${lat.toFixed(6)}, ${lng.toFixed(6)}`, 400, 350);
+        ctx.fillText(`Współrzędne: ${lat.toFixed(6)}, ${lng.toFixed(6)}`, 400, 460);
         
         // Convert canvas to blob
         return new Promise((resolve) => {
           canvas.toBlob((blob) => {
             if (blob) {
-                  const file = new File([blob], `map_localization_${Date.now()}.png`, { type: 'image/png' });
+                  const file = new File([blob], `Mapa_Lokalizacji_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`, { type: 'image/png' });
               console.log('Fallback map screenshot generated:', file.name, file.size, 'bytes');
               resolve(file);
             } else {
@@ -668,7 +669,8 @@ export const ReportPage: React.FC = () => {
                           <img
                             src={URL.createObjectURL(mapScreenshot)}
                             alt="Map screenshot"
-                            className="w-full h-16 sm:h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                            className="w-full aspect-[5/1] object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                            style={{ objectPosition: 'center center' }}
                             onClick={openMapScreenshotModal}
                           />
                           <div className="absolute top-1 left-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
@@ -678,7 +680,7 @@ export const ReportPage: React.FC = () => {
                       )}
                       
                       {isGeneratingMapScreenshot && (
-                        <div className="w-full h-16 sm:h-20 bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded flex items-center justify-center">
+                        <div className="w-full aspect-[5/1] bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded flex items-center justify-center">
                           <div className="flex items-center space-x-2">
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 dark:border-blue-400"></div>
                             <span className="text-xs text-blue-600 dark:text-blue-400">Generowanie screenshotu...</span>
@@ -813,25 +815,32 @@ export const ReportPage: React.FC = () => {
               className="relative max-w-5xl max-h-[90vh] w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
-              <button
-                onClick={closeMapScreenshotModal}
-                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
-              >
-                <X className="w-8 h-8" />
-              </button>
-
-              {/* Title */}
-              <div className="absolute -top-12 left-0 text-white text-lg font-medium z-10">
-                Screenshot mapy lokalizacji
+              {/* Header with title and close button */}
+              <div className="absolute -top-12 left-0 right-0 flex items-center justify-between px-8 z-10">
+                {/* Title - centered with margin */}
+                <div className="flex-1 text-center">
+                  <span className="text-white text-lg font-medium">
+                    Screenshot mapy lokalizacji
+                  </span>
+                </div>
+                
+                {/* Close button with margin */}
+                <button
+                  onClick={closeMapScreenshotModal}
+                  className="text-white hover:text-gray-300 transition-colors ml-4"
+                >
+                  <X className="w-8 h-8" />
+                </button>
               </div>
 
               {/* Main screenshot */}
-              <img
-                src={URL.createObjectURL(mapScreenshot)}
-                alt="Map screenshot"
-                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-lg"
-              />
+              <div className="flex items-center justify-center w-full h-full min-h-[60vh]">
+                <img
+                  src={URL.createObjectURL(mapScreenshot)}
+                  alt="Map screenshot"
+                  className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-lg"
+                />
+              </div>
             </motion.div>
           </motion.div>
         )}
