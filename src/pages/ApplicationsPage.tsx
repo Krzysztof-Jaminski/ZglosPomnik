@@ -682,6 +682,7 @@ export const ApplicationsPage: React.FC = () => {
                     selectedTree={selectedTree}
                     selectedCommune={selectedCommune}
                     selectedTemplate={selectedTemplate}
+                    applicationId={currentApplication?.id}
                   />
                 </motion.div>
               )}

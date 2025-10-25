@@ -236,10 +236,10 @@ export const applicationsService = {
     return response.json();
   },
 
-  // Generate justification description for tree using backend AI (Gemini)
-  async generateJustification(treeId: string): Promise<string> {
-    console.log(`API Call: GET /api/Gemini/tree/${treeId}/justification`);
-    const response = await fetch(`${API_BASE_URL}/Gemini/tree/${treeId}/justification`, {
+  // Generate justification description for application using backend AI (Gemini)
+  async generateJustification(applicationId: string): Promise<string> {
+    console.log(`API Call: GET /api/Gemini/application/${applicationId}/justification`);
+    const response = await fetch(`${API_BASE_URL}/Gemini/application/${applicationId}/justification`, {
       method: 'GET',
       headers: createHeaders()
     });

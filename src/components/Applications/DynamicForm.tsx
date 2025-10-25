@@ -16,6 +16,7 @@ interface DynamicFormProps {
   selectedTree?: Tree | null;
   selectedCommune?: Commune | null;
   selectedTemplate?: ApplicationTemplate | null;
+  applicationId?: string;
 }
 
 export const DynamicForm: React.FC<DynamicFormProps> = ({
@@ -25,7 +26,8 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   onClose,
   isSubmitting = false,
   selectedTree = null,
-  selectedCommune = null
+  selectedCommune = null,
+  applicationId
 }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -302,10 +304,10 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       // Try to get justification from backend AI (Gemini)
       let generatedDescription = '';
       
-      if (selectedTree?.id) {
+      if (applicationId) {
         try {
-          console.log('Calling Gemini to generate justification for tree:', selectedTree.id);
-          generatedDescription = await applicationsService.generateJustification(selectedTree.id);
+          console.log('Calling Gemini to generate justification for application:', applicationId);
+          generatedDescription = await applicationsService.generateJustification(applicationId);
           console.log('Generated justification from Gemini:', generatedDescription);
         } catch (error) {
           console.error('Gemini API error:', error);
