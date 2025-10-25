@@ -289,6 +289,11 @@ export const ReportPage: React.FC = () => {
     }
   };
 
+  // Function for empty slot click - opens gallery directly
+  const handleEmptySlotClick = () => {
+    selectFromGallery();
+  };
+
   // Initialize location from navigation state or localStorage
   const initializeLocation = useCallback((): { lat: number; lng: number } | null => {
     // First try navigation state
@@ -655,9 +660,13 @@ export const ReportPage: React.FC = () => {
                       ))}
                     {/* Empty slots for remaining photos */}
                     {Array.from({ length: 5 - photos.length }).map((_, index) => (
-                      <div key={`empty-${index}`} className="aspect-square border-2 border-dashed border-gray-400 dark:border-gray-600 rounded flex items-center justify-center">
-                        <span className="text-gray-400 dark:text-gray-600 text-xs">+</span>
-                        </div>
+                      <div 
+                        key={`empty-${index}`} 
+                        className="aspect-square border-2 border-dashed border-gray-400 dark:border-gray-600 rounded flex items-center justify-center cursor-pointer"
+                        onClick={handleEmptySlotClick}
+                      >
+                        <span className="text-gray-400 dark:text-gray-600 text-xs pointer-events-none">+</span>
+                      </div>
                       ))}
                     </div>
                   
