@@ -1,26 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, AlertCircle } from 'lucide-react';
-import { Tree, Species } from '../types';
-import { adminService, AdminUser, AdminStats, SpeciesFormData } from '../services/adminService';
-import { motion } from 'framer-motion';
-import { GlassButton } from '../components/UI/GlassButton';
-import { AdminNavigation } from '../components/Admin/AdminNavigation';
-import { AdminStats as AdminStatsComponent } from '../components/Admin/AdminStats';
-import { AdminTrees } from '../components/Admin/AdminTrees';
+import { AlertCircle } from 'lucide-react';
+import { Species, Tree } from '../types';
+import { adminService, AdminUser, SpeciesFormData } from '../services/adminService';
 import { AdminUsers } from '../components/Admin/AdminUsers';
 import { AdminSpecies } from '../components/Admin/AdminSpecies';
+import { AdminTrees } from '../components/Admin/AdminTrees';
 import { AdminModals } from '../components/Admin/AdminModals';
 
 export const AdminPage: React.FC = () => {
-  const [trees, setTrees] = useState<Tree[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [species, setSpecies] = useState<Species[]>([]);
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [activeTab, setActiveTab] = useState<'stats' | 'trees' | 'users' | 'species'>('stats');
+  const [trees, setTrees] = useState<Tree[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
-  const [deleteAction, setDeleteAction] = useState<{ type: 'post' | 'user' | 'species', id: string, postId?: string } | null>(null);
+  const [deleteAction, setDeleteAction] = useState<{ type: 'user' | 'species' | 'tree', id: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpeciesModal, setShowSpeciesModal] = useState(false);
   const [editingSpecies, setEditingSpecies] = useState<Species | null>(null);
@@ -49,58 +43,21 @@ export const AdminPage: React.FC = () => {
         setIsLoading(true);
         setError(null);
         
-        // Load all data with mock data for now
-        const [treesData, usersData] = await Promise.all([
-          adminService.getAllTrees(),
-          adminService.getAllUsers()
+        const [usersData, speciesData, treesData] = await Promise.all([
+          adminService.getAllUsers(),
+          adminService.getAllSpecies(),
+          adminService.getAllTrees()
         ]);
         
-        // Use mock data for species
-        const speciesData: Species[] = [
-          {
-            id: '1',
-            polishName: 'Dąb szypułkowy',
-            latinName: 'Quercus robur',
-            family: 'Bukowate',
-            description: 'Duże drzewo liściaste',
-            identificationGuide: ['Kora szara i spękana', 'Liście klapowane'],
-            seasonalChanges: {
-              spring: 'Pąki pęcznieją',
-              summer: 'Pełne ulistnienie',
-              autumn: 'Żółte liście',
-              winter: 'Bez liści'
-            },
-            images: [],
-            traits: {
-              maxHeight: 40,
-              lifespan: '500+ lat',
-              nativeToPoland: true
-            }
-          }
-        ];
-        
-        setTrees(treesData);
         setUsers(usersData);
         setSpecies(speciesData);
-        
-        // Calculate stats from real data
-        const statsData = {
-          totalUsers: usersData.length,
-          totalTrees: treesData.length,
-          totalComments: 0, // No comments anymore
-          pendingTrees: treesData.filter(tree => tree.status === 'pending').length,
-          activeUsers: usersData.filter(user => user.status === 'active').length
-        };
-        setStats(statsData);
+        setTrees(treesData);
         
       } catch (error) {
         console.error('Error loading admin data:', error);
         setError(error instanceof Error ? error.message : 'Błąd podczas ładowania danych');
-        // Clear any existing data on error
-        setTrees([]);
         setUsers([]);
         setSpecies([]);
-        setStats(null);
       } finally {
         setIsLoading(false);
       }
@@ -108,11 +65,6 @@ export const AdminPage: React.FC = () => {
 
     loadData();
   }, []);
-
-  const handleDeletePost = (postId: string) => {
-    setDeleteAction({ type: 'post', id: postId });
-    setShowPasswordModal(true);
-  };
 
   const handleDeleteUser = (userId: string) => {
     setDeleteAction({ type: 'user', id: userId });
@@ -124,6 +76,10 @@ export const AdminPage: React.FC = () => {
     setShowPasswordModal(true);
   };
 
+  const handleDeleteTree = (treeId: string) => {
+    setDeleteAction({ type: 'tree', id: treeId });
+    setShowPasswordModal(true);
+  };
 
   const handleEditSpecies = (species: Species) => {
     setEditingSpecies(species);
@@ -166,14 +122,9 @@ export const AdminPage: React.FC = () => {
     if (!deletePassword || !deleteAction) return;
 
     try {
-      // Password verification through API
       const isValidPassword = await adminService.verifyAdminPassword(deletePassword);
       if (isValidPassword) {
-        if (deleteAction?.type === 'post') {
-          await adminService.deleteTree(deleteAction.id);
-          setTrees(prev => prev.filter(tree => tree.id !== deleteAction.id));
-          alert('Zgłoszenie drzewa zostało usunięte!');
-        } else if (deleteAction?.type === 'user') {
+        if (deleteAction?.type === 'user') {
           await adminService.deleteUser(deleteAction.id);
           setUsers(prev => prev.filter(user => user.id !== deleteAction.id));
           alert('Użytkownik został usunięty!');
@@ -181,6 +132,10 @@ export const AdminPage: React.FC = () => {
           await adminService.deleteSpecies(deleteAction.id);
           setSpecies(prev => prev.filter(species => species.id !== deleteAction.id));
           alert('Gatunek został usunięty!');
+        } else if (deleteAction?.type === 'tree') {
+          await adminService.deleteTree(deleteAction.id);
+          setTrees(prev => prev.filter(tree => tree.id !== deleteAction.id));
+          alert('Drzewo zostało usunięte!');
         }
         setShowPasswordModal(false);
         setDeletePassword('');
@@ -239,7 +194,7 @@ export const AdminPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Ładowanie panelu administratora...</p>
@@ -250,77 +205,30 @@ export const AdminPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Błąd ładowania</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
-          <GlassButton
-            onClick={() => window.location.reload()}
-            variant="primary"
-            size="md"
-          >
-            Spróbuj ponownie
-          </GlassButton>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-2 sm:mb-4"
-        >
-          <div className="flex items-center space-x-3 mb-2">
-            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-            <h1 className="text-lg sm:text-2xl font-bold text-green-900 dark:text-white">
-              Panel administratora
-            </h1>
-          </div>
-          <p className="text-base sm:text-lg text-green-800 dark:text-gray-400">
-            Zarządzaj zgłoszeniami i moderuj zawartość
-          </p>
-        </motion.div>
-
-        {/* Navigation */}
-        <AdminNavigation
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          counts={{
-            trees: trees.length,
-            users: users.length,
-            species: species.length
-          }}
-        />
-
-        {/* Content */}
-        {activeTab === 'stats' && (
-          <AdminStatsComponent stats={stats} />
-        )}
-
-        {activeTab === 'trees' && (
-          <AdminTrees trees={trees} onDeleteTree={handleDeletePost} />
-        )}
-
-        {activeTab === 'users' && (
+    <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
+      <div className="w-full px-3 sm:px-4">
+        <div className="space-y-2 sm:space-y-3">
           <AdminUsers users={users} onDeleteUser={handleDeleteUser} />
-        )}
-
-        {activeTab === 'species' && (
           <AdminSpecies 
             species={species} 
             onDeleteSpecies={handleDeleteSpecies}
             onEditSpecies={handleEditSpecies}
             onAddSpecies={handleAddSpecies}
           />
-        )}
+          <AdminTrees trees={trees} onDeleteTree={handleDeleteTree} />
+        </div>
 
-
-        {/* Modals */}
         <AdminModals
           showPasswordModal={showPasswordModal}
           deletePassword={deletePassword}

@@ -1,18 +1,27 @@
 import React, { useState, useCallback } from 'react';
-import { Edit, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { TreePost as TreePostType } from '../../types';
+import { Edit, Trash2, X, ChevronLeft, ChevronRight, Save } from 'lucide-react';
+import { TreePost as TreePostType, ApiTreeSubmission } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DeleteConfirmationModal } from '../UI/DeleteConfirmationModal';
 import { treesService } from '../../services/treesService';
+import { speciesService } from '../../services/speciesService';
 
 interface TreePostProps {
   post: TreePostType;
   onDelete?: (postId: string) => void;
+  onUpdate?: () => void;
+  isEditing?: boolean;
+  onStartEdit?: () => void;
+  onCancelEdit?: () => void;
 }
 
 export const TreePost: React.FC<TreePostProps> = ({
   post,
-  onDelete
+  onDelete,
+  onUpdate,
+  isEditing: externalIsEditing,
+  onStartEdit,
+  onCancelEdit
 }) => {
   // Log tree object to console for debugging
   console.log('TreePost - Tree object:', post);
@@ -21,6 +30,44 @@ export const TreePost: React.FC<TreePostProps> = ({
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [showMapScreenshotModal, setShowMapScreenshotModal] = useState(false);
+  const isEditing = externalIsEditing || false;
+  const [editName, setEditName] = useState<string>(post.name || '');
+  const [editDescription, setEditDescription] = useState<string>(post.description || '');
+  const [editLegend, setEditLegend] = useState<string>(post.legend || '');
+  const [editCircumference, setEditCircumference] = useState<string>(post.circumference?.toString() || '');
+  const [editHeight, setEditHeight] = useState<string>(post.height?.toString() || '');
+  const [editCrownSpread, setEditCrownSpread] = useState<string>(post.crownSpread?.toString() || '');
+  const [editEstimatedAge, setEditEstimatedAge] = useState<string>(post.estimatedAge?.toString() || '');
+  const [editLat, setEditLat] = useState<string>(post.location?.lat?.toString() || '');
+  const [editLng, setEditLng] = useState<string>(post.location?.lng?.toString() || '');
+  const [editAddress, setEditAddress] = useState<string>(post.location?.address || '');
+  const [editPlotNumber, setEditPlotNumber] = useState<string>(post.location?.plotNumber || '');
+  const [editDistrict, setEditDistrict] = useState<string>(post.location?.district || '');
+  const [editProvince, setEditProvince] = useState<string>(post.location?.province || '');
+  const [editCounty, setEditCounty] = useState<string>(post.location?.county || '');
+  const [editCommune, setEditCommune] = useState<string>(post.location?.commune || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Initialize edit values when editing starts
+  React.useEffect(() => {
+    if (isEditing) {
+      setEditName(post.name || '');
+      setEditDescription(post.description || '');
+      setEditLegend(post.legend || '');
+      setEditCircumference(post.circumference?.toString() || '');
+      setEditHeight(post.height?.toString() || '');
+      setEditCrownSpread(post.crownSpread?.toString() || '');
+      setEditEstimatedAge(post.estimatedAge?.toString() || '');
+      setEditLat(post.location?.lat?.toString() || '');
+      setEditLng(post.location?.lng?.toString() || '');
+      setEditAddress(post.location?.address || '');
+      setEditPlotNumber(post.location?.plotNumber || '');
+      setEditDistrict(post.location?.district || '');
+      setEditProvince(post.location?.province || '');
+      setEditCounty(post.location?.county || '');
+      setEditCommune(post.location?.commune || '');
+    }
+  }, [isEditing, post]);
 
 
 
@@ -124,13 +171,124 @@ export const TreePost: React.FC<TreePostProps> = ({
                           
                           <div className="flex items-center space-x-2">
                             {/* Edit button */}
-                            {canEditPost && (
+                            {canEditPost && !isEditing && (
                               <button
+                                onClick={onStartEdit}
                                 className="p-2 text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center min-h-[32px] min-w-[32px]"
                                 title="Edytuj post"
                               >
                                 <Edit className="w-4 h-4 box-border" style={{ lineHeight: 1, fontSize: '16px' }} />
                               </button>
+                            )}
+                            {isEditing && (
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={async () => {
+                                    setIsSaving(true);
+                                    try {
+                                      // Find species ID by matching name
+                                      let speciesId = '';
+                                      try {
+                                        const allSpecies = await speciesService.getSpecies();
+                                        const matchingSpecies = allSpecies.find((s: any) => 
+                                          s.polishName === post.species || 
+                                          s.latinName === post.speciesLatin ||
+                                          s.latinName === post.speciesLatin?.replace(/ L\.?$/, '')
+                                        );
+                                        if (matchingSpecies) {
+                                          speciesId = matchingSpecies.id;
+                                        }
+                                      } catch (error) {
+                                        console.error('Error finding species:', error);
+                                      }
+
+                                      if (!speciesId) {
+                                        alert('Nie można znaleźć gatunku drzewa. Spróbuj ponownie.');
+                                        setIsSaving(false);
+                                        return;
+                                      }
+
+                                      const apiTreeData: ApiTreeSubmission = {
+                                        speciesId: speciesId,
+                                        name: editName,
+                                        location: {
+                                          lat: parseFloat(editLat) || post.location?.lat || 0,
+                                          lng: parseFloat(editLng) || post.location?.lng || 0,
+                                          address: editAddress || post.location?.address || '',
+                                          plotNumber: editPlotNumber || undefined,
+                                          district: editDistrict || undefined,
+                                          province: editProvince || undefined,
+                                          county: editCounty || undefined,
+                                          commune: editCommune || undefined
+                                        },
+                                        circumference: parseFloat(editCircumference) || post.circumference || 0,
+                                        height: parseFloat(editHeight) || post.height || 0,
+                                        soil: post.soil || [],
+                                        health: post.health || [],
+                                        environment: post.environment || [],
+                                        isAlive: post.isAlive !== false,
+                                        estimatedAge: editEstimatedAge ? parseInt(editEstimatedAge) : post.estimatedAge,
+                                        crownSpread: parseFloat(editCrownSpread) || post.crownSpread || 0,
+                                        description: editDescription,
+                                        legend: editLegend,
+                                        isMonument: post.isMonument || false
+                                      };
+
+                                      // Fetch existing photos from URLs to include in update
+                                      const existingPhotos: File[] = [];
+                                      
+                                      if (post.imageUrls && post.imageUrls.length > 0) {
+                                        try {
+                                          const photoPromises = post.imageUrls.map(async (url) => {
+                                            try {
+                                              const response = await fetch(url);
+                                              const blob = await response.blob();
+                                              const fileName = url.split('/').pop() || `image_${Date.now()}.jpg`;
+                                              return new File([blob], fileName, { type: blob.type });
+                                            } catch (error) {
+                                              console.error('Error loading photo:', url, error);
+                                              return null;
+                                            }
+                                          });
+                                          const fetchedPhotos = (await Promise.all(photoPromises)).filter((photo): photo is File => photo !== null);
+                                          existingPhotos.push(...fetchedPhotos);
+                                        } catch (error) {
+                                          console.error('Error loading existing photos:', error);
+                                        }
+                                      }
+
+                                      if (existingPhotos.length === 0) {
+                                        alert('Nie można zapisać bez zdjęć. Wymagane jest co najmniej jedno zdjęcie.');
+                                        setIsSaving(false);
+                                        return;
+                                      }
+
+                                      await treesService.updateTree(post.id, apiTreeData, existingPhotos);
+                                      if (onCancelEdit) onCancelEdit();
+                                      if (onUpdate) onUpdate();
+                                    } catch (error: any) {
+                                      console.error('Error updating tree:', error);
+                                      alert(error.message || 'Błąd podczas aktualizacji');
+                                    } finally {
+                                      setIsSaving(false);
+                                    }
+                                  }}
+                                  disabled={isSaving}
+                                  className="p-2 text-green-400 hover:text-green-600 dark:text-green-500 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center justify-center min-h-[32px] min-w-[32px]"
+                                  title="Zapisz zmiany"
+                                >
+                                  <Save className="w-4 h-4 box-border" style={{ lineHeight: 1, fontSize: '16px' }} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (onCancelEdit) onCancelEdit();
+                                  }}
+                                  className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400 transition-colors rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/20 flex items-center justify-center min-h-[32px] min-w-[32px]"
+                                  title="Anuluj"
+                                >
+                                  <X className="w-4 h-4 box-border" style={{ lineHeight: 1, fontSize: '16px' }} />
+                                </button>
+                              </div>
                             )}
                             
                             {/* Delete button */}
@@ -223,48 +381,105 @@ export const TreePost: React.FC<TreePostProps> = ({
                         <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-gray-200/50 dark:border-gray-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
                           <div className="space-y-3">
                             {/* Tree Name - FIRST FIELD ON THE LEFT */}
-                            {post.name && (
-                              <div>
-                                <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Nazwa drzewa</h3>
+                            <div>
+                              <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Nazwa drzewa</h3>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={editName}
+                                  onChange={(e) => setEditName(e.target.value)}
+                                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                                  placeholder="Nazwa drzewa"
+                                />
+                              ) : (
                                 <p className="text-xs text-gray-700 dark:text-gray-300">
-                                  {post.name}
+                                  {post.name || 'Brak nazwy'}
                                 </p>
-                              </div>
-                            )}
+                              )}
+                            </div>
 
                             {/* Description */}
-                            {post.description && (
-                              <div>
-                                <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Opis</h3>
+                            <div>
+                              <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Opis</h3>
+                              {isEditing ? (
+                                <textarea
+                                  value={editDescription}
+                                  onChange={(e) => setEditDescription(e.target.value)}
+                                  rows={5}
+                                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[80px]"
+                                  placeholder="Opis drzewa"
+                                />
+                              ) : (
                                 <p className="text-xs text-gray-700 dark:text-gray-300">
-                                  {post.description}
+                                  {post.description || 'Brak opisu'}
                                 </p>
-                              </div>
-                            )}
+                              )}
+                            </div>
 
                 {/* Tree Measurements */}
                 <div>
                   <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">Wymiary drzewa</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2 text-center">
-                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Obwód</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{post.circumference} cm</p>
-                    </div>
-                    <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2 text-center">
-                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Wysokość</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{post.height} m</p>
-                    </div>
-                    <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2 text-center">
-                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Korona</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{post.crownSpread} m</p>
-                    </div>
-                    {post.estimatedAge && (
-                      <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2 text-center">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Wiek</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">{post.estimatedAge} lat</p>
+                  {isEditing ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2">
+                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Obwód (cm)</label>
+                        <input
+                          type="number"
+                          value={editCircumference}
+                          onChange={(e) => setEditCircumference(e.target.value)}
+                          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                        />
                       </div>
-                    )}
-                  </div>
+                      <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2">
+                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Wysokość (m)</label>
+                        <input
+                          type="number"
+                          value={editHeight}
+                          onChange={(e) => setEditHeight(e.target.value)}
+                          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                        />
+                      </div>
+                      <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2">
+                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Korona (m)</label>
+                        <input
+                          type="number"
+                          value={editCrownSpread}
+                          onChange={(e) => setEditCrownSpread(e.target.value)}
+                          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                        />
+                      </div>
+                      <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2">
+                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Wiek (lata)</label>
+                        <input
+                          type="number"
+                          value={editEstimatedAge}
+                          onChange={(e) => setEditEstimatedAge(e.target.value)}
+                          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2 text-center">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Obwód</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{post.circumference} cm</p>
+                      </div>
+                      <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2 text-center">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Wysokość</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{post.height} m</p>
+                      </div>
+                      <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2 text-center">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Korona</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{post.crownSpread} m</p>
+                      </div>
+                      {post.estimatedAge && (
+                        <div className="bg-white/50 dark:bg-gray-700/50 rounded p-1 sm:p-2 text-center">
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Wiek</p>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">{post.estimatedAge} lat</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Location */}
@@ -272,29 +487,114 @@ export const TreePost: React.FC<TreePostProps> = ({
                   <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
                     Lokalizacja
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
-                      <strong>Adres:</strong> {post.location?.address || 'Brak adresu'}
-                    </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
-                      <strong>Gmina:</strong> {post.location?.commune || 'Brak danych'}
-                    </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
-                      <strong>Powiat:</strong> {post.location?.county || 'Brak danych'}
-                    </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
-                      <strong>Dzielnica:</strong> {post.location?.district || 'Brak danych'}
-                    </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
-                      <strong>Województwo:</strong> {post.location?.province || 'Brak danych'}
-                    </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
-                      <strong>Numer działki:</strong> {post.location?.plotNumber || 'Brak danych'}
-                    </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
-                      <strong>Lat:</strong> {post.location?.lat?.toFixed(6)}, <strong>Lng:</strong> {post.location?.lng?.toFixed(6)}
-                    </p>
-                  </div>
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Latitude</label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={editLat}
+                            onChange={(e) => setEditLat(e.target.value)}
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Longitude</label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={editLng}
+                            onChange={(e) => setEditLng(e.target.value)}
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Adres</label>
+                        <input
+                          type="text"
+                          value={editAddress}
+                          onChange={(e) => setEditAddress(e.target.value)}
+                          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Gmina</label>
+                          <input
+                            type="text"
+                            value={editCommune}
+                            onChange={(e) => setEditCommune(e.target.value)}
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Powiat</label>
+                          <input
+                            type="text"
+                            value={editCounty}
+                            onChange={(e) => setEditCounty(e.target.value)}
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Dzielnica</label>
+                          <input
+                            type="text"
+                            value={editDistrict}
+                            onChange={(e) => setEditDistrict(e.target.value)}
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Województwo</label>
+                          <input
+                            type="text"
+                            value={editProvince}
+                            onChange={(e) => setEditProvince(e.target.value)}
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Numer działki</label>
+                        <input
+                          type="text"
+                          value={editPlotNumber}
+                          onChange={(e) => setEditPlotNumber(e.target.value)}
+                          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Adres:</strong> {post.location?.address || 'Brak adresu'}
+                      </p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Gmina:</strong> {post.location?.commune || 'Brak danych'}
+                      </p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Powiat:</strong> {post.location?.county || 'Brak danych'}
+                      </p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Dzielnica:</strong> {post.location?.district || 'Brak danych'}
+                      </p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Województwo:</strong> {post.location?.province || 'Brak danych'}
+                      </p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Numer działki:</strong> {post.location?.plotNumber || 'Brak danych'}
+                      </p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Lat:</strong> {post.location?.lat?.toFixed(6)}, <strong>Lng:</strong> {post.location?.lng?.toFixed(6)}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Health, Soil, Environment Tags */}
@@ -356,14 +656,22 @@ export const TreePost: React.FC<TreePostProps> = ({
                 )}
 
                 {/* Legend */}
-                {post.legend && (
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Historie i legendy</h3>
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Historie i legendy</h3>
+                  {isEditing ? (
+                    <textarea
+                      value={editLegend}
+                      onChange={(e) => setEditLegend(e.target.value)}
+                      rows={5}
+                      className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[80px]"
+                      placeholder="Historie i legendy"
+                    />
+                  ) : (
                     <p className="text-xs text-gray-700 dark:text-gray-300">
-                      {post.legend}
+                      {post.legend || 'Brak historii i legend'}
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 

@@ -17,6 +17,7 @@ export const FeedPage: React.FC = () => {
   const [filterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const [editingTreeId, setEditingTreeId] = useState<string | null>(null);
   
   const POSTS_PER_PAGE = 5; // Display 5 posts at a time
 
@@ -139,6 +140,11 @@ export const FeedPage: React.FC = () => {
     setAllPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
   };
 
+  // Handle post update - reload posts
+  const handleUpdatePost = useCallback(async () => {
+    await loadAllPosts();
+  }, [loadAllPosts]);
+
 
   // Search function
   const searchPosts = (posts: TreePostType[], query: string) => {
@@ -204,6 +210,10 @@ export const FeedPage: React.FC = () => {
               <TreePost
                 post={post}
                 onDelete={handleDeletePost}
+                onUpdate={handleUpdatePost}
+                isEditing={editingTreeId === post.id}
+                onStartEdit={() => setEditingTreeId(post.id)}
+                onCancelEdit={() => setEditingTreeId(null)}
               />
             </div>
           ))}

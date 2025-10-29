@@ -377,6 +377,111 @@ class TreesService {
     }
   }
 
+  // Edytuj drzewo - PUT /api/Trees/{id}
+  async updateTree(treeId: string, treeData: ApiTreeSubmission, photos: File[]): Promise<any> {
+    try {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      // Validate photos
+      if (photos.length === 0) {
+        throw new Error('At least one photo is required');
+      }
+      if (photos.length > 5) {
+        throw new Error('Maximum 5 photos allowed');
+      }
+
+      // Validate photo formats
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      for (const photo of photos) {
+        if (!allowedTypes.includes(photo.type)) {
+          throw new Error(`Invalid photo format: ${photo.type}. Allowed: JPG, PNG, JPEG`);
+        }
+      }
+
+      console.log('Updating tree:', treeId, treeData);
+
+      // Create FormData
+      const formData = new FormData();
+      
+      // Add tree data fields
+      formData.append('speciesId', treeData.speciesId);
+      formData.append('location.lat', treeData.location.lat.toString());
+      formData.append('location.lng', treeData.location.lng.toString());
+      
+      // Add location fields
+      formData.append('location.address', treeData.location.address || '');
+      if (treeData.location.plotNumber) formData.append('location.plotNumber', treeData.location.plotNumber);
+      if (treeData.location.district) formData.append('location.district', treeData.location.district);
+      if (treeData.location.province) formData.append('location.province', treeData.location.province);
+      if (treeData.location.county) formData.append('location.county', treeData.location.county);
+      if (treeData.location.commune) formData.append('location.commune', treeData.location.commune);
+      
+      formData.append('circumference', treeData.circumference.toString());
+      formData.append('height', treeData.height.toString());
+      formData.append('crownSpread', treeData.crownSpread.toString());
+      if (treeData.estimatedAge) formData.append('estimatedAge', treeData.estimatedAge.toString());
+      if (treeData.isAlive !== undefined) formData.append('isAlive', treeData.isAlive.toString());
+      if (treeData.description) formData.append('description', treeData.description);
+      if (treeData.legend) formData.append('legend', treeData.legend);
+      if (treeData.name) formData.append('name', treeData.name);
+      if (treeData.isMonument !== undefined) formData.append('isMonument', treeData.isMonument.toString());
+      
+      // Add tags as arrays
+      if (treeData.soil && treeData.soil.length > 0) {
+        treeData.soil.forEach(tag => formData.append('soil', tag));
+      }
+      if (treeData.health && treeData.health.length > 0) {
+        treeData.health.forEach(tag => formData.append('health', tag));
+      }
+      if (treeData.environment && treeData.environment.length > 0) {
+        treeData.environment.forEach(tag => formData.append('environment', tag));
+      }
+
+      // Add photos
+      photos.forEach((photo) => {
+        formData.append('images', photo);
+      });
+
+      const response = await fetch(`${API_BASE_URL}/trees/${treeId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'accept': '*/*'
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication token expired');
+        }
+        if (response.status === 400) {
+          throw new Error('Bad request - check photo requirements (1-5 photos, JPG/PNG/JPEG)');
+        }
+        if (response.status === 403) {
+          throw new Error('Permission denied - you can only edit your own trees');
+        }
+        if (response.status === 404) {
+          throw new Error('Tree not found');
+        }
+        if (response.status === 422) {
+          throw new Error('Validation error - check all required fields');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Tree updated successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('Update tree error:', error);
+      throw error;
+    }
+  }
+
   // Usuń post drzewa - DELETE /api/Trees/{id}
   async deleteTree(treeId: string): Promise<void> {
     try {
