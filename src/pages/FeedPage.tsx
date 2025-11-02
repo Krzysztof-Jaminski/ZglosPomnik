@@ -194,7 +194,7 @@ export const FeedPage: React.FC = () => {
           />
         </div>
 
-        <div className="space-y-4 sm:space-y-6 w-full px-2 py-2">
+        <div className="space-y-4 sm:space-y-6 w-full px-2 pt-1">
           {isLoading && filteredAndSortedPosts.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
