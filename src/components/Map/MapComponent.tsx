@@ -387,7 +387,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           const clickedMarker = currentMarkers.find(marker => {
               const markerPos = marker.getLatLng();
               const distance = mapInstance.distance(e.latlng, markerPos);
-            return distance < 30; // 30 meters tolerance
+            return distance < 0.1; // 0.1 meters tolerance - allow very close placement
             });
             
             if (clickedMarker) {

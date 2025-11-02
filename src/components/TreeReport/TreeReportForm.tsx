@@ -126,17 +126,25 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
   // Real-time validation for estimatedAge
   const handleEstimatedAgeChange = (value: string) => {
     setEstimatedAge(value);
-    const numValue = parseInt(value);
-    if (value && (numValue < TreeSubmissionValidation.estimatedAge.min || numValue > TreeSubmissionValidation.estimatedAge.max)) {
+    // Validate estimatedAge - it's required
+    if (!value || value.trim() === '') {
       setValidationErrors(prev => ({
         ...prev,
-        estimatedAge: `Szacowany wiek musi być między ${TreeSubmissionValidation.estimatedAge.min} a ${TreeSubmissionValidation.estimatedAge.max} lat`
+        estimatedAge: 'Szacowany wiek jest wymagany'
       }));
     } else {
-      setValidationErrors(prev => {
-        const { estimatedAge, ...rest } = prev;
-        return rest;
-      });
+      const numValue = parseInt(value);
+      if (numValue < TreeSubmissionValidation.estimatedAge.min || numValue > TreeSubmissionValidation.estimatedAge.max) {
+        setValidationErrors(prev => ({
+          ...prev,
+          estimatedAge: `Szacowany wiek musi być między ${TreeSubmissionValidation.estimatedAge.min} a ${TreeSubmissionValidation.estimatedAge.max} lat`
+        }));
+      } else {
+        setValidationErrors(prev => {
+          const { estimatedAge, ...rest } = prev;
+          return rest;
+        });
+      }
     }
   };
 
@@ -401,8 +409,11 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           errors.crownSpread = `Rozpiętość korony musi być między ${TreeSubmissionValidation.crownSpread.min} a ${TreeSubmissionValidation.crownSpread.max} m`;
         }
 
-        if (estimatedAgeValue < TreeSubmissionValidation.estimatedAge.min || 
-            estimatedAgeValue > TreeSubmissionValidation.estimatedAge.max) {
+        // Validate estimatedAge - it's required
+        if (!estimatedAge || estimatedAge.trim() === '') {
+          errors.estimatedAge = 'Szacowany wiek jest wymagany';
+        } else if (estimatedAgeValue < TreeSubmissionValidation.estimatedAge.min || 
+                   estimatedAgeValue > TreeSubmissionValidation.estimatedAge.max) {
           errors.estimatedAge = `Szacowany wiek musi być między ${TreeSubmissionValidation.estimatedAge.min} a ${TreeSubmissionValidation.estimatedAge.max} lat`;
         }
 
@@ -636,7 +647,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
             type="submit"
             variant="primary"
             size="sm"
-            disabled={isSubmitting || !selectedSpecies || photos.length === 0 || !treeName.trim()}
+            disabled={isSubmitting || !selectedSpecies || photos.length === 0 || !treeName.trim() || !estimatedAge || estimatedAge.trim() === ''}
             className="flex-1 sm:flex-none text-sm"
           >
             {isSubmitting ? 'Zapisywanie...' : 'Zgłoś drzewo'}

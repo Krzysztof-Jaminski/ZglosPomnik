@@ -62,14 +62,14 @@ export const TreeReportFormSectionDetails: React.FC<TreeReportFormSectionDetails
           </div>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Szacowany wiek (lata) <span className="text-gray-500">(opcjonalny)</span>
+              Szacowany wiek (lata) <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
               value={estimatedAge}
               onChange={(e) => setEstimatedAge(e.target.value)}
               placeholder="np. 150"
-              min="0"
+              min="1"
               step="1"
               className={`w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg focus:ring-0 dark:bg-gray-800 dark:text-white transition-all ${
                 validationErrors.estimatedAge 

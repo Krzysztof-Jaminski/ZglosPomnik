@@ -78,7 +78,7 @@ export const TreeSubmissionValidation = {
     max: 150,
   },
   estimatedAge: {
-    min: 450,
+    min: 1,
     max: 10000,
   },
   crownSpread: {
