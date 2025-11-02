@@ -27,7 +27,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   };
 
   const iconSizeClasses = {
-    sm: 'w-3 h-3',
+    sm: 'w-4 h-4',
     md: 'w-4 h-4',
     lg: 'w-4 h-4'
   };
@@ -39,12 +39,12 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   };
 
   const baseClasses = variant === 'compact' 
-    ? 'border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white transition-all'
-    : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm';
+    ? 'bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-green-500 dark:focus:border-green-400 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all'
+    : 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm';
 
   return (
     <div className={`relative ${className}`}>
-      <Search className={`absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 ${iconSizeClasses[size]}`} />
+      <Search className={`absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 ${iconSizeClasses[size]} z-10`} style={{ filter: 'none', backdropFilter: 'none' }} />
       <input
         type="text"
         placeholder={placeholder}
