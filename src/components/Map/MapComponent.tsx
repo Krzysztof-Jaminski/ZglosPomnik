@@ -194,7 +194,14 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         const initialZoom = savedState?.zoom || 10;
         const initialMapType = savedState?.mapType || 'roadmap';
 
-        // Create roadmap map in its own container - START WITH SAVED POSITION
+        // Poland and surrounding area bounds (with buffer for "okolic")
+        // North: 55.5°N, South: 48.5°N, East: 25°E, West: 13°E
+        const polandBounds = L.latLngBounds(
+          [48.5, 13.0], // Southwest corner
+          [55.5, 25.0]  // Northeast corner
+        );
+
+        // Create roadmap map in its own container - LIMITED TO POLAND AND SURROUNDINGS
         const roadmapInstance = L.map(roadmapMapRef.current, {
           center: initialCenter,
           zoom: initialZoom,
@@ -206,12 +213,13 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           scrollWheelZoom: true,
           boxZoom: true,
           keyboard: true,
-          // NO BOUNDS - GLOBAL MAP
-          minZoom: 1,
+          maxBounds: polandBounds,
+          maxBoundsViscosity: 1.0, // Strict bounds - cannot drag outside
+          minZoom: 6, // Minimum zoom to prevent going too far out
           maxZoom: 19 // Maximum zoom for best detail
         });
 
-        // Create satellite map in its own container - START WITH SAVED POSITION
+        // Create satellite map in its own container - LIMITED TO POLAND AND SURROUNDINGS
         const satelliteInstance = L.map(satelliteMapRef.current, {
           center: initialCenter,
           zoom: initialZoom,
@@ -226,31 +234,31 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           fadeAnimation: true,
           zoomAnimation: true,
           markerZoomAnimation: true,
-          // NO BOUNDS - GLOBAL MAP
-          minZoom: 1,
+          maxBounds: polandBounds,
+          maxBoundsViscosity: 1.0, // Strict bounds - cannot drag outside
+          minZoom: 6, // Minimum zoom to prevent going too far out
           maxZoom: 19 // Maximum zoom for best detail
         });
 
-        // Add tile layers with GLOBAL settings
+        // Add tile layers with POLAND-ONLY settings
         const roadmapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
           maxZoom: 19, // Maximum zoom for best detail
-          minZoom: 1, // Global zoom
+          minZoom: 6, // Minimum zoom for Poland area
           tileSize: 256,
           zoomOffset: 0,
           crossOrigin: true,
           updateWhenZooming: false, // Reduce API calls during zoom
           updateWhenIdle: true,
           keepBuffer: 6, // Increased buffer for better performance
-          maxNativeZoom: 19, // Maximum zoom for best detail
-          // NO BOUNDS - GLOBAL MAP
+          maxNativeZoom: 19 // Maximum zoom for best detail
         });
 
-        // Primary satellite tiles with fallback - GLOBAL
+        // Primary satellite tiles with fallback - POLAND-ONLY
         const satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
               attribution: '© Esri',
           maxZoom: 19, // Maximum zoom for best detail
-          minZoom: 1, // Global zoom
+          minZoom: 6, // Minimum zoom for Poland area
           tileSize: 256,
           zoomOffset: 0,
           crossOrigin: true,
@@ -258,23 +266,21 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           updateWhenIdle: true,
           keepBuffer: 6, // Increased buffer for better performance
           maxNativeZoom: 19, // Maximum zoom for best detail
-          // NO BOUNDS - GLOBAL MAP
           errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
         });
 
-        // Fallback satellite tiles (OpenStreetMap) - GLOBAL
+        // Fallback satellite tiles (OpenStreetMap) - POLAND-ONLY
         const satelliteFallback = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '© OpenStreetMap contributors',
           maxZoom: 19, // Maximum zoom for best detail
-          minZoom: 1, // Global zoom
+          minZoom: 6, // Minimum zoom for Poland area
           tileSize: 256,
           zoomOffset: 0,
           crossOrigin: true,
           updateWhenZooming: false,
           updateWhenIdle: true,
           keepBuffer: 6, // Increased buffer for better performance
-          maxNativeZoom: 19, // Maximum zoom for best detail
-          // NO BOUNDS - GLOBAL MAP
+          maxNativeZoom: 19 // Maximum zoom for best detail
         });
 
         roadmapTiles.addTo(roadmapInstance);
