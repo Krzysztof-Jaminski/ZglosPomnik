@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Loader2, X, CheckCircle } from 'lucide-react';
+import { Plus, Loader2, X, CheckCircle, Download } from 'lucide-react';
 import { Tree, ApplicationTemplate, Commune, Application, FormSchema } from '../types';
 import { applicationsService } from '../services/applicationsService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +11,7 @@ import { TreeSelector } from '../components/Applications/TreeSelector';
 import { CommuneSelector } from '../components/Applications/CommuneSelector';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
+import JSZip from 'jszip';
 
 
 
@@ -80,6 +81,7 @@ export const ApplicationsPage: React.FC = () => {
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [generatedTreeScreenshotUrl, setGeneratedTreeScreenshotUrl] = useState<string>('');
   const [userManuallyClosedForm, setUserManuallyClosedForm] = useState(false);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
 
   // Track which page was last active
   useEffect(() => {
@@ -143,7 +145,7 @@ export const ApplicationsPage: React.FC = () => {
         
         // Load trees and communes initially
         const [treesData, communesData] = await Promise.all([
-          applicationsService.getUserTrees(),
+          applicationsService.getAllTrees(),
           applicationsService.getCommunes()
         ]);
         setTrees(treesData);
@@ -447,6 +449,77 @@ export const ApplicationsPage: React.FC = () => {
     setCurrentApplication(null);
     setFormSchema(null);
     setTemplates([]);
+  };
+
+  // Function to download file from URL
+  const downloadFile = async (url: string): Promise<Blob> => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download file from ${url}`);
+    }
+    return response.blob();
+  };
+
+  // Function to download and package files into ZIP
+  const handleDownloadZip = async () => {
+    if (!generatedPdfUrl) return;
+
+    try {
+      setIsDownloadingZip(true);
+      const zip = new JSZip();
+
+      // Download PDF
+      console.log('Downloading PDF:', generatedPdfUrl);
+      const pdfBlob = await downloadFile(generatedPdfUrl);
+      zip.file('wniosek.pdf', pdfBlob);
+
+      // Download tree screenshot if available
+      if (generatedTreeScreenshotUrl) {
+        console.log('Downloading tree screenshot:', generatedTreeScreenshotUrl);
+        try {
+          const screenshotBlob = await downloadFile(generatedTreeScreenshotUrl);
+          const extension = generatedTreeScreenshotUrl.split('.').pop()?.split('?')[0] || 'jpg';
+          zip.file(`Mapa lokalizacyjna drzewa.${extension}`, screenshotBlob);
+        } catch (error) {
+          console.warn('Failed to download tree screenshot:', error);
+        }
+      }
+
+      // Download all images (in the same folder as PDF)
+      if (generatedImageUrls.length > 0) {
+        console.log('Downloading images:', generatedImageUrls.length);
+        for (let i = 0; i < generatedImageUrls.length; i++) {
+          try {
+            const imageBlob = await downloadFile(generatedImageUrls[i]);
+            const extension = generatedImageUrls[i].split('.').pop()?.split('?')[0] || 'jpg';
+            zip.file(`zdjecie_${i + 1}.${extension}`, imageBlob);
+          } catch (error) {
+            console.warn(`Failed to download image ${i + 1}:`, error);
+          }
+        }
+      }
+
+      // Generate ZIP file
+      console.log('Generating ZIP file...');
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+      // Download ZIP
+      const url = window.URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `wniosek_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      console.log('ZIP file downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading ZIP:', error);
+      alert(`Błąd podczas pobierania plików: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+    } finally {
+      setIsDownloadingZip(false);
+    }
   };
 
   // Check if we can show the next section
@@ -840,92 +913,29 @@ export const ApplicationsPage: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
 
-              {/* PDF Link */}
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                  Link do PDF:
-                </h4>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={generatedPdfUrl}
-                    className="flex-1 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
-                  />
-                  <GlassButton
-                    onClick={() => {
-                      window.open(generatedPdfUrl, '_blank');
-                    }}
-                    variant="secondary"
-                    size="xs"
-                  >
-                    Otwórz
-                  </GlassButton>
-                </div>
+              {/* Download ZIP Button */}
+              <div className="mb-4">
+                <GlassButton
+                  onClick={handleDownloadZip}
+                  disabled={isDownloadingZip}
+                  variant="primary"
+                  size="sm"
+                  className="w-full"
+                  icon={isDownloadingZip ? Loader2 : Download}
+                >
+                  {isDownloadingZip ? 'Pobieranie...' : 'Pobierz wszystkie pliki (ZIP)'}
+                </GlassButton>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center">
+                  Plik ZIP zawiera: wniosek PDF, zdjęcia drzewa {generatedTreeScreenshotUrl ? 'oraz screenshot mapy' : ''}
+                </p>
               </div>
-
-              {/* Tree Screenshot Link */}
-              {generatedTreeScreenshotUrl && (
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Link do screenshotu mapy:
-                  </h4>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={generatedTreeScreenshotUrl}
-                      className="flex-1 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
-                    />
-                    <GlassButton
-                      onClick={() => {
-                        window.open(generatedTreeScreenshotUrl, '_blank');
-                      }}
-                      variant="secondary"
-                      size="xs"
-                    >
-                      Otwórz
-                    </GlassButton>
-                  </div>
-                </div>
-              )}
-
-              {/* Image Links */}
-              {generatedImageUrls.length > 0 && (
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Linki do obrazów ({generatedImageUrls.length}):
-                  </h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {generatedImageUrls.map((imageUrl, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          readOnly
-                          value={imageUrl}
-                          className="flex-1 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
-                        />
-                        <GlassButton
-                          onClick={() => {
-                            window.open(imageUrl, '_blank');
-                          }}
-                          variant="secondary"
-                          size="xs"
-                        >
-                          Otwórz
-                        </GlassButton>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="space-y-2 mt-4">
                 <GlassButton
                   onClick={() => {
                     window.open('https://epuap.gov.pl', '_blank');
                   }}
-                  variant="primary"
+                  variant="secondary"
                   size="sm"
                   className="w-full"
                 >

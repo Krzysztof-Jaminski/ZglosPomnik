@@ -179,10 +179,10 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       }
     }
 
-    // Special validation for justification field - always use 5000 limit
+    // Special validation for justification field - always use 1500 limit
     if (field.name === 'justification' || field.label.toLowerCase().includes('uzasadnienie')) {
       const justificationMinLength = centralizedRules?.minLength || 50;
-      const justificationMaxLength = 5000;
+      const justificationMaxLength = 1500;
       
       if (value.toString().length < justificationMinLength) {
         return `Minimum ${justificationMinLength} znaków`;
@@ -468,7 +468,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             style={{ minHeight: '60px' }}
             maxLength={
               field.name === 'justification' || field.label.toLowerCase().includes('uzasadnienie')
-                ? 5000
+                ? 1500
                 : field.validation?.maxLength || (DynamicFormFieldsValidation as any)[field.name]?.maxLength
             }
           />
