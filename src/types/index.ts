@@ -209,5 +209,7 @@ export interface ApplicationSubmission {
 }
 
 export interface PdfResponse {
-  pdfUrl: string;
+  pdfPath: string;
+  images?: string[];
+  treeScreenshotUrl?: string;
 }

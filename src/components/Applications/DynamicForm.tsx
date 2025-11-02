@@ -179,6 +179,21 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       }
     }
 
+    // Special validation for justification field - always use 5000 limit
+    if (field.name === 'justification' || field.label.toLowerCase().includes('uzasadnienie')) {
+      const justificationMinLength = centralizedRules?.minLength || 50;
+      const justificationMaxLength = 5000;
+      
+      if (value.toString().length < justificationMinLength) {
+        return `Minimum ${justificationMinLength} znaków`;
+      }
+      if (value.toString().length > justificationMaxLength) {
+        return `Maksimum ${justificationMaxLength} znaków`;
+      }
+      // Return null here to skip backend validation for justification field
+      return null;
+    }
+
     // Apply centralized min/max length for known fields
     if (centralizedRules) {
       if (centralizedRules.minLength && value.toString().length < centralizedRules.minLength) {
@@ -195,7 +210,11 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       }
     }
     
-    // Fallback to backend validation rules
+    // Fallback to backend validation rules (but skip for justification field)
+    if (field.name === 'justification' || field.label.toLowerCase().includes('uzasadnienie')) {
+      return null; // Already validated above, skip backend validation
+    }
+    
     if (!validation) return null;
 
     if (validation.minLength && value.toString().length < validation.minLength) {
@@ -447,6 +466,11 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             rows={3}
             className={`${baseInputClasses} resize-none overflow-hidden`}
             style={{ minHeight: '60px' }}
+            maxLength={
+              field.name === 'justification' || field.label.toLowerCase().includes('uzasadnienie')
+                ? 5000
+                : field.validation?.maxLength || (DynamicFormFieldsValidation as any)[field.name]?.maxLength
+            }
           />
         ) : field.type === 'Select' ? (
           <select

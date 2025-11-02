@@ -2,9 +2,11 @@ import React, { useState, useCallback } from 'react';
 import { Edit, Trash2, X, ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import { TreePost as TreePostType, ApiTreeSubmission } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAutoTextarea } from '../../hooks/useAutoTextarea';
 import { DeleteConfirmationModal } from '../UI/DeleteConfirmationModal';
 import { treesService } from '../../services/treesService';
 import { speciesService } from '../../services/speciesService';
+import { useAuth } from '../../context/AuthContext';
 
 interface TreePostProps {
   post: TreePostType;
@@ -23,6 +25,8 @@ export const TreePost: React.FC<TreePostProps> = ({
   onStartEdit,
   onCancelEdit
 }) => {
+  const { user, isModerator } = useAuth();
+  
   // Log tree object to console for debugging
   console.log('TreePost - Tree object:', post);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -47,6 +51,10 @@ export const TreePost: React.FC<TreePostProps> = ({
   const [editCounty, setEditCounty] = useState<string>(post.location?.county || '');
   const [editCommune, setEditCommune] = useState<string>(post.location?.commune || '');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Auto-resize textareas
+  const { ref: descRef, onInput: onDescInput } = useAutoTextarea(editDescription);
+  const { ref: legendRef, onInput: onLegendInput } = useAutoTextarea(editLegend);
 
   // Initialize edit values when editing starts
   React.useEffect(() => {
@@ -112,11 +120,10 @@ export const TreePost: React.FC<TreePostProps> = ({
     }
   };
 
-  // TODO: TEMPORARY - Show delete button for everyone, validation happens on click
-  // TODO: In the future, this should be: user && post.userData.userId && post.userData.userId === user.id
-  // TODO: API should include userId in post.userData for proper security validation
-  const canDeletePost = true; // Always show delete button for now
-  const canEditPost = true; // Always show edit button for now
+  // Moderatorzy mogą edytować/usunąć wszystko, zwykli użytkownicy tylko swoje posty
+  const isPostOwner = user && post.userData.userId && post.userData.userId === user.id;
+  const canDeletePost = isModerator || isPostOwner;
+  const canEditPost = isModerator || isPostOwner;
 
   // Photo modal functions
   const openPhotoModal = useCallback((index: number) => {
@@ -403,10 +410,12 @@ export const TreePost: React.FC<TreePostProps> = ({
                               <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Opis</h3>
                               {isEditing ? (
                                 <textarea
+                                  ref={descRef}
                                   value={editDescription}
                                   onChange={(e) => setEditDescription(e.target.value)}
+                                  onInput={onDescInput}
                                   rows={5}
-                                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[80px]"
+                                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[80px] overflow-hidden"
                                   placeholder="Opis drzewa"
                                 />
                               ) : (
@@ -660,10 +669,12 @@ export const TreePost: React.FC<TreePostProps> = ({
                   <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1">Historie i legendy</h3>
                   {isEditing ? (
                     <textarea
+                      ref={legendRef}
                       value={editLegend}
                       onChange={(e) => setEditLegend(e.target.value)}
+                      onInput={onLegendInput}
                       rows={5}
-                      className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[80px]"
+                      className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-0 focus:border-gray-400 dark:bg-gray-800 dark:text-white resize-none transition-all min-h-[80px] overflow-hidden"
                       placeholder="Historie i legendy"
                     />
                   ) : (

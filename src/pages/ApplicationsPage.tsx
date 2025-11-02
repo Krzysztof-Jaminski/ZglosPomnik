@@ -77,6 +77,8 @@ export const ApplicationsPage: React.FC = () => {
   const [showCreateNewModal, setShowCreateNewModal] = useState(false);
   const [showPdfSuccessModal, setShowPdfSuccessModal] = useState(false);
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string>('');
+  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
+  const [generatedTreeScreenshotUrl, setGeneratedTreeScreenshotUrl] = useState<string>('');
   const [userManuallyClosedForm, setUserManuallyClosedForm] = useState(false);
 
   // Track which page was last active
@@ -397,35 +399,10 @@ export const ApplicationsPage: React.FC = () => {
       // THEN: Generate PDF (only works for submitted applications, not drafts)
       const pdfResponse = await applicationsService.generatePdf(currentApplication.id);
       
-      // Open PDF in new tab
-      const newWindow = window.open(pdfResponse.pdfUrl, '_blank');
-      
-      // If window.open doesn't work (may be blocked), try alternative method
-      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        // Fallback: create a temporary link and click it
-        const link = document.createElement('a');
-        link.href = pdfResponse.pdfUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-      
-      // DON'T clear application data - allow multiple PDF generations
-      // localStorage.removeItem('currentApplication');
-      // localStorage.removeItem('applicationFormData');
-      // localStorage.removeItem('selectedTree');
-      // localStorage.removeItem('selectedCommune');
-      // localStorage.removeItem('selectedTemplate');
-      
-      // DON'T clear state - keep form open for multiple PDF generations
-      // setCurrentApplication(null);
-      // setFormSchema(null);
-      // setUserManuallyClosedForm(false);
-      
-      // Show success modal with PDF link
-      setGeneratedPdfUrl(pdfResponse.pdfUrl);
+      // Show success modal with PDF link and image URLs
+      setGeneratedPdfUrl(pdfResponse.pdfPath);
+      setGeneratedImageUrls(pdfResponse.images || []);
+      setGeneratedTreeScreenshotUrl(pdfResponse.treeScreenshotUrl || '');
       setShowPdfSuccessModal(true);
       setPdfModalOpen(true);
     } catch (error) {
@@ -863,6 +840,86 @@ export const ApplicationsPage: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
 
+              {/* PDF Link */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  Link do PDF:
+                </h4>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={generatedPdfUrl}
+                    className="flex-1 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
+                  />
+                  <GlassButton
+                    onClick={() => {
+                      window.open(generatedPdfUrl, '_blank');
+                    }}
+                    variant="secondary"
+                    size="xs"
+                  >
+                    Otwórz
+                  </GlassButton>
+                </div>
+              </div>
+
+              {/* Tree Screenshot Link */}
+              {generatedTreeScreenshotUrl && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                    Link do screenshotu mapy:
+                  </h4>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={generatedTreeScreenshotUrl}
+                      className="flex-1 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
+                    />
+                    <GlassButton
+                      onClick={() => {
+                        window.open(generatedTreeScreenshotUrl, '_blank');
+                      }}
+                      variant="secondary"
+                      size="xs"
+                    >
+                      Otwórz
+                    </GlassButton>
+                  </div>
+                </div>
+              )}
+
+              {/* Image Links */}
+              {generatedImageUrls.length > 0 && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                    Linki do obrazów ({generatedImageUrls.length}):
+                  </h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {generatedImageUrls.map((imageUrl, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={imageUrl}
+                          className="flex-1 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
+                        />
+                        <GlassButton
+                          onClick={() => {
+                            window.open(imageUrl, '_blank');
+                          }}
+                          variant="secondary"
+                          size="xs"
+                        >
+                          Otwórz
+                        </GlassButton>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2 mt-4">
                 <GlassButton
                   onClick={() => {
@@ -873,24 +930,6 @@ export const ApplicationsPage: React.FC = () => {
                   className="w-full"
                 >
                   Przejdź do ePUAP
-                </GlassButton>
-                <GlassButton
-                  onClick={() => {
-                    // Create a temporary link to download the PDF
-                    const link = document.createElement('a');
-                    link.href = generatedPdfUrl;
-                    link.download = 'wniosek.pdf';
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                  variant="secondary"
-                  size="sm"
-                  className="w-full"
-                >
-                  Pobierz PDF
                 </GlassButton>
               </div>
             </motion.div>

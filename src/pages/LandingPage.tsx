@@ -135,7 +135,7 @@ export const LandingPage = () => {
   // Usunięto pełnoekranowy loading - teraz loading jest tylko w formularzu
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="dark min-h-screen bg-gray-900 text-white">
       {/* Topbar - znika przy scrollowaniu */}
       <motion.div
         initial={{ y: 0 }}

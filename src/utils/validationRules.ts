@@ -160,7 +160,7 @@ export const DynamicFormFieldsValidation = {
   // Justification field
   justification: {
     minLength: 50,
-    maxLength: 1500,
+    maxLength: 5000, // Old 1500
   },
   
   // Cost estimation

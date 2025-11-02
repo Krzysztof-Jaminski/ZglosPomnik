@@ -26,10 +26,7 @@ export const FeedPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Pokaż animację ładowania tylko po 500ms
-      const loadingTimeout = setTimeout(() => {
-        setShowLoadingAnimation(true);
-      }, 500);
+      setShowLoadingAnimation(true);
       
       // Load trees from API
       const treesData = await treesService.getTrees();
@@ -54,7 +51,6 @@ export const FeedPage: React.FC = () => {
       setHasMorePosts(allPostsData.length > POSTS_PER_PAGE);
       setCurrentPage(0);
 
-      clearTimeout(loadingTimeout);
       setShowLoadingAnimation(false);
     } catch (error) {
       console.error('Error loading trees:', error);
@@ -71,6 +67,7 @@ export const FeedPage: React.FC = () => {
       setDisplayedPosts(firstPagePosts);
       setHasMorePosts(allPostsData.length > POSTS_PER_PAGE);
       setCurrentPage(0);
+      setShowLoadingAnimation(false);
     } finally {
       setIsLoading(false);
     }
@@ -171,13 +168,13 @@ export const FeedPage: React.FC = () => {
 
   if (isLoading && showLoadingAnimation) {
     return (
-      <div className="h-full bg-gray-900 flex items-center justify-center">
+      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <h2 className="text-lg font-semibold text-white mb-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Ładowanie feed'a...
           </h2>
-          <p className="text-gray-300">
+          <p className="text-gray-700 dark:text-gray-300">
             Pobieranie postów
           </p>
         </div>

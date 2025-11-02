@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const Sidebar: React.FC = () => {
   const { triggerLightHaptic } = useHapticFeedback();
-  const { isAdmin } = useAuth();
+  const { isModerator } = useAuth();
   
   const navItems = [
     { to: '/map', icon: Map, label: 'Mapa' },
@@ -15,7 +15,7 @@ const Sidebar: React.FC = () => {
     { to: '/applications', icon: FileText, label: 'Wnioski' },
     { to: '/encyclopedia', icon: BookOpen, label: 'Encyklopedia' },
     { to: '/profile', icon: User, label: 'Profil' },
-    ...(isAdmin ? [{ to: '/admin', icon: Shield, label: 'Panel administratora' }] : [])
+    ...(isModerator ? [{ to: '/admin', icon: Shield, label: 'Panel administratora' }] : [])
   ];
 
   return (

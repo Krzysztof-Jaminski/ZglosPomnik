@@ -43,14 +43,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="bg-gray-900 rounded-lg">
                 <div className="p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                       <img 
                         src="/logo.png" 
                         alt="ZgłośPomnik" 
-                        className="w-10 h-10 sm:w-12 sm:h-12"
+                        className="w-10 h-10 sm:w-10 sm:h-10"
                       />
-                      <h2 className="text-xl sm:text-2xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif' }}>
-                        <span className="text-blue-600 dark:text-blue-500">Zgłoś</span><span className="text-green-600 dark:text-green-400">Pomnik</span>
+                      <h2 className="text-xl sm:text-xl font-bold text-white leading-none tracking-tight" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                        <span className="text-blue-500">Zgłoś</span><span className="text-green-500">Pomnik</span>
                       </h2>
                     </div>
                     <button

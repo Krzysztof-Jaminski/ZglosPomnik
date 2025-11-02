@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { Tree } from '../../types';
@@ -18,6 +18,33 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
   // Log tree object to console for debugging
   console.log('TreeInfoPopup - Tree object:', tree);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [showMapScreenshotModal, setShowMapScreenshotModal] = useState(false);
+
+  const openPhotoModal = useCallback((index: number) => {
+    setSelectedPhotoIndex(index);
+    setShowImageModal(true);
+  }, []);
+
+  const closePhotoModal = useCallback(() => {
+    setShowImageModal(false);
+  }, []);
+
+  const nextPhoto = useCallback(() => {
+    setSelectedPhotoIndex((prev) => (prev + 1) % (tree.imageUrls?.length || 1));
+  }, [tree.imageUrls?.length]);
+
+  const prevPhoto = useCallback(() => {
+    setSelectedPhotoIndex((prev) => (prev - 1 + (tree.imageUrls?.length || 1)) % (tree.imageUrls?.length || 1));
+  }, [tree.imageUrls?.length]);
+
+  const openMapScreenshotModal = useCallback(() => {
+    setShowMapScreenshotModal(true);
+  }, []);
+
+  const closeMapScreenshotModal = useCallback(() => {
+    setShowMapScreenshotModal(false);
+  }, []);
 
   return (
     <div
@@ -85,7 +112,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
                             referrerPolicy="no-referrer"
                             alt={`Tree photo ${index + 1}`}
                             className="w-full h-full object-cover rounded-lg cursor-pointer shadow-sm"
-                            onClick={() => setShowImageModal(true)}
+                            onClick={() => openPhotoModal(index)}
                           />
                         </div>
                       );
@@ -104,6 +131,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
                       referrerPolicy="no-referrer"
                       alt="Map screenshot"
                       className="w-full h-20 sm:h-24 object-cover rounded cursor-pointer"
+                      onClick={openMapScreenshotModal}
                     />
                     <div className="absolute top-1 left-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
                       Lokalizacja na mapie
@@ -318,32 +346,122 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
 
       {/* Image Modal */}
       <AnimatePresence>
-        {showImageModal && (
+        {showImageModal && tree.imageUrls && tree.imageUrls.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4"
-            onClick={() => setShowImageModal(false)}
+            onClick={closePhotoModal}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="relative max-w-5xl max-h-[90vh]"
+              className="relative max-w-5xl max-h-[90vh] w-full"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close button */}
               <button
-                onClick={() => setShowImageModal(false)}
-                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+                onClick={closePhotoModal}
+                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
               >
                 <X className="w-8 h-8" />
               </button>
+
+              {/* Photo counter */}
+              <div className="absolute -top-12 left-0 text-white text-lg font-medium z-10">
+                {selectedPhotoIndex + 1} / {tree.imageUrls.length}
+              </div>
+
+              {/* Main photo */}
               <img
-                src={tree.imageUrls?.[0] || ''}
-                alt="Tree photo - enlarged"
+                src={tree.imageUrls[selectedPhotoIndex]}
+                alt={`Photo ${selectedPhotoIndex + 1}`}
                 className="max-w-full max-h-full object-contain rounded-lg"
-                crossOrigin={tree.imageUrls?.[0]?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                crossOrigin={tree.imageUrls[selectedPhotoIndex]?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                referrerPolicy="no-referrer"
+              />
+
+              {/* Navigation arrows */}
+              {tree.imageUrls.length > 1 && (
+                <>
+                  <button
+                    onClick={prevPhoto}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 transition-colors rounded-full p-2"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={nextPhoto}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 transition-colors rounded-full p-2"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Thumbnail strip */}
+              {tree.imageUrls.length > 1 && (
+                <div className="flex gap-2 bg-black/50 rounded-lg p-2 mt-4">
+                  {tree.imageUrls.map((photo, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedPhotoIndex(index)}
+                      className={`w-12 h-12 rounded overflow-hidden transition-opacity ${
+                        index === selectedPhotoIndex ? 'opacity-100 ring-2 ring-white' : 'opacity-60 hover:opacity-80'
+                      }`}
+                    >
+                      <img
+                        src={photo}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Map Screenshot Preview Modal */}
+      <AnimatePresence>
+        {showMapScreenshotModal && tree.treeScreenshotUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4"
+            onClick={closeMapScreenshotModal}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-5xl max-h-[90vh] w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closeMapScreenshotModal}
+                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
+              >
+                <X className="w-8 h-8" />
+              </button>
+
+              {/* Title */}
+              <div className="absolute -top-12 left-0 text-white text-lg font-medium z-10">
+                Screenshot mapy lokalizacji
+              </div>
+
+              {/* Main screenshot */}
+              <img
+                src={tree.treeScreenshotUrl}
+                alt="Map screenshot"
+                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-lg"
+                crossOrigin={tree.treeScreenshotUrl.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
                 referrerPolicy="no-referrer"
               />
             </motion.div>

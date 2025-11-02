@@ -2,6 +2,7 @@
 import { Tree, Species, User } from '../types';
 import { applicationsService } from './applicationsService';
 import { treesService } from './treesService';
+import { authService } from './authService';
 
 export interface AdminUser {
   id: string;
@@ -214,8 +215,13 @@ class AdminService {
       if (speciesData.barkImage) formData.append('barkImage', speciesData.barkImage);
       if (speciesData.fruitImage) formData.append('fruitImage', speciesData.fruitImage);
 
+      const token = authService.getToken();
       const response = await fetch(`${this.baseUrl}/Species`, {
         method: 'POST',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+          Accept: 'application/json'
+        },
         body: formData,
       });
 
@@ -259,8 +265,13 @@ class AdminService {
       if (speciesData.barkImage) formData.append('barkImage', speciesData.barkImage);
       if (speciesData.fruitImage) formData.append('fruitImage', speciesData.fruitImage);
 
+      const token = authService.getToken();
       const response = await fetch(`${this.baseUrl}/Species/${speciesId}`, {
         method: 'PUT',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+          Accept: 'application/json'
+        },
         body: formData,
       });
 
@@ -279,10 +290,12 @@ class AdminService {
   async deleteSpecies(speciesId: string): Promise<void> {
     try {
       console.log(`API Call: deleteSpecies ${speciesId} (admin)`);
+      const token = authService.getToken();
       const response = await fetch(`${this.baseUrl}/Species/${speciesId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+          Accept: 'application/json'
         },
       });
 

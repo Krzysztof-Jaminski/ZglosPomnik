@@ -7,6 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
+  isModerator: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<any>;
   resendEmailVerification: (email: string) => Promise<any>;
@@ -279,12 +280,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Sprawdź czy użytkownik jest administratorem (admin = 1, user = 0)
   const isAdmin = user?.role === '1' || user?.role === 'Admin' || user?.role === 'admin';
+  
+  // Sprawdź czy użytkownik jest moderatorem
+  const isModerator = user?.role === 'Moderator' || user?.role === 'moderator' || isAdmin;
 
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     isLoading,
     isAdmin,
+    isModerator,
     login,
     register,
     resendEmailVerification,
