@@ -4,10 +4,8 @@ import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useHapticFeedback } from '../hooks/useHapticFeedback';
-import { ProfileHeader } from '../components/Profile/ProfileHeader';
 import { ProfileInfo } from '../components/Profile/ProfileInfo';
-import { ProfileStatistics } from '../components/Profile/ProfileStatistics';
-import { ProfileSettings } from '../components/Profile/ProfileSettings';
+import { ProfileStatisticsAndSettings } from '../components/Profile/ProfileStatisticsAndSettings';
 import { PasswordChangeModal } from '../components/Profile/PasswordChangeModal';
 import { LogoutModal } from '../components/Profile/LogoutModal';
 
@@ -29,7 +27,7 @@ interface OrganizationData {
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isModerator } = useAuth();
   const { triggerLightHaptic, triggerMediumHaptic, triggerNotificationHaptic } = useHapticFeedback();
   const [fullUserData, setFullUserData] = useState(user);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
@@ -517,10 +515,8 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-4 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <ProfileHeader />
-
+    <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
+      <div className="w-full px-3 sm:px-4">
         <ProfileInfo
           userData={userData}
           additionalData={additionalData}
@@ -539,20 +535,17 @@ export const ProfilePage: React.FC = () => {
           onCancel={handleCancelEdit}
         />
 
-        <ProfileStatistics
+        <ProfileStatisticsAndSettings
           submissionsCount={userData.submissionsCount}
           applicationsCount={userData.applicationsCount}
-        />
-
-        <ProfileSettings
           onPasswordChange={() => {
                    triggerLightHaptic();
                    setShowChangePasswordModal(true);
                  }}
-          onAdminPanel={() => {
+          onAdminPanel={isModerator ? () => {
                    triggerLightHaptic();
                    navigate('/admin');
-                 }}
+                 } : undefined}
           onLogout={handleLogout}
         />
 
