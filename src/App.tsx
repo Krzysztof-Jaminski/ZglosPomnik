@@ -7,6 +7,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './pages/LandingPage';
 import { Header } from './components/Layout/Header';
 import { Sidebar } from './components/Layout/Sidebar';
+import { RightSidebar } from './components/Layout/RightSidebar';
 import { BottomNavigation } from './components/Layout/BottomNavigation';
 import { MapPage } from './pages/MapPage';
 import { ReportPage } from './pages/ReportPage';
@@ -63,6 +64,8 @@ const MainContent: React.FC = () => {
             <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </main>
+        
+        <RightSidebar />
       </div>
       
       <BottomNavigation />

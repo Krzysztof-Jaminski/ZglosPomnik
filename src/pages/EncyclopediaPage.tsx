@@ -699,7 +699,7 @@ export const EncyclopediaPage: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
               {filteredSpecies.map((speciesItem) => (
                 <div key={speciesItem.id}>
                   <SpeciesCard 

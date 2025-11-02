@@ -161,17 +161,29 @@
     box-sizing: border-box;
   }
 
-  /* Remove default browser focus styles */
-  *:focus {
-    outline: none !important;
-  }
+/* Remove default browser focus styles */
+*:focus {
+  outline: none !important;
+}
 
-  input:focus,
-  textarea:focus,
-  select:focus,
-  button:focus {
-    outline: none !important;
-  }
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
+  outline: none !important;
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
 
   /* Remove focus from bottom navigation */
   nav a:focus,
