@@ -152,13 +152,18 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
     centerOnLocation: (lat: number, lng: number) => {
       const currentMap = mapType === 'roadmap' ? roadmapMap : satelliteMap;
       if (currentMap) {
+        // Ensure coordinates are within Poland bounds
+        // Poland bounds: North: 55.5°N, South: 48.5°N, East: 25°E, West: 13°E
+        const clampedLat = Math.max(48.5, Math.min(55.5, lat));
+        const clampedLng = Math.max(13.0, Math.min(25.0, lng));
+        
         // Optimized zoom for Poland - use appropriate zoom level
         const zoom = Math.min(16, Math.max(10, currentMap.getZoom())); // Clamp between 10-16
-        currentMap.setView([lat, lng], zoom);
+        currentMap.setView([clampedLat, clampedLng], zoom);
         // Sync both maps to the same location
         if (roadmapMap && satelliteMap) {
-          roadmapMap.setView([lat, lng], zoom);
-          satelliteMap.setView([lat, lng], zoom);
+          roadmapMap.setView([clampedLat, clampedLng], zoom);
+          satelliteMap.setView([clampedLat, clampedLng], zoom);
         }
       }
     }
