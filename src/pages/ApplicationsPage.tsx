@@ -75,12 +75,15 @@ export const ApplicationsPage: React.FC = () => {
   const [showAllTrees, setShowAllTrees] = useState(false);
   const [autoSelectAttempted, setAutoSelectAttempted] = useState(false);
   const [showCreateNewModal, setShowCreateNewModal] = useState(false);
-  const [showPdfSuccessModal, setShowPdfSuccessModal] = useState(false);
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string>('');
   const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
   const [generatedTreeScreenshotUrl, setGeneratedTreeScreenshotUrl] = useState<string>('');
   const [userManuallyClosedForm, setUserManuallyClosedForm] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+  const [isPdfGenerated, setIsPdfGenerated] = useState<boolean>(() => {
+    const savedPdfData = localStorage.getItem('generatedPdfData');
+    return !!savedPdfData;
+  });
 
   // Track which page was last active
   useEffect(() => {
@@ -112,6 +115,22 @@ export const ApplicationsPage: React.FC = () => {
       localStorage.setItem('currentApplication', JSON.stringify(currentApplication));
     }
   }, [currentApplication]);
+
+  // Load PDF data from localStorage on mount
+  useEffect(() => {
+    const savedPdfData = localStorage.getItem('generatedPdfData');
+    if (savedPdfData) {
+      try {
+        const pdfData = JSON.parse(savedPdfData);
+        setGeneratedPdfUrl(pdfData.pdfUrl);
+        setGeneratedImageUrls(pdfData.imageUrls || []);
+        setGeneratedTreeScreenshotUrl(pdfData.treeScreenshotUrl || '');
+        setIsPdfGenerated(true);
+      } catch (error) {
+        console.error('Error loading saved PDF data:', error);
+      }
+    }
+  }, []);
 
   // Load initial data
   useEffect(() => {
@@ -391,6 +410,14 @@ export const ApplicationsPage: React.FC = () => {
       // Reset the flag when creating new application
       setUserManuallyClosedForm(false);
       
+      // Clear PDF data when creating new application
+      localStorage.removeItem('generatedPdfData');
+      setIsPdfGenerated(false);
+      setGeneratedPdfUrl('');
+      setGeneratedImageUrls([]);
+      setGeneratedTreeScreenshotUrl('');
+      setPdfModalOpen(false);
+      
       console.log('Creating application with:');
       console.log('Selected tree:', selectedTree);
       console.log('Selected template:', selectedTemplate);
@@ -436,8 +463,19 @@ export const ApplicationsPage: React.FC = () => {
       setGeneratedPdfUrl(pdfResponse.pdfPath);
       setGeneratedImageUrls(pdfResponse.images || []);
       setGeneratedTreeScreenshotUrl(pdfResponse.treeScreenshotUrl || '');
-      setShowPdfSuccessModal(true);
-      setPdfModalOpen(true);
+      
+      // Save PDF data to localStorage for persistent access
+      const pdfData = {
+        pdfUrl: pdfResponse.pdfPath,
+        imageUrls: pdfResponse.images || [],
+        treeScreenshotUrl: pdfResponse.treeScreenshotUrl || ''
+      };
+      localStorage.setItem('generatedPdfData', JSON.stringify(pdfData));
+      
+      // Mark PDF as generated and show application view immediately
+      setIsPdfGenerated(true);
+      setFormSchema(null); // Hide form
+      setUserManuallyClosedForm(true); // Prevent form from showing again
     } catch (error) {
       console.error('Error submitting application:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
@@ -459,11 +497,35 @@ export const ApplicationsPage: React.FC = () => {
     localStorage.removeItem('selectedTree');
     localStorage.removeItem('selectedCommune');
     localStorage.removeItem('selectedTemplate');
+    localStorage.removeItem('generatedPdfData');
     
     // Clear state and close form
     setCurrentApplication(null);
     setFormSchema(null);
     setUserManuallyClosedForm(false);
+    setIsPdfGenerated(false);
+    setGeneratedPdfUrl('');
+    setGeneratedImageUrls([]);
+    setGeneratedTreeScreenshotUrl('');
+  };
+
+  // Function to create a new application (reset everything)
+  const handleCreateNewApplication = async () => {
+    // Clear PDF data
+    localStorage.removeItem('generatedPdfData');
+    setIsPdfGenerated(false);
+    setGeneratedPdfUrl('');
+    setGeneratedImageUrls([]);
+    setGeneratedTreeScreenshotUrl('');
+    setPdfModalOpen(false);
+    
+    // Clear form state
+    setFormSchema(null);
+    setUserManuallyClosedForm(false);
+    setCurrentApplication(null);
+    
+    // Create new application
+    await createNewApplication();
   };
 
   const clearCacheAndReset = async () => {
@@ -556,7 +618,8 @@ export const ApplicationsPage: React.FC = () => {
   // Check if we can show the next section
   const canShowCommuneSelection = selectedTree !== null;
   const canShowTemplateSelection = selectedTree !== null && selectedCommune !== null;
-  const canShowForm = currentApplication !== null && formSchema !== null;
+  const canShowForm = currentApplication !== null && formSchema !== null && !isPdfGenerated;
+  const canShowApplicationView = isPdfGenerated && currentApplication !== null;
     
   // Don't show full screen loading - show content with spinner instead
 
@@ -567,110 +630,243 @@ export const ApplicationsPage: React.FC = () => {
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg">
           <div className="space-y-1 sm:space-y-2">
 
-            {/* Tree Selection Section - Hide when form is shown */}
-            {!canShowForm && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
-                <div className="space-y-2">
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Wybierz drzewo
-                  </label>
-                  
-                  <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
-                    {/* Top fade gradient */}
-                    <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
-                    {/* Bottom fade gradient */}
-                    <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
-                    {isLoading && trees.length === 0 ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="text-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Ładowanie drzew...</p>
-                        </div>
+            {/* Application View - Show when PDF is generated */}
+            <AnimatePresence>
+              {canShowApplicationView && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-lg p-3 sm:p-4 shadow-xl"
+                >
+                  <div className="text-center mb-4">
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Wniosek został wygenerowany
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Możesz pobrać pliki wiele razy
+                    </p>
+                  </div>
+
+                  {/* Application Info */}
+                  <div className="space-y-3 mb-4">
+                    {selectedTree && (
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Drzewo</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTree.name}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{selectedTree.location.address}</p>
                       </div>
-                    ) : (
-                      <TreeSelector
-                        trees={trees}
-                        selectedTree={selectedTree}
-                        onTreeSelect={handleTreeSelect}
-                        onLoadMore={handleLoadAllTrees}
-                        isLoading={isLoading}
-                        showAllTrees={showAllTrees}
-                        onTreeClick={(tree) => setSelectedTree(tree)}
-                      />
                     )}
+                    {selectedCommune && (
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Gmina</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedCommune.name}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{selectedCommune.city}</p>
+                      </div>
+                    )}
+                    {selectedTemplate && (
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Szablon wniosku</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTemplate.name}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Download ZIP Button */}
+                  <div className="mb-4">
+                    <GlassButton
+                      onClick={handleDownloadZip}
+                      disabled={isDownloadingZip}
+                      variant="primary"
+                      size="sm"
+                      className="w-full"
+                      icon={isDownloadingZip ? Loader2 : Download}
+                    >
+                      {isDownloadingZip ? 'Pobieranie...' : 'Pobierz wszystkie pliki (ZIP)'}
+                    </GlassButton>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center">
+                      Plik ZIP zawiera: wniosek PDF, zdjęcia drzewa {generatedTreeScreenshotUrl ? 'oraz screenshot mapy' : ''}
+                    </p>
+                  </div>
+
+                  {/* ePUAP Instructions */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 mb-4">
+                    <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                      Instrukcja wysyłania wniosku na ePUAP:
+                    </h4>
+                    <div className="space-y-2 text-xs text-blue-800 dark:text-blue-200">
+                      <div className="flex items-start space-x-2">
+                        <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">1</div>
+                        <span>Zaloguj się na portalu <strong>ePUAP</strong> (epuap.gov.pl)</span>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">2</div>
+                        <span>Wybierz odpowiednią <strong>gminę</strong> ({selectedCommune?.name || 'tę samą co w formularzu'})</span>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">3</div>
+                        <span>Znajdź sekcję <strong>"Wnioski"</strong> lub <strong>"Sprawy urzędowe"</strong></span>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">4</div>
+                        <span>Wyślij wygenerowany <strong>PDF jako załącznik</strong> do odpowiedniego wniosku</span>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">5</div>
+                        <span>Podpisz wniosek <strong>profilem zaufanym</strong> i czekaj na odpowiedź od gminy</span>
+                      </div>
+                    </div>
+                    {selectedCommune && (
+                      <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                        <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1">Kontakt do gminy:</p>
+                        <p className="text-xs text-blue-800 dark:text-blue-200">Email: {selectedCommune.email}</p>
+                        <p className="text-xs text-blue-800 dark:text-blue-200">Telefon: {selectedCommune.phone}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Create New Application Button */}
+                  <GlassButton
+                    onClick={handleCreateNewApplication}
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    icon={Plus}
+                  >
+                    Utwórz nowy wniosek
+                  </GlassButton>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Tree Selection Section - Hide when form or application view is shown */}
+            {!canShowForm && !canShowApplicationView && (
+              <div className="relative rounded-xl p-1 shadow-lg mb-2 sm:mb-3" style={{
+                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3))',
+                padding: '2px'
+              }}>
+                <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg">
+                  <div className="p-2 sm:p-3">
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Wybierz drzewo
+                      </label>
+                      
+                      <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
+                        {/* Top fade gradient */}
+                        <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                        {/* Bottom fade gradient */}
+                        <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                        {isLoading && trees.length === 0 ? (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="text-center">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Ładowanie drzew...</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <TreeSelector
+                            trees={trees}
+                            selectedTree={selectedTree}
+                            onTreeSelect={handleTreeSelect}
+                            onLoadMore={handleLoadAllTrees}
+                            isLoading={isLoading}
+                            showAllTrees={showAllTrees}
+                            onTreeClick={(tree) => setSelectedTree(tree)}
+                          />
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Commune Selection Section - Show when tree is selected but hide when form is shown */}
+            {/* Commune Selection Section - Show when tree is selected but hide when form or application view is shown */}
             <AnimatePresence>
-              {canShowCommuneSelection && !canShowForm && (
+              {canShowCommuneSelection && !canShowForm && !canShowApplicationView && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700"
+                  className="relative rounded-xl p-1 shadow-lg mb-2 sm:mb-3" style={{
+                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3))',
+                    padding: '2px'
+                  }}
                 >
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Wybierz gminę
-                    </label>
-                    
-                    <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
-                      {/* Top fade gradient */}
-                      <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
-                      {/* Bottom fade gradient */}
-                      <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
-                      <CommuneSelector
-                        communes={communes}
-                        selectedCommune={selectedCommune}
-                        onCommuneSelect={setSelectedCommune}
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Template Selection Section - Show when commune is selected but hide when form is shown */}
-            <AnimatePresence>
-              {canShowTemplateSelection && !canShowForm && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-700"
-                >
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Wybierz szablon wniosku
-                    </label>
-                    
-                    <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
-                      {/* Top fade gradient */}
-                      <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
-                      {/* Bottom fade gradient */}
-                      <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
-                      {isLoading ? (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+                  <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg">
+                    <div className="p-2 sm:p-3">
+                      <div className="space-y-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Wybierz gminę
+                        </label>
+                        
+                        <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
+                          {/* Top fade gradient */}
+                          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                          {/* Bottom fade gradient */}
+                          <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                          <CommuneSelector
+                            communes={communes}
+                            selectedCommune={selectedCommune}
+                            onCommuneSelect={setSelectedCommune}
+                          />
                         </div>
-                      ) : (
-                        <TemplateSelector
-                          templates={templates}
-                          selectedTemplate={selectedTemplate}
-                          onTemplateSelect={handleTemplateSelect}
-                        />
-                      )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Continue Application Button - Show when there's an existing application */}
-            {!canShowForm && currentApplication && (
+            {/* Template Selection Section - Show when commune is selected but hide when form or application view is shown */}
+            <AnimatePresence>
+              {canShowTemplateSelection && !canShowForm && !canShowApplicationView && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="relative rounded-xl p-1 shadow-lg mb-2 sm:mb-3" style={{
+                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3))',
+                    padding: '2px'
+                  }}
+                >
+                  <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg">
+                    <div className="p-2 sm:p-3">
+                      <div className="space-y-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Wybierz szablon wniosku
+                        </label>
+                        
+                        <div className="relative max-h-[30vh] overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-700/50 shadow-inner ring-1 ring-gray-100 dark:ring-gray-800">
+                          {/* Top fade gradient */}
+                          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                          {/* Bottom fade gradient */}
+                          <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
+                          {isLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+                            </div>
+                          ) : (
+                            <TemplateSelector
+                              templates={templates}
+                              selectedTemplate={selectedTemplate}
+                              onTemplateSelect={handleTemplateSelect}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Continue Application Button - Show when there's an existing application but PDF not generated */}
+            {!canShowForm && !canShowApplicationView && currentApplication && !isPdfGenerated && (
               <div className="w-full mb-2">
                 <GlassButton
                   onClick={() => {
@@ -718,7 +914,7 @@ export const ApplicationsPage: React.FC = () => {
             )}
 
             {/* Create Application Button */}
-            {!canShowForm && (
+            {!canShowForm && !canShowApplicationView && (
               <div className="w-full">
                 <GlassButton
                   onClick={handleCreateApplication}
@@ -877,99 +1073,6 @@ export const ApplicationsPage: React.FC = () => {
           </div>
         )}
 
-        {/* PDF Success Modal */}
-        {showPdfSuccessModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="relative bg-white dark:bg-gray-800 border-2 border-green-200/50 dark:border-green-400/30 rounded-lg shadow-xl p-4 max-w-md w-full max-h-[80vh] overflow-y-auto"
-            >
-              <div className="text-center mb-4">
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Wniosek został wygenerowany!
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Postępuj zgodnie z instrukcją!
-                </p>
-              </div>
-              
-              {/* Instructions */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 mb-4">
-                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                  Instrukcja wysyłania wniosku:
-                </h4>
-                <div className="space-y-2 text-xs text-blue-800 dark:text-blue-200">
-                  <div className="flex items-start space-x-2">
-                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">1</div>
-                    <span>Zaloguj się na portalu <strong>ePUAP</strong> (epuap.gov.pl)</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">2</div>
-                    <span>Wybierz odpowiednią <strong>gminę</strong> (tę samą co w formularzu)</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">3</div>
-                    <span>Znajdź sekcję <strong>"Wnioski"</strong> lub <strong>"Sprawy urzędowe"</strong></span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">4</div>
-                    <span>Wyślij wygenerowany <strong>PDF jako załącznik</strong> do odpowiedniego wniosku</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="flex-shrink-0 w-4 h-4 bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 rounded-full flex items-center justify-center text-xs font-semibold text-blue-700 dark:text-blue-200">5</div>
-                    <span>Podpisz wniosek <strong>profilem zaufanym</strong> i czekaj na odpowiedź od gminy</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Close button */}
-              <button
-                onClick={() => {
-                  setShowPdfSuccessModal(false);
-                  setPdfModalOpen(false);
-                }}
-                className="absolute top-4 right-4 p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                title="Zamknij"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* Download ZIP Button */}
-              <div className="mb-4">
-                <GlassButton
-                  onClick={handleDownloadZip}
-                  disabled={isDownloadingZip}
-                  variant="primary"
-                  size="sm"
-                  className="w-full"
-                  icon={isDownloadingZip ? Loader2 : Download}
-                >
-                  {isDownloadingZip ? 'Pobieranie...' : 'Pobierz wszystkie pliki (ZIP)'}
-                </GlassButton>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center">
-                  Plik ZIP zawiera: wniosek PDF, zdjęcia drzewa {generatedTreeScreenshotUrl ? 'oraz screenshot mapy' : ''}
-                </p>
-              </div>
-
-              <div className="space-y-2 mt-4">
-                <GlassButton
-                  onClick={() => {
-                    window.open('https://epuap.gov.pl', '_blank');
-                  }}
-                  variant="secondary"
-                  size="sm"
-                  className="w-full"
-                >
-                  Przejdź do ePUAP
-                </GlassButton>
-              </div>
-            </motion.div>
-          </div>
-        )}
       </div>
     </div>
   );
