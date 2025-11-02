@@ -45,7 +45,30 @@ export const EncyclopediaPage: React.FC = () => {
   const [isImageViewerOpen, setIsImageViewerOpen] = useUIState('encyclopedia', 'isImageViewerOpen', false);
   
   const [isLoading, setIsLoading] = useState(true);
-  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
+  
+  // Initialize selectedSpecies from temporary localStorage if available (for smooth navigation from report page)
+  // This runs BEFORE loadSpecies to prepare the page
+  useEffect(() => {
+    const speciesIdFromStorage = localStorage.getItem('_temp_encyclopedia_selectedSpecies');
+    if (speciesIdFromStorage) {
+      // Check if we have cached species data
+      const cachedSpecies = localStorage.getItem('cached_species');
+      if (cachedSpecies) {
+        try {
+          const cachedData = JSON.parse(cachedSpecies);
+          const speciesItem = cachedData.find((s: Species) => s.id === speciesIdFromStorage);
+          if (speciesItem) {
+            // Set species immediately from cache to prevent flickering
+            setSelectedSpecies(speciesItem);
+            localStorage.removeItem('_temp_encyclopedia_selectedSpecies');
+            // Keep _temp_encyclopedia_returnTo until user navigates back
+          }
+        } catch (e) {
+          console.warn('Failed to parse cached species for initialization:', e);
+        }
+      }
+    }
+  }, [setSelectedSpecies]);
 
   // Auto-resize for description-like fields (when editing)
   const { ref: descRef, onInput: onDescInput } = useAutoTextarea(speciesFormData.description || '');
@@ -60,36 +83,80 @@ export const EncyclopediaPage: React.FC = () => {
       try {
         console.log('EncyclopediaPage: Loading species...');
         
-        setShowLoadingAnimation(true);
+        // Check for selected species from temporary localStorage FIRST (before loading data)
+        const speciesIdFromStorage = localStorage.getItem('_temp_encyclopedia_selectedSpecies');
         
-        const data = await speciesService.getSpecies();
-        console.log('EncyclopediaPage: Loaded species count:', data.length);
-        console.log('EncyclopediaPage: Species data:', data);
-        setSpecies(data);
-        setFilteredSpecies(data);
+        // Try to load from localStorage first
+        const cachedSpecies = localStorage.getItem('cached_species');
+        let data: Species[] = [];
         
-        // Check if we should show a specific species from location state or URL params
+        if (cachedSpecies) {
+          try {
+            const cachedData = JSON.parse(cachedSpecies);
+            const cacheTime = localStorage.getItem('cached_species_time');
+            const cacheAge = cacheTime ? Date.now() - parseInt(cacheTime) : Infinity;
+            
+            // Use cached data if less than 5 minutes old
+            if (cacheAge < 5 * 60 * 1000 && Array.isArray(cachedData) && cachedData.length > 0) {
+              console.log('EncyclopediaPage: Using cached species data');
+              data = cachedData;
+              setSpecies(data);
+              setFilteredSpecies(data);
+              setIsLoading(false);
+              
+              // If we have a selected species from temporary storage, set it immediately
+              if (speciesIdFromStorage && !selectedSpecies) {
+                const speciesItem = data.find(s => s.id === speciesIdFromStorage);
+                if (speciesItem) {
+                  setSelectedSpecies(speciesItem);
+                  // Clear species from localStorage after using it
+                  localStorage.removeItem('_temp_encyclopedia_selectedSpecies');
+                  // Keep _temp_encyclopedia_returnTo until user navigates back
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to parse cached species:', e);
+          }
+        }
+        
+        // Always fetch fresh data in background
+        const freshData = await speciesService.getSpecies();
+        console.log('EncyclopediaPage: Loaded species count:', freshData.length);
+        
+        // Cache the data
+        localStorage.setItem('cached_species', JSON.stringify(freshData));
+        localStorage.setItem('cached_species_time', Date.now().toString());
+        
+        setSpecies(freshData);
+        setFilteredSpecies(freshData);
+        
+        // Check if we should show a specific species from location state, URL params, or temporary localStorage
         const urlParams = new URLSearchParams(window.location.search);
         const speciesIdFromUrl = urlParams.get('species');
         const speciesIdFromState = location.state?.selectedSpecies;
         
-        
-        // Priority: location state first, then URL params
-        const speciesId = speciesIdFromState || speciesIdFromUrl;
-        
-        if (speciesId) {
-          const speciesItem = data.find(s => s.id === speciesId);
-          if (speciesItem) {
-            setSelectedSpecies(speciesItem);
+        // Priority: location state first, then URL params, then temporary localStorage
+        // But only if we don't already have a selected species (to prevent flickering)
+        if (!selectedSpecies) {
+          const speciesId = speciesIdFromState || speciesIdFromUrl || speciesIdFromStorage;
+          
+          if (speciesId) {
+            const speciesItem = freshData.find(s => s.id === speciesId);
+            if (speciesItem) {
+              setSelectedSpecies(speciesItem);
+              // Clear species from localStorage after using it
+              if (speciesIdFromStorage) {
+                localStorage.removeItem('_temp_encyclopedia_selectedSpecies');
+                // Keep _temp_encyclopedia_returnTo until user navigates back
+              }
+            }
           }
-        } else {
         }
         
-        setShowLoadingAnimation(false);
+        setIsLoading(false);
       } catch (error) {
         console.error('Error loading species:', error);
-        setShowLoadingAnimation(false);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -173,38 +240,7 @@ export const EncyclopediaPage: React.FC = () => {
     }
   }, [isImageViewerOpen, selectedSpecies]);
 
-  if (isLoading && showLoadingAnimation) {
-    return (
-      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Ładowanie encyklopedii...
-          </h2>
-          <p className="text-gray-700 dark:text-gray-300">
-            Pobieranie danych gatunków
-          </p>
-        </div>
-        <DeleteConfirmationModal
-          isOpen={showDeleteModal}
-          onClose={() => setShowDeleteModal(false)}
-          onConfirm={async () => {
-            if (!pendingDeleteId) return;
-            await adminService.deleteSpecies(pendingDeleteId);
-            setFilteredSpecies(prev => prev.filter(s => s.id !== pendingDeleteId));
-            setSpecies(prev => prev.filter(s => s.id !== pendingDeleteId));
-            setShowDeleteModal(false);
-            setPendingDeleteId(null);
-            setSelectedSpecies(null);
-          }}
-          title="Usuń gatunek"
-          message="Czy na pewno chcesz usunąć ten gatunek?"
-        />
-
-        
-      </div>
-    );
-  }
+  // Don't show full screen loading - show content with spinner instead
 
   // If a specific species is selected, show detailed view
   if (selectedSpecies) {
@@ -223,8 +259,12 @@ export const EncyclopediaPage: React.FC = () => {
                   const urlParams = new URLSearchParams(window.location.search);
                   const returnToFromUrl = urlParams.get('returnTo');
                   const returnToFromState = location.state?.returnTo;
-                  const returnTo = returnToFromState || returnToFromUrl;
+                  const returnToFromStorage = localStorage.getItem('_temp_encyclopedia_returnTo');
+                  const returnTo = returnToFromState || returnToFromUrl || returnToFromStorage;
                   if (returnTo === 'report') {
+                    // Clear temporary storage when navigating back
+                    localStorage.removeItem('_temp_encyclopedia_returnTo');
+                    localStorage.removeItem('_temp_encyclopedia_selectedSpecies');
                     navigate('/report');
                   } else {
                     setSelectedSpecies(null);
@@ -372,7 +412,7 @@ export const EncyclopediaPage: React.FC = () => {
 
             {/* Thumbnail gallery */}
             {(selectedSpecies.images || []).length > 1 && (
-                <div className="p-2 bg-gray-50 dark:bg-gray-700">
+                <div className="p-2">
                 <h3 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Galeria zdjęć
                 </h3>
@@ -401,7 +441,7 @@ export const EncyclopediaPage: React.FC = () => {
 
           {/* Latin and family under images (display mode) */}
           {!isEditing && (
-            <div className="px-4 py-2">
+            <div className="px-4 pt-1 pb-2">
               <div className="flex items-center gap-2 text-xs">
                 <p className="text-gray-900 dark:text-gray-200 font-semibold">{selectedSpecies.polishName}</p>
                 <span className="text-gray-500">|</span>
@@ -412,7 +452,7 @@ export const EncyclopediaPage: React.FC = () => {
               </div>
             )}
             
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 pt-2 sm:pt-4">
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
                 {/* Images section - use PhotoPicker from report; 4 slots for species */}
                 <div>
@@ -649,25 +689,35 @@ export const EncyclopediaPage: React.FC = () => {
       </div>
 
       <div className="w-full px-2 sm:px-4 lg:px-6">
-
         {/* Species grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
-          {filteredSpecies.map((speciesItem) => (
-            <div key={speciesItem.id}>
-              <SpeciesCard 
-                species={speciesItem} 
-                onClick={() => setSelectedSpecies(speciesItem)}
-              />
+        {isLoading && filteredSpecies.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Ładowanie gatunków...</p>
             </div>
-          ))}
-        </div>
-
-        {filteredSpecies.length === 0 && (
-          <div className="text-center py-8 sm:py-12">
-            <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">
-              Nie znaleziono gatunków spełniających kryteria wyszukiwania
-            </p>
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+              {filteredSpecies.map((speciesItem) => (
+                <div key={speciesItem.id}>
+                  <SpeciesCard 
+                    species={speciesItem} 
+                    onClick={() => setSelectedSpecies(speciesItem)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {filteredSpecies.length === 0 && !isLoading && (
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">
+                  Nie znaleziono gatunków spełniających kryteria wyszukiwania
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

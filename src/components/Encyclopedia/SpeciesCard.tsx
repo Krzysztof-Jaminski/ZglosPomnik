@@ -27,17 +27,17 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, onClick }) =>
       </div>
       
       {/* Info container below image */}
-      <div className="p-3 sm:p-4 flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+      <div className="p-2 sm:p-3 flex-1 flex flex-col">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
           <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 text-sm sm:text-base">
             {species.polishName}
           </h3>
         </div>
-        <p className="text-gray-700 dark:text-gray-300 italic mb-2 line-clamp-1 text-xs sm:text-sm">
+        <p className="text-gray-700 dark:text-gray-300 italic mb-0.5 line-clamp-1 text-xs sm:text-sm">
           {species.latinName}
         </p>
-        <p className="text-gray-600 dark:text-gray-400 mb-2 text-xs">
+        <p className="text-gray-600 dark:text-gray-400 mb-1 text-xs">
           Rodzina: {species.family}
         </p>
         

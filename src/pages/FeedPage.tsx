@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TreePost } from '../components/Feed/TreePost';
 import { TreePost as TreePostType } from '../types';
 import { treesService } from '../services/treesService';
-import { api } from '../services/api';
 import { useLocation } from 'react-router-dom';
 import { SearchInput } from '../components/UI/SearchInput';
 
@@ -10,7 +9,6 @@ export const FeedPage: React.FC = () => {
   const [allPosts, setAllPosts] = useState<TreePostType[]>([]);
   const [displayedPosts, setDisplayedPosts] = useState<TreePostType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
@@ -26,9 +24,32 @@ export const FeedPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      setShowLoadingAnimation(true);
+      // Try to load from localStorage first
+      const cachedPosts = localStorage.getItem('cached_feed_posts');
+      if (cachedPosts) {
+        try {
+          const cachedData = JSON.parse(cachedPosts);
+          const cacheTime = localStorage.getItem('cached_feed_posts_time');
+          const cacheAge = cacheTime ? Date.now() - parseInt(cacheTime) : Infinity;
+          
+          // Use cached data if less than 5 minutes old
+          if (cacheAge < 5 * 60 * 1000 && Array.isArray(cachedData) && cachedData.length > 0) {
+            console.log('FeedPage: Using cached posts data');
+            setAllPosts(cachedData);
+            
+            // Display first 5 posts
+            const firstPagePosts = cachedData.slice(0, POSTS_PER_PAGE);
+            setDisplayedPosts(firstPagePosts);
+            setHasMorePosts(cachedData.length > POSTS_PER_PAGE);
+            setCurrentPage(0);
+            setIsLoading(false);
+          }
+        } catch (e) {
+          console.warn('Failed to parse cached posts:', e);
+        }
+      }
       
-      // Load trees from API
+      // Always fetch fresh data in background
       const treesData = await treesService.getTrees();
       
       // Sort trees by submission date (newest first)
@@ -43,6 +64,10 @@ export const FeedPage: React.FC = () => {
         ...tree
       }));
 
+      // Cache the data
+      localStorage.setItem('cached_feed_posts', JSON.stringify(allPostsData));
+      localStorage.setItem('cached_feed_posts_time', Date.now().toString());
+
       setAllPosts(allPostsData);
       
       // Display first 5 posts
@@ -51,24 +76,9 @@ export const FeedPage: React.FC = () => {
       setHasMorePosts(allPostsData.length > POSTS_PER_PAGE);
       setCurrentPage(0);
 
-      setShowLoadingAnimation(false);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error loading trees:', error);
-      // Fallback to mock data if API fails
-      const mockTrees = await api.getTrees();
-      const allPostsData: TreePostType[] = mockTrees.map(tree => ({
-        ...tree
-      }));
-
-      setAllPosts(allPostsData);
-      
-      // Display first 5 posts
-      const firstPagePosts = allPostsData.slice(0, POSTS_PER_PAGE);
-      setDisplayedPosts(firstPagePosts);
-      setHasMorePosts(allPostsData.length > POSTS_PER_PAGE);
-      setCurrentPage(0);
-      setShowLoadingAnimation(false);
-    } finally {
       setIsLoading(false);
     }
   }, []);
@@ -166,21 +176,7 @@ export const FeedPage: React.FC = () => {
       return new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime();
     });
 
-  if (isLoading && showLoadingAnimation) {
-    return (
-      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Ładowanie feed'a...
-          </h2>
-          <p className="text-gray-700 dark:text-gray-300">
-            Pobieranie postów
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Don't show full screen loading - show content with spinner instead
 
   return (
     <div className="h-full flex flex-col">
@@ -199,21 +195,30 @@ export const FeedPage: React.FC = () => {
         </div>
 
         <div className="space-y-4 sm:space-y-6 w-full px-2 py-2">
-          {filteredAndSortedPosts.map((post) => (
-            <div
-              key={post.id}
-              id={`tree-post-${post.id}`}
-            >
-              <TreePost
-                post={post}
-                onDelete={handleDeletePost}
-                onUpdate={handleUpdatePost}
-                isEditing={editingTreeId === post.id}
-                onStartEdit={() => setEditingTreeId(post.id)}
-                onCancelEdit={() => setEditingTreeId(null)}
-              />
+          {isLoading && filteredAndSortedPosts.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Ładowanie postów...</p>
+              </div>
             </div>
-          ))}
+          ) : (
+            filteredAndSortedPosts.map((post) => (
+              <div
+                key={post.id}
+                id={`tree-post-${post.id}`}
+              >
+                <TreePost
+                  post={post}
+                  onDelete={handleDeletePost}
+                  onUpdate={handleUpdatePost}
+                  isEditing={editingTreeId === post.id}
+                  onStartEdit={() => setEditingTreeId(post.id)}
+                  onCancelEdit={() => setEditingTreeId(null)}
+                />
+              </div>
+            ))
+          )}
         </div>
 
         {/* Search Results Info */}

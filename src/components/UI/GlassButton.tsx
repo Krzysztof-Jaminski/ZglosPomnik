@@ -5,7 +5,7 @@ import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 interface GlassButtonProps {
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   variant?: 'primary' | 'secondary' | 'danger';
@@ -85,10 +85,10 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
     lg: 'w-10 h-10'
   };
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
       triggerLightHaptic();
-      onClick?.();
+      onClick?.(e);
     }
   };
 

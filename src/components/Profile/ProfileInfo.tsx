@@ -224,31 +224,31 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
     }}>
       <div className="bg-gray-50 dark:bg-gray-900 rounded-lg">
         <div className="p-2 sm:p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2 sm:space-x-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
-                  {userData.name}
-                </h2>
-                <p className="text-xs text-gray-600 dark:text-gray-300">
-                  Członek od {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
-                </p>
-              </div>
             </div>
-            
-            <GlassButton
-              onClick={onEditToggle}
-              variant="secondary"
-              size="xs"
-            >
-              <span className="text-xs">
-                {isEditing ? 'Anuluj' : 'Edytuj'}
-              </span>
-            </GlassButton>
+            <div>
+                <h2 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+                {userData.name}
+              </h2>
+                <p className="text-xs text-gray-600 dark:text-gray-300">
+                Członek od {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
+              </p>
+            </div>
           </div>
+          
+          <GlassButton
+            onClick={onEditToggle}
+            variant="secondary"
+              size="xs"
+          >
+              <span className="text-xs">
+              {isEditing ? 'Anuluj' : 'Edytuj'}
+            </span>
+          </GlassButton>
+        </div>
 
           {/* Sekcja informacyjna o prywatności */}
           <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -259,15 +259,15 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
           </div>
 
           {/* Sekcja informacyjna o organizacji */}
-          <div className="mb-2 p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-            <p className="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
+          <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <p className="text-xs text-green-700 dark:text-green-300 leading-relaxed">
               <strong>Dane organizacji:</strong> Dane organizacji są całkowicie opcjonalne. Jeśli chciałbyś tworzyć wnioski z danymi innymi niż te z profilu, możesz użyć organizacji w wniosku.
-            </p>
-          </div>
-
+              </p>
+            </div>
+            
           {isEditing ? (
           <div className="space-y-2">
-            <div className="relative">
+              <div className="relative">
                 <input
                   type="tel"
                   value={editData.phone}
@@ -472,8 +472,8 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             {editOrganizationData && onOrganizationInputChange && (
               <div className="mt-3 pt-2 border-t border-gray-300 dark:border-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-2">
-                  Edycja organizacji
-                </h3>
+                    Edycja organizacji
+                  </h3>
                 
                 <div className="space-y-2">
                       <input
@@ -619,13 +619,13 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             </div>
             <div className="text-sm text-gray-700 dark:text-gray-300">
               <span className="font-medium">Adres:</span> {additionalData.address}
-            </div>
+              </div>
             <div className="text-sm text-gray-700 dark:text-gray-300">
               <span className="font-medium">Miasto:</span> {additionalData.city}
-            </div>
+              </div>
             <div className="text-sm text-gray-700 dark:text-gray-300">
               <span className="font-medium">Kod pocztowy:</span> {additionalData.postalCode}
-            </div>
+              </div>
             <div className="text-sm text-gray-700 dark:text-gray-300">
               <span className="font-medium">Dołączył:</span> {new Date(userData.registrationDate).toLocaleDateString('pl-PL')}
             </div>
@@ -634,8 +634,8 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             {organizationData && (
               <div className="mt-3 pt-2 border-t border-gray-300 dark:border-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-2">
-                  Organizacja
-                </h3>
+                    Organizacja
+                  </h3>
                 <div className="space-y-2">
                   <div className="text-sm text-gray-700 dark:text-gray-300">
                     <span className="font-medium">Nazwa:</span> {organizationData.name}

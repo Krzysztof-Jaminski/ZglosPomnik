@@ -69,7 +69,6 @@ export const ApplicationsPage: React.FC = () => {
   });
   const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [isCreatingApplication, setIsCreatingApplication] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
@@ -123,15 +122,44 @@ export const ApplicationsPage: React.FC = () => {
         return;
       }
 
-      // Pokaż animację ładowania tylko po 500ms
-      let loadingTimeout: NodeJS.Timeout | undefined;
-
       try {
         setIsLoading(true);
         
-        loadingTimeout = setTimeout(() => {
-          setShowLoadingAnimation(true);
-        }, 500);
+        // Try to load from localStorage first
+        const cachedTrees = localStorage.getItem('cached_application_trees');
+        const cachedCommunes = localStorage.getItem('cached_application_communes');
+        
+        if (cachedTrees) {
+          try {
+            const cachedData = JSON.parse(cachedTrees);
+            const cacheTime = localStorage.getItem('cached_application_trees_time');
+            const cacheAge = cacheTime ? Date.now() - parseInt(cacheTime) : Infinity;
+            
+            // Use cached data if less than 5 minutes old
+            if (cacheAge < 5 * 60 * 1000 && Array.isArray(cachedData) && cachedData.length > 0) {
+              console.log('ApplicationsPage: Using cached trees data');
+              setTrees(cachedData);
+            }
+          } catch (e) {
+            console.warn('Failed to parse cached trees:', e);
+          }
+        }
+        
+        if (cachedCommunes) {
+          try {
+            const cachedData = JSON.parse(cachedCommunes);
+            const cacheTime = localStorage.getItem('cached_application_communes_time');
+            const cacheAge = cacheTime ? Date.now() - parseInt(cacheTime) : Infinity;
+            
+            // Use cached data if less than 5 minutes old
+            if (cacheAge < 5 * 60 * 1000 && Array.isArray(cachedData) && cachedData.length > 0) {
+              console.log('ApplicationsPage: Using cached communes data');
+              setCommunes(cachedData);
+            }
+          } catch (e) {
+            console.warn('Failed to parse cached communes:', e);
+          }
+        }
         
         // Check if user is returning from report page
         const lastActivePage = localStorage.getItem('lastActivePage');
@@ -143,11 +171,18 @@ export const ApplicationsPage: React.FC = () => {
           setUserManuallyClosedForm(false);
         }
         
-        // Load trees and communes initially
+        // Load trees and communes initially (always fetch fresh data)
         const [treesData, communesData] = await Promise.all([
           applicationsService.getAllTrees(),
           applicationsService.getCommunes()
         ]);
+        
+        // Cache the data
+        localStorage.setItem('cached_application_trees', JSON.stringify(treesData));
+        localStorage.setItem('cached_application_trees_time', Date.now().toString());
+        localStorage.setItem('cached_application_communes', JSON.stringify(communesData));
+        localStorage.setItem('cached_application_communes_time', Date.now().toString());
+        
         setTrees(treesData);
         setCommunes(communesData);
         
@@ -178,10 +213,6 @@ export const ApplicationsPage: React.FC = () => {
             return;
           }
         } finally {
-          if (loadingTimeout) {
-            clearTimeout(loadingTimeout);
-          }
-          setShowLoadingAnimation(false);
           setIsLoading(false);
         }
       };
@@ -527,22 +558,7 @@ export const ApplicationsPage: React.FC = () => {
   const canShowTemplateSelection = selectedTree !== null && selectedCommune !== null;
   const canShowForm = currentApplication !== null && formSchema !== null;
     
-  // Show loading screen if loading and animation should be shown
-  if (isLoading && showLoadingAnimation) {
-    return (
-      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Ładowanie wniosków...
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            Pobieranie danych aplikacji
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Don't show full screen loading - show content with spinner instead
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
@@ -564,15 +580,24 @@ export const ApplicationsPage: React.FC = () => {
                     <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
                     {/* Bottom fade gradient */}
                     <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
-                    <TreeSelector
-                      trees={trees}
-                      selectedTree={selectedTree}
-                      onTreeSelect={handleTreeSelect}
-                      onLoadMore={handleLoadAllTrees}
-                      isLoading={isLoading}
-                      showAllTrees={showAllTrees}
-                      onTreeClick={(tree) => setSelectedTree(tree)}
-                    />
+                    {isLoading && trees.length === 0 ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="text-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Ładowanie drzew...</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <TreeSelector
+                        trees={trees}
+                        selectedTree={selectedTree}
+                        onTreeSelect={handleTreeSelect}
+                        onLoadMore={handleLoadAllTrees}
+                        isLoading={isLoading}
+                        showAllTrees={showAllTrees}
+                        onTreeClick={(tree) => setSelectedTree(tree)}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

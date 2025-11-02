@@ -31,7 +31,6 @@ export const ProfilePage: React.FC = () => {
   const { triggerLightHaptic, triggerMediumHaptic, triggerNotificationHaptic } = useHapticFeedback();
   const [fullUserData, setFullUserData] = useState(user);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
-  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   // Dane użytkownika z API (dostępne)
@@ -92,14 +91,60 @@ export const ProfilePage: React.FC = () => {
       if (!user) return;
       
       // Pokaż animację ładowania tylko po 500ms
-      let loadingTimeout: NodeJS.Timeout | undefined;
-      
       try {
-        setIsLoadingProfile(true);
+        // Try to load from localStorage first
+        const cachedUserData = localStorage.getItem('user_data');
+        if (cachedUserData) {
+          try {
+            const cachedData = JSON.parse(cachedUserData);
+            const cacheTime = localStorage.getItem('user_data_time');
+            const cacheAge = cacheTime ? Date.now() - parseInt(cacheTime) : Infinity;
+            
+            // Use cached data if less than 5 minutes old
+            if (cacheAge < 5 * 60 * 1000 && cachedData) {
+              console.log('ProfilePage: Using cached user data');
+              setFullUserData(cachedData);
+              
+              setAdditionalData({
+                phone: cachedData.phone || 'Nie podano',
+                address: cachedData.address || 'Nie podano',
+                city: cachedData.city || 'Nie podano',
+                postalCode: cachedData.postalCode || 'Nie podano'
+              });
+              
+              setOrganizationData({
+                name: cachedData.organization?.name || 'Nie podano',
+                address: cachedData.organization?.address || 'Nie podano',
+                city: cachedData.organization?.city || 'Nie podano',
+                postalCode: cachedData.organization?.postalCode || 'Nie podano',
+                phone: cachedData.organization?.phone || 'Nie podano',
+                email: cachedData.organization?.email || 'Nie podano'
+              });
+              
+              setEditData({
+                phone: cachedData.phone || '',
+                address: cachedData.address || '',
+                city: cachedData.city || '',
+                postalCode: cachedData.postalCode || ''
+              });
+              
+              setEditOrganizationData({
+                name: cachedData.organization?.name || '',
+                address: cachedData.organization?.address || '',
+                city: cachedData.organization?.city || '',
+                postalCode: cachedData.organization?.postalCode || '',
+                phone: cachedData.organization?.phone || '',
+                email: cachedData.organization?.email || ''
+              });
+              
+              setIsLoadingProfile(false);
+            }
+          } catch (e) {
+            console.warn('Failed to parse cached user data:', e);
+          }
+        }
         
-        loadingTimeout = setTimeout(() => {
-          setShowLoadingAnimation(true);
-        }, 500);
+        setIsLoadingProfile(true);
         
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -162,6 +207,7 @@ export const ProfilePage: React.FC = () => {
 
         // Zapisz zaktualizowane dane do localStorage
         localStorage.setItem('user_data', JSON.stringify(userData));
+        localStorage.setItem('user_data_time', Date.now().toString());
         
       } catch (error) {
         console.error('Failed to fetch user data from /api/Users/current:', error);
@@ -182,10 +228,6 @@ export const ProfilePage: React.FC = () => {
           postalCode: user.postalCode || ''
         });
       } finally {
-        if (loadingTimeout) {
-          clearTimeout(loadingTimeout);
-        }
-        setShowLoadingAnimation(false);
         setIsLoadingProfile(false);
       }
     };
@@ -492,23 +534,6 @@ export const ProfilePage: React.FC = () => {
           >
             Zaloguj się
           </GlassButton>
-        </div>
-      </div>
-    );
-  }
-
-  // Jeśli ładujemy dane profilu i minęło wystarczająco czasu
-  if (isLoadingProfile && showLoadingAnimation) {
-    return (
-      <div className="h-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Ładowanie profilu...
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            Pobieranie danych użytkownika
-          </p>
         </div>
       </div>
     );

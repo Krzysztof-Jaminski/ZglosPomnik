@@ -345,7 +345,12 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     setShowSpeciesPanel(true);
   };
 
-  const handleSpeciesSelect = (species: Species) => {
+  const handleSpeciesSelect = (species: Species | null) => {
+    if (species === null) {
+      setSelectedSpecies(null);
+      setSpeciesQuery('');
+      return;
+    }
     setSelectedSpecies(species);
     setSpeciesQuery(species.polishName); // Only Polish name
     setShowSpeciesPanel(false);

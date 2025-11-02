@@ -28,13 +28,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const iconSizeClasses = {
     sm: 'w-3 h-3',
-    md: 'w-3 h-3',
+    md: 'w-4 h-4',
     lg: 'w-4 h-4'
   };
 
   const paddingClasses = {
     sm: 'pl-7 pr-3',
-    md: 'pl-8 pr-4',
+    md: 'pl-8 pr-10 sm:pr-12',
     lg: 'pl-9 pr-4'
   };
 
@@ -55,7 +55,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       {showClearButton && value && (
         <button
           onClick={() => onChange('')}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="absolute right-7 sm:right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
         >
           <X className={`${iconSizeClasses[size]}`} />
         </button>
