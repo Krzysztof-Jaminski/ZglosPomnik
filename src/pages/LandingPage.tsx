@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
@@ -7,6 +7,84 @@ import { useSystemTheme } from '../hooks/useSystemTheme';
 import { MobileLandingPage } from './MobileLandingPage';
 import { AuthModal } from '../components/Auth/AuthModal';
 import { EmailConfirmationModal } from '../components/Auth/EmailConfirmationModal';
+
+interface ScreenshotInfo {
+  filename: string;
+  path: string;
+  date: Date;
+  description: string;
+}
+
+const SCREENSHOTS = [
+  'Screenshot_2025-11-03-16-46-56-384_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-47-18-329_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-47-43-143_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-47-55-744_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-48-57-130_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-49-23-988_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-49-36-999_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-49-46-185_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-50-23-654_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-50-52-632_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-51-05-229_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-51-32-935_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-51-57-772_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-52-10-663_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-52-38-614_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-53-03-740_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-53-15-961_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-54-22-596_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-54-26-157_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-55-05-084_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-55-15-639_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-55-25-277_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-56-43-929_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-57-05-433_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-57-37-372_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-57-43-687_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-57-54-651_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-58-29-802_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-16-58-34-323_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-02-18-654_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-02-49-435_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-03-21-631_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-03-26-076_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-03-30-833_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-03-55-488_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-04-05-028_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-04-08-702_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-04-34-800_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-04-38-737_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-17-04-49-405_com.zglospomnik.app.jpg',
+];
+
+const parseScreenshotFilename = (filename: string): ScreenshotInfo => {
+  const match = filename.match(/Screenshot_(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d+)_com\.zglospomnik\.app\.jpg/);
+  if (match) {
+    const [, year, month, day, hour, minute, second] = match;
+    const date = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      parseInt(hour),
+      parseInt(minute),
+      parseInt(second)
+    );
+    const description = `${day}.${month}.${year} ${hour}:${minute}`;
+    return {
+      filename,
+      path: `/LandPagePhotos/LandPagePhotos/Screenshoots/${filename}`,
+      date,
+      description,
+    };
+  }
+  return {
+    filename,
+    path: `/LandPagePhotos/LandPagePhotos/Screenshoots/${filename}`,
+    date: new Date(0),
+    description: filename,
+  };
+};
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -27,6 +105,11 @@ export const LandingPage = () => {
   
   const { login, register, resendEmailVerification, isLoading } = useAuth();
   useSystemTheme('dark');
+
+  const sortedScreenshots = useMemo(() => {
+    return SCREENSHOTS.map(parseScreenshotFilename)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, []);
 
   // Check if mobile
   useEffect(() => {
@@ -271,221 +354,35 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Mapa Interaktywna Section */}
+      {/* Screenshots Gallery Section */}
       <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left - Image */}
-            <div className="flex justify-center order-2 lg:order-1">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-3xl blur-sm opacity-75"></div>
-                <img 
-                  src="/LandPagePhotos/image2.png" 
-                  alt="Mapa Interaktywna Screenshot" 
-                  className="relative max-w-sm max-h-md w-full h-auto rounded-3xl"
-                />
-              </div>
-            </div>
-            
-            {/* Right - Text Content */}
-            <div className="space-y-6 order-1 lg:order-2 text-center">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Mapa Interaktywna
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                Wyświetlanie wszystkich zatwierdzonych drzew na mapie Google Maps z możliwością filtrowania według gatunku, regionu i statusu. Geolokalizacja użytkownika i szczegółowe informacje o każdym drzewie.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Zgłaszanie Drzew Section */}
-      <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left - Text Content */}
-            <div className="space-y-6 order-2 lg:order-1 text-center">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Zgłaszanie Drzew
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                Formularz zgłoszeniowy z walidacją umożliwiający dodanie do 5 zdjęć i automatyczne pobieranie lokalizacji GPS. Szczegółowe dane obejmują gatunek, wymiary, opis oraz legendy.
-              </p>
-            </div>
-            
-            {/* Right - Image */}
-            <div className="flex justify-center order-1 lg:order-2">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur-sm opacity-75"></div>
-                <img 
-                  src="/LandPagePhotos/image2.png" 
-                  alt="Zgłaszanie Drzew Screenshot" 
-                  className="relative max-w-sm max-h-md w-full h-auto rounded-3xl"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Encyklopedia Gatunków Section */}
-      <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left - Text Content */}
-            <div className="space-y-6 order-2 lg:order-1 text-center">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Encyklopedia Gatunków
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                Baza wiedzy o polskich gatunkach drzew z nazwami polskimi i łacińskimi oraz przewodnikiem identyfikacyjnym. Opisy zmian sezonowych i charakterystyczne cechy każdego gatunku.
-              </p>
-            </div>
-            
-            {/* Right - Image */}
-            <div className="flex justify-center order-1 lg:order-2">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-3xl blur-sm opacity-75"></div>
-                <img 
-                  src="/LandPagePhotos/image2.png" 
-                  alt="Encyklopedia Gatunków Screenshot" 
-                  className="relative max-w-sm max-h-md w-full h-auto rounded-3xl"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Aktualności Section */}
-      <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left - Image */}
-            <div className="flex justify-center order-2 lg:order-1">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-3xl blur-sm opacity-75"></div>
-                <img 
-                  src="/LandPagePhotos/image2.png" 
-                  alt="Aktualności Screenshot" 
-                  className="relative max-w-sm max-h-md w-full h-auto rounded-3xl"
-                />
-              </div>
-            </div>
-            
-            {/* Right - Text Content */}
-            <div className="space-y-6 order-1 lg:order-2 text-center">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Aktualności
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                Chronologiczny strumień zatwierdzonych zgłoszeń z systemem głosowania i możliwością przeglądania opisów. Filtry i wyszukiwarka oraz społecznościowe dzielenie się odkryciami natury.
-              </p>
-            </div>
-          </div>
-              </div>
-      </section>
-
-      {/* Generator Zgłoszeń Section */}
-      <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left - Text Content */}
-            <div className="space-y-6 order-2 lg:order-1 text-center">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Generator Zgłoszeń
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                Automatyczne dostosowywanie wniosku do formularza gmin z wsparciem AI i automatycznym generowaniem załączników. System wypełnia pola użytkownika i dostarcza instrukcje wysyłki przez epulap.
-              </p>
-            </div>
-            
-            {/* Right - Image */}
-            <div className="flex justify-center order-1 lg:order-2">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-3xl blur-sm opacity-75"></div>
-                <img 
-                  src="/LandPagePhotos/image2.png" 
-                  alt="Generator Zgłoszeń Screenshot" 
-                  className="relative max-w-sm max-h-md w-full h-auto rounded-3xl"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section - Zwiększona */}
-      <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left - Image */}
-            <div className="flex justify-center order-2 lg:order-1">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-blue-500 rounded-3xl blur-sm opacity-75"></div>
-                <img 
-                  src="/LandPagePhotos/image2.png" 
-                  alt="ZgłośPomnik Application Screenshot" 
-                  className="relative max-w-sm max-h-md w-full h-auto rounded-3xl"
-                />
-              </div>
-            </div>
-            
-            {/* Right - Text Content */}
-            <div className="space-y-6 order-1 lg:order-2 text-center">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Zgłaszanie. Uproszczone.
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                ZgłośPomnik prowadzi Cię krok po kroku przez proces zgłaszania drzew i priorytetyzuje to, co najważniejsze dla ochrony przyrody. Intuicyjny interfejs dla każdego użytkownika.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Monitoring Section */}
-      <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center">
-            {/* Text Content Only */}
-            <div className="space-y-6">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Monitoring dostosowany do Ciebie
+        <div className="max-w-7xl mx-auto">
+          <div className="space-y-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
+                Zobacz aplikację w akcji
               </h2>
               <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                ZgłośPomnik identyfikuje zagrożenia w Twojej okolicy i pomaga Ci je szybko rozwiązać!
+                Przejrzyj screenshoty pokazujące funkcjonalności ZgłośPomnik od najstarszych do najnowszych wersji
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Progress Section */}
-      <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left - Report Image */}
-            <div className="flex justify-center order-2 lg:order-1">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-3xl blur-sm opacity-75"></div>
-                <img 
-                  src="/LandPagePhotos/image2.png" 
-                  alt="ZgłośPomnik Report Screenshot" 
-                  className="relative max-w-sm max-h-md w-full h-auto rounded-3xl"
-                />
-            </div>
-          </div>
-          
-            {/* Right - Text Content */}
-            <div className="space-y-6 order-1 lg:order-2 text-center">
-              <h2 className="text-2xl lg:text-4xl font-bold text-white" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Śledź swój postęp
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                Zobacz statystyki zgłoszeń dla każdego gatunku drzew, aby zidentyfikować luki w ochronie i śledzić postęp w czasie rzeczywistym.
-              </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {sortedScreenshots.map((screenshot, index) => (
+                <div key={screenshot.filename} className="space-y-3">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-3xl blur-md opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                    <img 
+                      src={screenshot.path} 
+                      alt={`Screenshot ${index + 1}`}
+                      className="relative w-full h-auto rounded-3xl shadow-xl object-cover transition-transform group-hover:scale-105"
+                    />
+                  </div>
+                  <p className="text-sm text-gray-400 text-center">
+                    {screenshot.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
