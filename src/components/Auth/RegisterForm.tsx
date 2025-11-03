@@ -645,7 +645,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 )}
               </button>
               <div className="flex-1">
-                <span className="text-[11px] text-gray-300 leading-tight">
+                <span className="text-[11px] text-gray-400 leading-tight">
                   Akceptuję{' '}
                   <button
                     type="button"
@@ -659,7 +659,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                         setLastTermsClickTime(currentTime);
                       }
                     }}
-                    className="text-white hover:text-gray-200 underline"
+                    className="text-gray-300 hover:text-gray-200 underline"
                   >
                     warunki korzystania
                   </button>
