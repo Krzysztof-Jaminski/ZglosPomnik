@@ -8,7 +8,11 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'DARK',
       backgroundColor: '#000000'
-    }
+    },
+    Filesystem: {
+      iosIsDocumentPickerEnabled: false
+    },
+    Share: {}
   },
   android: {
     allowMixedContent: true,

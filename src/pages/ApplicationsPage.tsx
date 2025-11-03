@@ -12,6 +12,7 @@ import { CommuneSelector } from '../components/Applications/CommuneSelector';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import JSZip from 'jszip';
+import { Capacitor } from '@capacitor/core';
 
 
 
@@ -635,17 +636,102 @@ export const ApplicationsPage: React.FC = () => {
       console.log('Generating ZIP file...');
       const zipBlob = await zip.generateAsync({ type: 'blob' });
 
-      // Download ZIP
-      const url = window.URL.createObjectURL(zipBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `wniosek_${new Date().toISOString().split('T')[0]}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Check if running on mobile (Capacitor)
+      if (Capacitor.isNativePlatform()) {
+        // Use Filesystem API for mobile
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        
+        try {
+          // Convert blob to base64
+          const base64Data = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              // Remove data URL prefix (data:application/zip;base64,)
+              const base64String = result.includes(',') ? result.split(',')[1] : result;
+              resolve(base64String);
+            };
+            reader.onerror = () => reject(new Error('Failed to read blob'));
+            reader.readAsDataURL(zipBlob);
+          });
 
-      console.log('ZIP file downloaded successfully');
+          const fileName = `wniosek_${new Date().toISOString().split('T')[0]}.zip`;
+          
+          // Try to save to Downloads folder first (accessible to user)
+          try {
+            // Try saving to Downloads folder (different names for different Android versions)
+            let saved = false;
+            const downloadPaths = [`Download/${fileName}`, `Downloads/${fileName}`, fileName];
+            
+            for (const downloadsPath of downloadPaths) {
+              try {
+                const result = await Filesystem.writeFile({
+                  path: downloadsPath,
+                  data: base64Data,
+                  directory: Directory.ExternalStorage,
+                  recursive: true
+                });
+                console.log('ZIP file saved to Downloads:', result.uri);
+                alert(`Plik został pobrany! Znajdziesz go w folderze Pobrane (Downloads): ${fileName}`);
+                saved = true;
+                break;
+              } catch (pathError: any) {
+                console.warn(`Failed to save to ${downloadsPath}, trying next path...`);
+                continue;
+              }
+            }
+            
+            if (!saved) {
+              throw new Error('Nie udało się zapisać do folderu Downloads');
+            }
+          } catch (downloadsError: any) {
+            console.warn('Failed to save to Downloads, trying Documents:', downloadsError);
+            
+            // Fallback to Documents folder (still accessible and user-friendly)
+            try {
+              const result = await Filesystem.writeFile({
+                path: fileName,
+                data: base64Data,
+                directory: Directory.Documents,
+                recursive: true
+              });
+              console.log('ZIP file saved to Documents:', result.uri);
+              alert(`Plik został pobrany! Znajdziesz go w folderze Dokumenty: ${fileName}`);
+            } catch (documentsError: any) {
+              console.error('Failed to save to Documents:', documentsError);
+              
+              // Last fallback to Data directory (app-specific, but accessible via file manager)
+              try {
+                const result = await Filesystem.writeFile({
+                  path: fileName,
+                  data: base64Data,
+                  directory: Directory.Data,
+                  recursive: true
+                });
+                console.log('ZIP file saved to Data:', result.uri);
+                alert(`Plik został zapisany: ${fileName}\nLokalizacja: ${result.uri}`);
+              } catch (dataError: any) {
+                console.error('Failed to save file:', dataError);
+                throw new Error('Nie udało się zapisać pliku w żadnej dostępnej lokalizacji');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error saving ZIP file:', error);
+          alert(`Błąd podczas pobierania pliku: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+        }
+      } else {
+        // Use standard browser download for web
+        const url = window.URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `wniosek_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        console.log('ZIP file downloaded successfully');
+      }
     } catch (error) {
       console.error('Error downloading ZIP:', error);
       alert(`Błąd podczas pobierania plików: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);

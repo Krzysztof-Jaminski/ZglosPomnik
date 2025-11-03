@@ -1424,49 +1424,49 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
                   Organizacja:
                 </div>
                 {/* Pierwsze 8 pól w układzie 2 kolumny (4 pola w każdej) */}
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">Nazwa:</span> {organizationData.name}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mb-3">
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Nazwa:</span> <span className="ml-1">{organizationData.name}</span>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">Adres:</span> {organizationData.address}
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Adres:</span> <span className="ml-1">{organizationData.address}</span>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">Miasto:</span> {organizationData.city}
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Miasto:</span> <span className="ml-1">{organizationData.city}</span>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">Kod pocztowy:</span> {organizationData.postalCode}
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Kod pocztowy:</span> <span className="ml-1">{organizationData.postalCode}</span>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">Telefon:</span> {organizationData.phone}
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Telefon:</span> <span className="ml-1">{organizationData.phone}</span>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">Email:</span> {organizationData.email}
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span> <span className="ml-1">{organizationData.email}</span>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">KRS:</span> {organizationData.krs || 'Nie podano'}
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">KRS:</span> <span className="ml-1">{organizationData.krs || 'Nie podano'}</span>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">REGON:</span> {organizationData.regon || 'Nie podano'}
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">REGON:</span> <span className="ml-1">{organizationData.regon || 'Nie podano'}</span>
                   </div>
                 </div>
                 {/* Korespondencja - grupowanie pól */}
-                <div className="mt-2">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="text-xs font-medium text-gray-900 dark:text-white mb-2">
                     Korespondencja:
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-sm text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">Skrytka pocztowa:</span> {organizationData.correspondence?.poBox || 'Nie podano'}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Skrytka pocztowa:</span> <span className="ml-1">{organizationData.correspondence?.poBox || 'Nie podano'}</span>
                     </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">Adres:</span> {organizationData.correspondence?.address || 'Nie podano'}
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Adres:</span> <span className="ml-1">{organizationData.correspondence?.address || 'Nie podano'}</span>
                     </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">Kod pocztowy:</span> {organizationData.correspondence?.postalCode || 'Nie podano'}
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Kod pocztowy:</span> <span className="ml-1">{organizationData.correspondence?.postalCode || 'Nie podano'}</span>
                     </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">Miasto:</span> {organizationData.correspondence?.city || 'Nie podano'}
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Miasto:</span> <span className="ml-1">{organizationData.correspondence?.city || 'Nie podano'}</span>
                     </div>
                   </div>
                 </div>
