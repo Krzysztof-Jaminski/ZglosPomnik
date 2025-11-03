@@ -17,46 +17,58 @@ interface ScreenshotInfo {
 }
 
 const SCREENSHOTS = [
-  'Screenshot_2025-11-03-16-46-56-384_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-47-18-329_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-47-43-143_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-47-55-744_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-48-57-130_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-49-23-988_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-49-36-999_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-49-46-185_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-50-23-654_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-50-52-632_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-51-05-229_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-51-32-935_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-51-57-772_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-52-10-663_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-52-38-614_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-53-03-740_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-53-15-961_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-54-22-596_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-54-26-157_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-55-05-084_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-55-15-639_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-55-25-277_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-56-43-929_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-57-05-433_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-57-37-372_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-57-43-687_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-57-54-651_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-58-29-802_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-16-58-34-323_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-02-18-654_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-02-49-435_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-03-21-631_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-03-26-076_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-03-30-833_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-03-55-488_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-04-05-028_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-04-08-702_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-04-34-800_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-04-38-737_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-17-04-49-405_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-21-59-44-420_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-00-08-672_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-00-53-147_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-01-31-450_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-55-28-478_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-55-54-683_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-56-11-207_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-56-21-356_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-56-46-969_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-57-07-364_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-57-14-244_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-22-57-29-565_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-05-59-436_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-06-20-996_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-06-50-670_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-07-23-762_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-08-02-793_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-08-21-147_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-12-53-327_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-12-57-829_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-14-58-007_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-15-08-413_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-15-17-066_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-15-31-050_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-16-48-486_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-16-56-575_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-17-02-871_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-17-09-593_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-17-27-873_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-18-28-465_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-18-51-771_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-19-09-798_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-21-29-832_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-21-43-477_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-21-55-558_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-21-59-170_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-22-28-401_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-22-36-112_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-22-51-501_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-22-59-060_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-23-04-968_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-23-12-689_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-23-31-852_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-23-48-037_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-24-10-934_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-24-21-887_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-24-35-165_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-25-03-662_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-25-24-336_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-25-44-675_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-25-53-314_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-03-23-26-10-157_com.zglospomnik.app.jpg',
 ];
 
 const parseScreenshotFilename = (filename: string): ScreenshotInfo => {
@@ -310,7 +322,7 @@ export const LandingPage = () => {
                 ZgłośPomnik to platforma, która umożliwia Ci wygodne zgłaszanie drzew w Twojej okolicy oraz generowanie profesjonalnych wniosków o ochronę.
               </p>
               <p className="text-lg text-gray-300 leading-relaxed max-w-5xl">
-                Aplikacja jest przeznaczona dla nowych ekologów, profesjonalistów, hobbystów jak i fundacji ekologicznych!
+                Aby korzystać z platformy, otwórz tę stronę na urządzeniu mobilnym lub pobierz dedykowaną aplikację dostępną na Android i iOS.
               </p>
             </div>
 
@@ -320,36 +332,28 @@ export const LandingPage = () => {
                 ZgłośPomnik to platforma, która umożliwia Ci wygodne zgłaszanie drzew w Twojej okolicy oraz generowanie profesjonalnych wniosków o ochronę.
               </p>
               <p className="text-base text-gray-300 leading-relaxed">
-                Aplikacja jest przeznaczona dla nowych ekologów, profesjonalistów, hobbystów jak i fundacji ekologicznych!
+                Aby korzystać z platformy, otwórz tę stronę na urządzeniu mobilnym lub pobierz dedykowaną aplikację dostępną na Android i iOS.
               </p>
             </div>
 
-            {/* Desktop: Auth Buttons */}
+            {/* Desktop: Mobile app buttons */}
             <div className="hidden lg:flex flex-row gap-3 mt-8">
             <DarkGlassButton
-              onClick={() => {
-                setError(null); // Wyczyść błąd przy otwieraniu
-                setAuthMode('login');
-                setShowAuthModal(true);
-              }}
+                onClick={() => {}}
               variant="primary"
               size="md"
               className="px-4 py-2 text-sm font-semibold"
             >
-              Zaloguj się
+                Pobierz na Android
             </DarkGlassButton>
               
               <DarkGlassButton
-                onClick={() => {
-                  setError(null); // Wyczyść błąd przy otwieraniu
-                  setAuthMode('register');
-          setShowAuthModal(true);
-                }}
+                onClick={() => {}}
                 variant="secondary"
                 size="md"
                 className="px-4 py-2 text-sm font-semibold"
               >
-                Zarejestruj się
+                Pobierz na iOS
               </DarkGlassButton>
             </div>
           </div>
