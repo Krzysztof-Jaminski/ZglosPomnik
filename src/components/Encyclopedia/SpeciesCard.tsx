@@ -42,7 +42,11 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, onClick }) =>
         </p>
         
         <div className="mt-auto flex justify-between items-center">
-          <span className="px-2 py-1 rounded-full font-medium text-[11px] bg-green-900/30 text-green-300 border border-green-500/20">
+          <span className={`px-2 py-1 rounded-full font-medium text-[11px] border ${
+            species.traits.nativeToPoland 
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/20' 
+              : 'bg-gray-100 dark:bg-gray-700/30 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-500/20'
+          }`}>
             {species.traits.nativeToPoland ? 'Rodzimy' : 'Obcy'}
           </span>
           <span className="text-gray-400 text-xs">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, X, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, X, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { SearchInput } from '../components/UI/SearchInput';
 import { PhotoPicker } from '../components/UI/PhotoPicker';
 import { useAutoTextarea } from '../hooks/useAutoTextarea';
@@ -12,6 +12,7 @@ import { useSearchState, useSelectedState, useUIState } from '../hooks/useLocalS
 import { adminService, SpeciesFormData } from '../services/adminService';
 import { DeleteConfirmationModal } from '../components/UI/DeleteConfirmationModal';
 import { useAuth } from '../context/AuthContext';
+import { GlassButton } from '../components/UI/GlassButton';
 
 
 export const EncyclopediaPage: React.FC = () => {
@@ -21,6 +22,8 @@ export const EncyclopediaPage: React.FC = () => {
   const [species, setSpecies] = useState<Species[]>([]);
   const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingSpecies, setIsCreatingSpecies] = useState(false);
   const [editPhotos, setEditPhotos] = useState<File[]>([]);
   const [speciesFormData, setSpeciesFormData] = useState<SpeciesFormData>({
     polishName: '',
@@ -228,6 +231,18 @@ export const EncyclopediaPage: React.FC = () => {
     };
     return labels[type] || type;
   };
+  
+  // Helper function to get image type label (for form view)
+  const getImageTypeLabelForForm = (type: string) => {
+    const labels: { [key: string]: string } = {
+      'Bark': 'Kora',
+      'Tree': 'Drzewo',
+      'Leaf': 'Liście',
+      'Fruit': 'Owoce',
+      'Flower': 'Kwiaty'
+    };
+    return labels[type] || type;
+  };
 
   // Keyboard navigation for image viewer
   useEffect(() => {
@@ -252,6 +267,329 @@ export const EncyclopediaPage: React.FC = () => {
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [isImageViewerOpen, selectedSpecies]);
+
+  // If creating new species or editing existing one, show form view
+  if (isCreating || (selectedSpecies && isEditing)) {
+    const isNewSpecies = isCreating;
+    return (
+      <div className="h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+        <div className="w-full px-2 sm:px-4 lg:px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-lg overflow-hidden bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border border-gray-300/40 dark:border-gray-700/40 shadow-xl mt-2 sm:mt-4"
+          >
+            {/* Header */}
+            <div className="flex items-center gap-2 px-2 py-1 border-b border-gray-300/40 dark:border-gray-700/40">
+              <button
+                onClick={() => {
+                  if (isCreating) {
+                    setIsCreating(false);
+                    setSpeciesFormData({
+                      polishName: '',
+                      latinName: '',
+                      family: '',
+                      description: '',
+                      identificationGuide: [],
+                      seasonalChanges: { spring: '', summer: '', autumn: '', winter: '' },
+                      traits: { maxHeight: 0, lifespan: '', nativeToPoland: false },
+                      treeImage: undefined,
+                      leafImage: undefined,
+                      barkImage: undefined,
+                      fruitImage: undefined
+                    });
+                    setEditPhotos([]);
+                  } else {
+                    if (!selectedSpecies) return;
+                    setSpeciesFormData({
+                      polishName: selectedSpecies.polishName,
+                      latinName: selectedSpecies.latinName,
+                      family: selectedSpecies.family,
+                      description: selectedSpecies.description,
+                      identificationGuide: selectedSpecies.identificationGuide,
+                      seasonalChanges: selectedSpecies.seasonalChanges,
+                      traits: selectedSpecies.traits
+                    });
+                    setIsEditing(false);
+                  }
+                }}
+                className="flex items-center justify-center p-2 rounded-lg transition-colors focus:outline-none focus:ring-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/5"
+                title="Anuluj"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                {isNewSpecies ? 'Dodaj nowy gatunek' : selectedSpecies?.polishName}
+              </h1>
+              {!isNewSpecies && (
+                <div className="ml-auto flex items-center gap-1">
+                  <button
+                    onClick={async () => {
+                      if (editPhotos.length < 4) {
+                        alert('Wymagane są 4 zdjęcia.');
+                        return;
+                      }
+                      if (!selectedSpecies) return;
+                      const [f0, f1, f2, f3] = editPhotos;
+                      const formData = {
+                        ...speciesFormData,
+                        treeImage: f0,
+                        leafImage: f1,
+                        barkImage: f2,
+                        fruitImage: f3
+                      };
+                      setSpeciesFormData(formData);
+                      const updated = await adminService.updateSpecies(selectedSpecies.id, formData);
+                      setSpecies(prev => prev.map(s => s.id === updated.id ? updated : s));
+                      setFilteredSpecies(prev => prev.map(s => s.id === updated.id ? updated : s));
+                      setSelectedSpecies(updated);
+                      setIsEditing(false);
+                      setEditPhotos([]);
+                    }}
+                    className="p-2 text-green-400 hover:text-green-600 dark:text-green-500 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-green-50/10 flex items-center justify-center min-h-[28px] min-w-[28px]"
+                    title="Zapisz zmiany"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M20 7v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7"/><path d="M16 3H8v5h8V3z"/></svg>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!selectedSpecies) return;
+                      setSpeciesFormData({
+                        polishName: selectedSpecies.polishName,
+                        latinName: selectedSpecies.latinName,
+                        family: selectedSpecies.family,
+                        description: selectedSpecies.description,
+                        identificationGuide: selectedSpecies.identificationGuide,
+                        seasonalChanges: selectedSpecies.seasonalChanges,
+                        traits: selectedSpecies.traits
+                      });
+                      setIsEditing(false);
+                      setEditPhotos([]);
+                    }}
+                    className="p-2 text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-50/10 flex items-center justify-center min-h-[28px] min-w-[28px]"
+                    title="Anuluj"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 sm:p-6 pt-2 sm:pt-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
+                {/* Images section */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-500"></div>
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Zdjęcia</h3>
+                  </div>
+                  {/* Show existing images when editing */}
+                  {!isNewSpecies && selectedSpecies && (selectedSpecies.images || []).length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Istniejące zdjęcia:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(selectedSpecies.images || []).map((image, index) => (
+                          <div key={index} className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600">
+                            <img
+                              src={image.imageUrl}
+                              alt={image.altText || selectedSpecies.polishName}
+                              className="w-full h-full object-cover"
+                              crossOrigin={image.imageUrl?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                            />
+                            <div className="absolute top-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">
+                              {getImageTypeLabelForForm(image.type || '')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <PhotoPicker
+                    photos={editPhotos}
+                    onChange={setEditPhotos}
+                    onSelectFromGallery={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.multiple = true;
+                      input.onchange = (e: any) => {
+                        const files = Array.from(e.target.files || []) as File[];
+                        setEditPhotos((prev: File[]) => {
+                          const combined = [...prev, ...files];
+                          return combined.slice(0, 4);
+                        });
+                      };
+                      input.click();
+                    }}
+                    maxPhotos={4}
+                  />
+                </div>
+
+                <div>
+                  {/* Header fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                    <div>
+                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nazwa polska</label>
+                      <input className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400" value={speciesFormData.polishName} onChange={e => setSpeciesFormData({ ...speciesFormData, polishName: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nazwa łacińska</label>
+                      <input className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400" value={speciesFormData.latinName} onChange={e => setSpeciesFormData({ ...speciesFormData, latinName: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Rodzina</label>
+                      <input className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400" value={speciesFormData.family} onChange={e => setSpeciesFormData({ ...speciesFormData, family: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Opis</h3>
+                  </div>
+                  <textarea ref={descRef} onInput={onDescInput} className="w-full min-h-[90px] rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 resize-none overflow-hidden"
+                    value={speciesFormData.description}
+                    onChange={e => setSpeciesFormData({ ...speciesFormData, description: e.target.value })}
+                  />
+
+                  <div className="flex items-center gap-2 mb-2 mt-4">
+                    <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-500"></div>
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Przewodnik identyfikacji</h3>
+                  </div>
+                  <textarea ref={guideRef} onInput={onGuideInput} className="w-full min-h-[110px] rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 resize-none overflow-hidden"
+                    placeholder="Każdy punkt w nowej linii"
+                    value={(speciesFormData.identificationGuide || []).join('\n')}
+                    onChange={e => setSpeciesFormData({ ...speciesFormData, identificationGuide: e.target.value.split('\n').filter(Boolean) })}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Charakterystyka</h3>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Maksymalna wysokość (m):</span>
+                      <input type="number" className="w-28 rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100 text-right"
+                        value={speciesFormData.traits.maxHeight || 0}
+                        onChange={e => setSpeciesFormData({ ...speciesFormData, traits: { ...speciesFormData.traits, maxHeight: Number(e.target.value) } })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Żywotność:</span>
+                      <input className="w-48 rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100 text-right"
+                        value={speciesFormData.traits.lifespan || ''}
+                        onChange={e => setSpeciesFormData({ ...speciesFormData, traits: { ...speciesFormData.traits, lifespan: e.target.value } })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Rodzimy dla Polski:</span>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!speciesFormData.traits.nativeToPoland}
+                          onChange={e => setSpeciesFormData({ ...speciesFormData, traits: { ...speciesFormData.traits, nativeToPoland: e.target.checked } })}
+                          className="sr-only"
+                        />
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                          speciesFormData.traits.nativeToPoland
+                            ? 'border-green-500 bg-green-500'
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}>
+                          {speciesFormData.traits.nativeToPoland && (
+                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 sm:mt-8">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Zmiany sezonowe</h3>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-xs font-medium text-green-600 dark:text-green-400">Wiosna:</span>
+                        <textarea ref={springRef} onInput={onSpringInput} className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.spring} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, spring: e.target.value } })} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-green-600 dark:text-green-400">Lato:</span>
+                        <textarea ref={summerRef} onInput={onSummerInput} className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.summer} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, summer: e.target.value } })} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-orange-600 dark:text-orange-400">Jesień:</span>
+                        <textarea ref={autumnRef} onInput={onAutumnInput} className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.autumn} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, autumn: e.target.value } })} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Zima:</span>
+                        <textarea ref={winterRef} onInput={onWinterInput} className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.winter} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, winter: e.target.value } })} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add Species Button - Only for creating new species */}
+              {isNewSpecies && (
+                <div className="mt-4">
+                  <GlassButton
+                    onClick={async () => {
+                      if (editPhotos.length < 4) {
+                        alert('Wymagane są 4 zdjęcia.');
+                        return;
+                      }
+                      if (!speciesFormData.polishName || !speciesFormData.latinName || !speciesFormData.family || !speciesFormData.description) {
+                        alert('Wszystkie pola są wymagane.');
+                        return;
+                      }
+                      setIsCreatingSpecies(true);
+                      try {
+                        const [f0, f1, f2, f3] = editPhotos;
+                        const formData = {
+                          ...speciesFormData,
+                          treeImage: f0,
+                          leafImage: f1,
+                          barkImage: f2,
+                          fruitImage: f3
+                        };
+                        const newSpecies = await adminService.createSpecies(formData);
+                        setSpecies(prev => [...prev, newSpecies]);
+                        setFilteredSpecies(prev => [...prev, newSpecies]);
+                        setSelectedSpecies(newSpecies);
+                        setIsCreating(false);
+                        setIsCreatingSpecies(false);
+                        setEditPhotos([]);
+                      } catch (error) {
+                        console.error('Error creating species:', error);
+                        alert('Wystąpił błąd podczas tworzenia gatunku.');
+                        setIsCreatingSpecies(false);
+                      }
+                    }}
+                    variant="primary"
+                    size="sm"
+                    className="w-full"
+                    icon={isCreatingSpecies ? Loader2 : Plus}
+                    disabled={
+                      isCreatingSpecies ||
+                      editPhotos.length < 4 ||
+                      !speciesFormData.polishName ||
+                      !speciesFormData.latinName ||
+                      !speciesFormData.family ||
+                      !speciesFormData.description
+                    }
+                  >
+                    {isCreatingSpecies ? 'Tworzenie...' : 'Dodaj gatunek'}
+                  </GlassButton>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   // If a specific species is selected, show detailed view
   if (selectedSpecies) {
@@ -469,7 +807,7 @@ export const EncyclopediaPage: React.FC = () => {
                 <div>
                   {isEditing ? (
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-500"></div>
                       <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Zdjęcia</h3>
                     </div>
                   ) : null}
@@ -502,25 +840,25 @@ export const EncyclopediaPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
                       <div>
                         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nazwa polska</label>
-                        <input className="w-full rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 placeholder-gray-400" value={speciesFormData.polishName} onChange={e => setSpeciesFormData({ ...speciesFormData, polishName: e.target.value })} />
+                        <input className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400" value={speciesFormData.polishName} onChange={e => setSpeciesFormData({ ...speciesFormData, polishName: e.target.value })} />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nazwa łacińska</label>
-                        <input className="w-full rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 placeholder-gray-400" value={speciesFormData.latinName} onChange={e => setSpeciesFormData({ ...speciesFormData, latinName: e.target.value })} />
+                        <input className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400" value={speciesFormData.latinName} onChange={e => setSpeciesFormData({ ...speciesFormData, latinName: e.target.value })} />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Rodzina</label>
-                        <input className="w-full rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 placeholder-gray-400" value={speciesFormData.family} onChange={e => setSpeciesFormData({ ...speciesFormData, family: e.target.value })} />
+                        <input className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400" value={speciesFormData.family} onChange={e => setSpeciesFormData({ ...speciesFormData, family: e.target.value })} />
                       </div>
                     </div>
                   )}
 
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-500"></div>
                     <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Opis</h3>
                   </div>
                   {isEditing ? (
-                    <textarea ref={descRef} onInput={onDescInput} className="w-full min-h-[90px] rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 placeholder-gray-400 resize-none overflow-hidden"
+                    <textarea ref={descRef} onInput={onDescInput} className="w-full min-h-[90px] rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 resize-none overflow-hidden"
                       value={speciesFormData.description}
                       onChange={e => setSpeciesFormData({ ...speciesFormData, description: e.target.value })}
                     />
@@ -529,11 +867,11 @@ export const EncyclopediaPage: React.FC = () => {
                   )}
 
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-500"></div>
                     <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Przewodnik identyfikacji</h3>
                   </div>
                   {isEditing ? (
-                    <textarea ref={guideRef} onInput={onGuideInput} className="w-full min-h-[110px] rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 placeholder-gray-400 resize-none overflow-hidden"
+                    <textarea ref={guideRef} onInput={onGuideInput} className="w-full min-h-[110px] rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 resize-none overflow-hidden"
                       placeholder="Każdy punkt w nowej linii"
                       value={(speciesFormData.identificationGuide || []).join('\n')}
                       onChange={e => setSpeciesFormData({ ...speciesFormData, identificationGuide: e.target.value.split('\n').filter(Boolean) })}
@@ -552,14 +890,14 @@ export const EncyclopediaPage: React.FC = () => {
 
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-500"></div>
                     <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Charakterystyka</h3>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Maksymalna wysokość (m):</span>
                       {isEditing ? (
-                        <input type="number" className="w-28 rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1 text-xs sm:text-sm text-gray-100 text-right"
+                        <input type="number" className="w-28 rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100 text-right"
                           value={speciesFormData.traits.maxHeight || 0}
                           onChange={e => setSpeciesFormData({ ...speciesFormData, traits: { ...speciesFormData.traits, maxHeight: Number(e.target.value) } })}
                         />
@@ -570,7 +908,7 @@ export const EncyclopediaPage: React.FC = () => {
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Żywotność:</span>
                       {isEditing ? (
-                        <input className="w-48 rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1 text-xs sm:text-sm text-gray-100 text-right"
+                        <input className="w-48 rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1 text-xs sm:text-sm text-gray-900 dark:text-gray-100 text-right"
                           value={speciesFormData.traits.lifespan || ''}
                           onChange={e => setSpeciesFormData({ ...speciesFormData, traits: { ...speciesFormData.traits, lifespan: e.target.value } })}
                         />
@@ -581,7 +919,23 @@ export const EncyclopediaPage: React.FC = () => {
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Rodzimy dla Polski:</span>
                       {isEditing ? (
-                        <input type="checkbox" className="w-4 h-4" checked={!!speciesFormData.traits.nativeToPoland} onChange={e => setSpeciesFormData({ ...speciesFormData, traits: { ...speciesFormData.traits, nativeToPoland: e.target.checked } })} />
+                            <label className="flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={!!speciesFormData.traits.nativeToPoland}
+                                onChange={e => setSpeciesFormData({ ...speciesFormData, traits: { ...speciesFormData.traits, nativeToPoland: e.target.checked } })}
+                                className="sr-only"
+                              />
+                              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                                speciesFormData.traits.nativeToPoland
+                                  ? 'border-green-600 dark:border-green-500 bg-green-600 dark:bg-green-500'
+                                  : 'border-gray-300 dark:border-gray-600'
+                              }`}>
+                                {speciesFormData.traits.nativeToPoland && (
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                )}
+                              </div>
+                            </label>
                       ) : (
                         <span className="text-xs sm:text-sm text-gray-900 dark:text-white font-medium">{selectedSpecies.traits.nativeToPoland ? 'Tak' : 'Nie'}</span>
                       )}
@@ -590,14 +944,14 @@ export const EncyclopediaPage: React.FC = () => {
 
                   <div className="mt-6 sm:mt-8">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-500"></div>
                       <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Zmiany sezonowe</h3>
                     </div>
                     <div className="space-y-2">
                       <div>
                         <span className="text-xs font-medium text-green-600 dark:text-green-400">Wiosna:</span>
                         {isEditing ? (
-                          <textarea ref={springRef} onInput={onSpringInput} className="w-full rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.spring} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, spring: e.target.value } })} />
+                          <textarea ref={springRef} onInput={onSpringInput} className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.spring} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, spring: e.target.value } })} />
                         ) : (
                         <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.spring}</p>
                         )}
@@ -605,7 +959,7 @@ export const EncyclopediaPage: React.FC = () => {
                       <div>
                         <span className="text-xs font-medium text-green-600 dark:text-green-400">Lato:</span>
                         {isEditing ? (
-                          <textarea ref={summerRef} onInput={onSummerInput} className="w-full rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.summer} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, summer: e.target.value } })} />
+                          <textarea ref={summerRef} onInput={onSummerInput} className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.summer} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, summer: e.target.value } })} />
                         ) : (
                         <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.summer}</p>
                         )}
@@ -613,7 +967,7 @@ export const EncyclopediaPage: React.FC = () => {
                       <div>
                         <span className="text-xs font-medium text-orange-600 dark:text-orange-400">Jesień:</span>
                         {isEditing ? (
-                          <textarea ref={autumnRef} onInput={onAutumnInput} className="w-full rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.autumn} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, autumn: e.target.value } })} />
+                          <textarea ref={autumnRef} onInput={onAutumnInput} className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.autumn} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, autumn: e.target.value } })} />
                         ) : (
                         <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.autumn}</p>
                         )}
@@ -621,7 +975,7 @@ export const EncyclopediaPage: React.FC = () => {
                       <div>
                         <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Zima:</span>
                         {isEditing ? (
-                          <textarea ref={winterRef} onInput={onWinterInput} className="w-full rounded-md bg-gray-900/40 dark:bg-gray-800/60 border border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.winter} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, winter: e.target.value } })} />
+                          <textarea ref={winterRef} onInput={onWinterInput} className="w-full rounded-md bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-700 focus:border-green-500 focus:outline-none focus:ring-0 px-2 py-1.5 text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1 resize-none overflow-hidden" value={speciesFormData.seasonalChanges.winter} onChange={e => setSpeciesFormData({ ...speciesFormData, seasonalChanges: { ...speciesFormData.seasonalChanges, winter: e.target.value } })} />
                         ) : (
                         <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">{selectedSpecies.seasonalChanges.winter}</p>
                         )}
@@ -702,25 +1056,57 @@ export const EncyclopediaPage: React.FC = () => {
       {/* Loading overlay - below search bar */}
       {showLoadingSpinner ? (
         <div className="absolute inset-x-0 top-24 bottom-0 bg-gray-50 dark:bg-gray-900 flex items-center justify-center z-40">
-          <div className="text-center">
+            <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
             <p className="text-sm text-gray-600 dark:text-gray-400">Ładowanie</p>
+            </div>
           </div>
-        </div>
       ) : null}
 
       <div className="w-full px-2 sm:px-4 lg:px-6">
+        {/* Add Species Button - Only for moderators */}
+        {isModerator && (
+          <div className="mb-3 sm:mb-4">
+            <GlassButton
+              onClick={() => {
+                setIsCreating(true);
+                setSpeciesFormData({
+                  polishName: '',
+                  latinName: '',
+                  family: '',
+                  description: '',
+                  identificationGuide: [],
+                  seasonalChanges: { spring: '', summer: '', autumn: '', winter: '' },
+                  traits: { maxHeight: 0, lifespan: '', nativeToPoland: false },
+                  treeImage: undefined,
+                  leafImage: undefined,
+                  barkImage: undefined,
+                  fruitImage: undefined
+                });
+                setEditPhotos([]);
+              }}
+              variant="primary"
+              size="xs"
+              className="w-full text-xs py-1"
+              icon={isCreatingSpecies ? Loader2 : Plus}
+              disabled={isCreatingSpecies}
+            >
+              {isCreatingSpecies ? 'Ładowanie...' : 'Dodaj nowy gatunek'}
+            </GlassButton>
+          </div>
+        )}
+
         {/* Species grid */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-          {filteredSpecies.map((speciesItem) => (
-            <div key={speciesItem.id}>
-              <SpeciesCard 
-                species={speciesItem} 
-                onClick={() => setSelectedSpecies(speciesItem)}
-              />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+              {filteredSpecies.map((speciesItem) => (
+                <div key={speciesItem.id}>
+                  <SpeciesCard 
+                    species={speciesItem} 
+                    onClick={() => setSelectedSpecies(speciesItem)}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
       </div>
 
       <DeleteConfirmationModal

@@ -568,8 +568,7 @@ export const ProfilePage: React.FC = () => {
                    setShowChangePasswordModal(true);
                  }}
           onAdminPanel={isModerator ? () => {
-                   triggerLightHaptic();
-                   navigate('/admin');
+                   // Panel administratora - tymczasowo nieaktywny
                  } : undefined}
           onLogout={handleLogout}
         />
