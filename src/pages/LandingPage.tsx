@@ -7,6 +7,7 @@ import { useSystemTheme } from '../hooks/useSystemTheme';
 import { MobileLandingPage } from './MobileLandingPage';
 import { AuthModal } from '../components/Auth/AuthModal';
 import { EmailConfirmationModal } from '../components/Auth/EmailConfirmationModal';
+import { RodoModal } from '../components/Layout/RodoModal';
 
 interface ScreenshotInfo {
   filename: string;
@@ -95,6 +96,7 @@ export const LandingPage = () => {
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showRodoModal, setShowRodoModal] = useState(false);
   // Check if mobile immediately (SSR safe)
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -375,8 +377,8 @@ export const LandingPage = () => {
                     src={screenshot.path} 
                     alt={`Screenshot ${index + 1}`}
                     className="relative w-full h-auto rounded-3xl shadow-xl object-cover transition-transform group-hover:scale-105"
-                  />
-                </div>
+                />
+            </div>
               ))}
             </div>
           </div>
@@ -400,6 +402,77 @@ export const LandingPage = () => {
         email={userEmail}
         onClose={closeEmailConfirmation}
         onResendEmail={resendEmailVerification}
+      />
+
+      {/* Footer */}
+      <footer className="bg-gray-900 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Logo and Description */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="Logo" className="w-12 h-12" />
+                <h3 className="text-2xl font-bold" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                  <span className="text-blue-600 dark:text-blue-500">Zgłoś</span>
+                  <span className="text-green-600 dark:text-green-400">Pomnik</span>
+                </h3>
+              </div>
+              <p className="text-gray-400 text-sm mb-2">
+                Platforma do zgłaszania i ochrony pomników przyrody. Chronimy polskie drzewa razem.
+              </p>
+              <p className="text-gray-500 text-xs">
+                © {new Date().getFullYear()} ZgłośPomnik. Wszelkie prawa zastrzeżone.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Szybkie linki</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    O platformie
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Jak działa
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Kontakt
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Informacje prawne</h4>
+              <ul className="space-y-2">
+                <li>
+                  <button
+                    onClick={() => setShowRodoModal(true)}
+                    className="text-gray-400 hover:text-white transition-colors text-sm text-left"
+                  >
+                    Polityka prywatności / RODO
+                  </button>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Regulamin
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      <RodoModal
+        isOpen={showRodoModal}
+        onClose={() => setShowRodoModal(false)}
       />
 
     </div>

@@ -3,6 +3,7 @@ import { Mail, Lock, User, Eye, EyeOff, Phone, Check, X as XIcon } from 'lucide-
 import { motion } from 'framer-motion';
 import { DarkGlassButton } from '../UI/DarkGlassButton';
 import { RegisterRequest } from '../../services/authService';
+import { RodoModal } from '../Layout/RodoModal';
 
 interface RegisterFormProps {
   onSubmit: (userData: RegisterRequest) => void;
@@ -33,6 +34,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     confirmPassword: false
   });
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showRodoModal, setShowRodoModal] = useState(false);
+  const [lastTermsClickTime, setLastTermsClickTime] = useState<number>(0);
   const [validation, setValidation] = useState({
     firstName: { isValid: false, message: '' },
     lastName: { isValid: false, message: '' },
@@ -72,6 +76,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     
     if (!phoneValid) {
       alert('Proszę poprawić format numeru telefonu lub zostawić pole puste');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      alert('Musisz zaakceptować warunki korzystania z aplikacji');
       return;
     }
     
@@ -619,6 +628,47 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             </motion.div>
           )}
 
+          {/* Terms and Conditions Checkbox */}
+          <div className="pt-2 pb-2">
+            <label className="flex items-start space-x-3 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setAcceptedTerms(!acceptedTerms)}
+                className="mt-1.5 flex-shrink-0 w-4 h-4 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                style={{
+                  borderColor: acceptedTerms ? '#10b981' : '#6b7280',
+                  backgroundColor: acceptedTerms ? '#10b981' : 'transparent'
+                }}
+              >
+                {acceptedTerms && (
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                )}
+              </button>
+              <div className="flex-1">
+                <span className="text-[11px] text-gray-300 leading-tight">
+                  Akceptuję{' '}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const currentTime = Date.now();
+                      if (currentTime - lastTermsClickTime < 500) {
+                        setShowRodoModal(true);
+                        setLastTermsClickTime(0);
+                      } else {
+                        setLastTermsClickTime(currentTime);
+                      }
+                    }}
+                    className="text-white hover:text-gray-200 underline"
+                  >
+                    warunki korzystania
+                  </button>
+                  {' '}i rozumiem że to wersja testowa.
+                </span>
+              </div>
+            </label>
+          </div>
+
           <div className="pt-2">
             <DarkGlassButton
               type="submit"
@@ -627,7 +677,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               className="w-full"
               disabled={isLoading || !validation.firstName.isValid || !validation.lastName.isValid || !validation.email.isValid || 
                        !Object.values(validation.password).every(Boolean) || !validation.passwordsMatch ||
-                       !formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword}
+                       !formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword ||
+                       !acceptedTerms}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -660,6 +711,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </div>
         </form>
       </div>
+
+      <RodoModal
+        isOpen={showRodoModal}
+        onClose={() => setShowRodoModal(false)}
+      />
     </motion.div>
   );
 };
