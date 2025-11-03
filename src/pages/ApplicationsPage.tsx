@@ -69,6 +69,7 @@ export const ApplicationsPage: React.FC = () => {
   });
   const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
   const [isCreatingApplication, setIsCreatingApplication] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
@@ -113,6 +114,9 @@ export const ApplicationsPage: React.FC = () => {
   useEffect(() => {
     if (currentApplication) {
       localStorage.setItem('currentApplication', JSON.stringify(currentApplication));
+    } else {
+      // Clear from localStorage when set to null
+      localStorage.removeItem('currentApplication');
     }
   }, [currentApplication]);
 
@@ -511,8 +515,12 @@ export const ApplicationsPage: React.FC = () => {
 
   // Function to create a new application (reset everything)
   const handleCreateNewApplication = async () => {
-    // Clear PDF data
+    // Clear ALL application data from localStorage FIRST
+    localStorage.removeItem('currentApplication');
+    localStorage.removeItem('applicationFormData');
     localStorage.removeItem('generatedPdfData');
+    
+    // Clear PDF data state
     setIsPdfGenerated(false);
     setGeneratedPdfUrl('');
     setGeneratedImageUrls([]);
@@ -523,6 +531,9 @@ export const ApplicationsPage: React.FC = () => {
     setFormSchema(null);
     setUserManuallyClosedForm(false);
     setCurrentApplication(null);
+    
+    // Wait a bit to ensure state updates are processed
+    await new Promise(resolve => setTimeout(resolve, 50));
     
     // Create new application
     await createNewApplication();
@@ -620,11 +631,31 @@ export const ApplicationsPage: React.FC = () => {
   const canShowTemplateSelection = selectedTree !== null && selectedCommune !== null;
   const canShowForm = currentApplication !== null && formSchema !== null && !isPdfGenerated;
   const canShowApplicationView = isPdfGenerated && currentApplication !== null;
-    
-  // Don't show full screen loading - show content with spinner instead
 
+  // Delayed spinner - show only after 500ms
+  useEffect(() => {
+    const shouldShow = isLoading && trees.length === 0 && !selectedTree && !selectedCommune && !selectedTemplate && !currentApplication;
+    if (shouldShow) {
+      const timer = setTimeout(() => {
+        setShowLoadingSpinner(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoadingSpinner(false);
+    }
+  }, [isLoading, trees.length, selectedTree, selectedCommune, selectedTemplate, currentApplication]);
+    
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto relative">
+      {/* Loading overlay - below header */}
+      {showLoadingSpinner ? (
+        <div className="absolute inset-x-0 top-0 bottom-0 bg-gray-50 dark:bg-gray-900 flex items-center justify-center z-40">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Ładowanie</p>
+          </div>
+        </div>
+      ) : null}
       <div className="w-full px-3 sm:px-4">
         {/* Main Container */}
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg">
@@ -744,10 +775,7 @@ export const ApplicationsPage: React.FC = () => {
 
             {/* Tree Selection Section - Hide when form or application view is shown */}
             {!canShowForm && !canShowApplicationView && (
-              <div className="relative rounded-xl p-1 shadow-lg mb-2 sm:mb-3" style={{
-                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3))',
-                padding: '2px'
-              }}>
+              <div className="relative rounded-xl p-1 shadow-lg border border-gray-200/40 dark:border-gray-400/30 mb-2 sm:mb-3">
                 <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg">
                   <div className="p-2 sm:p-3">
                     <div className="space-y-2">
@@ -760,14 +788,7 @@ export const ApplicationsPage: React.FC = () => {
                         <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
                         {/* Bottom fade gradient */}
                         <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-50/50 to-transparent dark:from-gray-700/50 dark:to-transparent pointer-events-none z-10"></div>
-                        {isLoading && trees.length === 0 ? (
-                          <div className="flex items-center justify-center py-8">
-                            <div className="text-center">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Ładowanie drzew...</p>
-                            </div>
-                          </div>
-                        ) : (
+                        {trees.length > 0 && (
                           <TreeSelector
                             trees={trees}
                             selectedTree={selectedTree}
@@ -792,10 +813,7 @@ export const ApplicationsPage: React.FC = () => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="relative rounded-xl p-1 shadow-lg mb-2 sm:mb-3" style={{
-                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3))',
-                    padding: '2px'
-                  }}
+                  className="relative rounded-xl p-1 shadow-lg border border-gray-200/40 dark:border-gray-400/30 mb-2 sm:mb-3"
                 >
                   <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg">
                     <div className="p-2 sm:p-3">
@@ -829,10 +847,7 @@ export const ApplicationsPage: React.FC = () => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="relative rounded-xl p-1 shadow-lg mb-2 sm:mb-3" style={{
-                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3))',
-                    padding: '2px'
-                  }}
+                  className="relative rounded-xl p-1 shadow-lg border border-gray-200/40 dark:border-gray-400/30 mb-2 sm:mb-3"
                 >
                   <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg">
                     <div className="p-2 sm:p-3">

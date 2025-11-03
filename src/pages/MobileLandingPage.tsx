@@ -127,7 +127,7 @@ export const MobileLandingPage = () => {
         {/* Title */}
         <h1 className="text-4xl font-bold text-center mb-6" style={{ fontFamily: 'Exo 2, sans-serif' }}>
           <span className="text-blue-600 dark:text-blue-500">Zgłoś</span>
-          <span className="text-green-600 dark:text-green-400">Pomnik</span>
+          <span className="text-green-400">Pomnik</span>
         </h1>
 
         {/* Subtitle */}

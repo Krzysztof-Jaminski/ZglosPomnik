@@ -45,6 +45,7 @@ export const EncyclopediaPage: React.FC = () => {
   const [isImageViewerOpen, setIsImageViewerOpen] = useUIState('encyclopedia', 'isImageViewerOpen', false);
   
   const [isLoading, setIsLoading] = useState(true);
+  const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
   
   // Initialize selectedSpecies from temporary localStorage if available (for smooth navigation from report page)
   // This runs BEFORE loadSpecies to prepare the page
@@ -180,6 +181,18 @@ export const EncyclopediaPage: React.FC = () => {
     setFilteredSpecies(filtered);
   }, [species, searchQuery]);
 
+  // Delayed spinner - show only after 500ms
+  useEffect(() => {
+    if (isLoading && filteredSpecies.length === 0) {
+      const timer = setTimeout(() => {
+        setShowLoadingSpinner(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoadingSpinner(false);
+    }
+  }, [isLoading, filteredSpecies.length]);
+
   const openImageViewer = (index: number) => {
     setSelectedImageIndex(index);
     setIsImageViewerOpen(true);
@@ -239,8 +252,6 @@ export const EncyclopediaPage: React.FC = () => {
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [isImageViewerOpen, selectedSpecies]);
-
-  // Don't show full screen loading - show content with spinner instead
 
   // If a specific species is selected, show detailed view
   if (selectedSpecies) {
@@ -675,7 +686,7 @@ export const EncyclopediaPage: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto relative">
       {/* Search */}
       <div className="px-3 py-2">
         <SearchInput
@@ -688,37 +699,28 @@ export const EncyclopediaPage: React.FC = () => {
         />
       </div>
 
+      {/* Loading overlay - below search bar */}
+      {showLoadingSpinner ? (
+        <div className="absolute inset-x-0 top-24 bottom-0 bg-gray-50 dark:bg-gray-900 flex items-center justify-center z-40">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Ładowanie</p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="w-full px-2 sm:px-4 lg:px-6">
         {/* Species grid */}
-        {isLoading && filteredSpecies.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Ładowanie gatunków...</p>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+          {filteredSpecies.map((speciesItem) => (
+            <div key={speciesItem.id}>
+              <SpeciesCard 
+                species={speciesItem} 
+                onClick={() => setSelectedSpecies(speciesItem)}
+              />
             </div>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-              {filteredSpecies.map((speciesItem) => (
-                <div key={speciesItem.id}>
-                  <SpeciesCard 
-                    species={speciesItem} 
-                    onClick={() => setSelectedSpecies(speciesItem)}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {filteredSpecies.length === 0 && !isLoading && (
-              <div className="text-center py-8 sm:py-12">
-                <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">
-                  Nie znaleziono gatunków spełniających kryteria wyszukiwania
-                </p>
-              </div>
-            )}
-          </>
-        )}
+          ))}
+        </div>
       </div>
 
       <DeleteConfirmationModal

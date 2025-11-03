@@ -9,6 +9,7 @@ export const FeedPage: React.FC = () => {
   const [allPosts, setAllPosts] = useState<TreePostType[]>([]);
   const [displayedPosts, setDisplayedPosts] = useState<TreePostType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
@@ -106,7 +107,6 @@ export const FeedPage: React.FC = () => {
     loadAllPosts();
   }, [loadAllPosts]);
 
-
   // Infinite scroll detection using Intersection Observer
   useEffect(() => {
     const loadMoreTrigger = document.getElementById('load-more-trigger');
@@ -176,10 +176,20 @@ export const FeedPage: React.FC = () => {
       return new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime();
     });
 
-  // Don't show full screen loading - show content with spinner instead
+  // Delayed spinner - show only after 500ms
+  useEffect(() => {
+    if (isLoading && filteredAndSortedPosts.length === 0) {
+      const timer = setTimeout(() => {
+        setShowLoadingSpinner(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoadingSpinner(false);
+    }
+  }, [isLoading, filteredAndSortedPosts.length]);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       {/* Posts */}
       <div className="flex-1 overflow-y-auto">
         {/* Search */}
@@ -194,46 +204,39 @@ export const FeedPage: React.FC = () => {
           />
         </div>
 
-        <div className="space-y-4 sm:space-y-6 w-full px-2 pt-1">
-          {isLoading && filteredAndSortedPosts.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Ładowanie postów...</p>
-              </div>
+        {/* Loading overlay - below search bar */}
+        {showLoadingSpinner ? (
+          <div className="absolute inset-x-0 top-24 bottom-0 bg-gray-50 dark:bg-gray-900 flex items-center justify-center z-40">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Ładowanie</p>
             </div>
-          ) : (
-            filteredAndSortedPosts.map((post) => (
-              <div
-                key={post.id}
-                id={`tree-post-${post.id}`}
-              >
-                <TreePost
-                  post={post}
-                  onDelete={handleDeletePost}
-                  onUpdate={handleUpdatePost}
-                  isEditing={editingTreeId === post.id}
-                  onStartEdit={() => setEditingTreeId(post.id)}
-                  onCancelEdit={() => setEditingTreeId(null)}
-                />
-              </div>
-            ))
-          )}
+          </div>
+        ) : null}
+
+        <div className="space-y-4 sm:space-y-6 w-full px-2 pt-1">
+          {filteredAndSortedPosts.map((post) => (
+            <div
+              key={post.id}
+              id={`tree-post-${post.id}`}
+            >
+              <TreePost
+                post={post}
+                onDelete={handleDeletePost}
+                onUpdate={handleUpdatePost}
+                isEditing={editingTreeId === post.id}
+                onStartEdit={() => setEditingTreeId(post.id)}
+                onCancelEdit={() => setEditingTreeId(null)}
+              />
+            </div>
+          ))}
         </div>
 
         {/* Search Results Info */}
-        {searchQuery && (
+        {searchQuery && !isLoading && (
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Znaleziono {filteredAndSortedPosts.length} wyników dla "{searchQuery}"
-            </p>
-          </div>
-        )}
-
-        {filteredAndSortedPosts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              {searchQuery ? 'Brak wyników wyszukiwania' : 'Brak zgłoszeń spełniających kryteria'}
             </p>
           </div>
         )}
