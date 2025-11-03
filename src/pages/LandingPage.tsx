@@ -369,18 +369,13 @@ export const LandingPage = () => {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {sortedScreenshots.map((screenshot, index) => (
-                <div key={screenshot.filename} className="space-y-3">
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-3xl blur-md opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                    <img 
-                      src={screenshot.path} 
-                      alt={`Screenshot ${index + 1}`}
-                      className="relative w-full h-auto rounded-3xl shadow-xl object-cover transition-transform group-hover:scale-105"
-                    />
-                  </div>
-                  <p className="text-sm text-gray-400 text-center">
-                    {screenshot.description}
-                  </p>
+                <div key={screenshot.filename} className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-3xl blur-md opacity-35 group-hover:opacity-50 transition-opacity"></div>
+                  <img 
+                    src={screenshot.path} 
+                    alt={`Screenshot ${index + 1}`}
+                    className="relative w-full h-auto rounded-3xl shadow-xl object-cover transition-transform group-hover:scale-105"
+                  />
                 </div>
               ))}
             </div>
