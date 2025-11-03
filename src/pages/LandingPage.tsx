@@ -125,6 +125,42 @@ export const LandingPage = () => {
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, []);
 
+  // Divide screenshots into sections
+  const sections = useMemo(() => {
+    const screenshots = sortedScreenshots;
+    let index = 0;
+    
+    const createSection = (title: string, description: string, count: number) => {
+      const sectionScreenshots = screenshots.slice(index, index + count);
+      index += count;
+      return { title, description, screenshots: sectionScreenshots };
+    };
+    
+    const sectionsArray = [
+      createSection('Start, logowanie i rejestracja', 'Rozpocznij korzystanie z aplikacji - zaloguj się lub zarejestruj nowe konto', 4),
+      createSection('Przeglądanie mapy drzew', 'Eksploruj mapę z zaznaczonymi drzewami w Twojej okolicy', 4),
+      createSection('Tworzenie nowego drzewa', 'Dodaj nowe drzewo do systemu - wypełnij formularz krok po kroku', 8),
+      createSection('Tworzenie wniosku', 'Wygeneruj profesjonalny wniosek o ochronę pomnika przyrody', 8),
+      createSection('Encyklopedia gatunków', 'Poznaj różne gatunki drzew i ich charakterystyki', 4),
+      createSection('Społeczność', 'Przeglądaj najnowsze zgłoszenia i aktywność społeczności', 4),
+      createSection('Profil użytkownika', 'Zarządzaj swoim kontem i przeglądaj swoje zgłoszenia', 4),
+      createSection('Działania moderatora', 'Narzędzia administracyjne do zarządzania platformą', 4),
+      createSection('Dodatkowe funkcje', 'Poznaj zaawansowane opcje i narzędzia aplikacji', 4),
+    ];
+    
+    // Add remaining screenshots to the last section (Podziękowania)
+    const remainingScreenshots = screenshots.slice(index);
+    if (remainingScreenshots.length > 0) {
+      sectionsArray.push({
+        title: 'Podziękowania',
+        description: 'Dziękujemy za uwagę! Aplikacja nie wymaga instalacji - otwórz tę stronę na telefonie i zacznij korzystać już teraz',
+        screenshots: remainingScreenshots
+      });
+    }
+    
+    return sectionsArray.filter(section => section.screenshots.length > 0);
+  }, [sortedScreenshots]);
+
   // Check if mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -373,18 +409,33 @@ export const LandingPage = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {sortedScreenshots.map((screenshot, index) => (
-                <div key={screenshot.filename} className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-3xl blur-md opacity-35 group-hover:opacity-50 transition-opacity"></div>
-                  <img 
-                    src={screenshot.path} 
-                    alt={`Screenshot ${index + 1}`}
-                    className="relative w-full h-auto rounded-3xl shadow-xl object-cover transition-transform group-hover:scale-105"
-                />
-            </div>
-              ))}
-            </div>
+            {sections.map((section, sectionIndex) => (
+              <div key={sectionIndex} className="space-y-6">
+                <div className="text-center">
+                  <h3 className="text-2xl lg:text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                    {section.title}
+                  </h3>
+                  <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+                    {section.description}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {section.screenshots.map((screenshot, index) => (
+                    <div key={screenshot.filename} className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-3xl blur-md opacity-35 group-hover:opacity-50 transition-opacity"></div>
+                      <img 
+                        src={screenshot.path} 
+                        alt={`Screenshot ${section.title} ${index + 1}`}
+                        className="relative w-full h-auto rounded-3xl shadow-xl object-cover transition-transform group-hover:scale-105"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {sectionIndex < sections.length - 1 && (
+                  <div className="border-t border-gray-700 pt-8"></div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
