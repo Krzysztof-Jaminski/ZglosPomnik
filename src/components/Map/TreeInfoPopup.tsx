@@ -446,13 +446,13 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
               {/* Close button */}
               <button
                 onClick={closeMapScreenshotModal}
-                className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
+                className="absolute -top-12 right-4 text-white hover:text-gray-300 transition-colors z-10"
               >
                 <X className="w-8 h-8" />
               </button>
 
               {/* Title */}
-              <div className="absolute -top-12 left-0 text-white text-lg font-medium z-10">
+              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-white text-lg font-medium z-10 whitespace-nowrap">
                 Screenshot mapy lokalizacji
               </div>
 
@@ -460,7 +460,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
               <img
                 src={tree.treeScreenshotUrl}
                 alt="Map screenshot"
-                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-lg"
+                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-lg mx-auto block"
                 crossOrigin={tree.treeScreenshotUrl.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
                 referrerPolicy="no-referrer"
               />
