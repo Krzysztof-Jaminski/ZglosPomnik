@@ -179,6 +179,19 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       }
     }
 
+    // Special validation for KRS and REGON - must contain exactly 9 digits
+    const fieldNameLower = field.name.toLowerCase();
+    const fieldLabelLower = field.label.toLowerCase();
+    if (fieldNameLower.includes('krs') || fieldLabelLower.includes('krs') || 
+        fieldNameLower.includes('regon') || fieldLabelLower.includes('regon')) {
+      const digitsOnly = value.toString().replace(/\D/g, ''); // Remove all non-digits
+      if (digitsOnly.length !== 9) {
+        return `${field.label} musi składać się z dokładnie 9 cyfr`;
+      }
+      // If validation passes, allow any formatting (spaces, dashes, etc.)
+      return null;
+    }
+
     // Special validation for justification field - always use 1500 limit
     if (field.name === 'justification' || field.label.toLowerCase().includes('uzasadnienie')) {
       const justificationMinLength = centralizedRules?.minLength || 50;

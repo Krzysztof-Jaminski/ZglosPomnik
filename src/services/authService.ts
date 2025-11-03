@@ -350,6 +350,14 @@ class AuthService {
       postalCode?: string;
       phone?: string;
       email?: string;
+      krs?: string;
+      regon?: string;
+      correspondence?: {
+        poBox?: number;
+        address?: string;
+        postalCode?: string;
+        city?: string;
+      };
     };
   }): Promise<User> {
     const token = this.getToken();
@@ -382,7 +390,20 @@ class AuthService {
         formData.append('Organization.City', userData.organization.city || '');
         formData.append('Organization.PostalCode', userData.organization.postalCode || '');
         formData.append('Organization.Phone', userData.organization.phone || '');
-        formData.append('Organization.Email', userData.organization.email || '');
+        formData.append('Organization.Mail', userData.organization.email || '');
+        formData.append('Organization.Krs', userData.organization.krs || '');
+        formData.append('Organization.Regon', userData.organization.regon || '');
+        
+        // Add correspondence fields - always send them if organization exists
+        const corr = userData.organization.correspondence || {};
+        // PoBox must be sent as string only if it has a valid value (> 0)
+        // Don't send empty string - backend doesn't accept it
+        if (corr.poBox !== undefined && corr.poBox !== null && corr.poBox !== 0 && corr.poBox > 0) {
+          formData.append('Organization.Correspondence.PoBox', corr.poBox.toString());
+        }
+        formData.append('Organization.Correspondence.Address', corr.address || '');
+        formData.append('Organization.Correspondence.PostalCode', corr.postalCode || '');
+        formData.append('Organization.Correspondence.City', corr.city || '');
       }
 
       console.log('Updating user data with FormData:');

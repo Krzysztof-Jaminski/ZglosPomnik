@@ -23,6 +23,14 @@ interface OrganizationData {
   postalCode: string;
   phone: string;
   email: string;
+  krs?: string;
+  regon?: string;
+  correspondence?: {
+    poBox?: number;
+    address?: string;
+    postalCode?: string;
+    city?: string;
+  };
 }
 
 export const ProfilePage: React.FC = () => {
@@ -51,13 +59,21 @@ export const ProfilePage: React.FC = () => {
   });
   
   // Dane organizacji z API
-  const [organizationData, setOrganizationData] = useState({
+  const [organizationData, setOrganizationData] = useState<OrganizationData>({
     name: fullUserData?.organization?.name || 'Nie podano',
     address: fullUserData?.organization?.address || 'Nie podano',
     city: fullUserData?.organization?.city || 'Nie podano',
     postalCode: fullUserData?.organization?.postalCode || 'Nie podano',
     phone: fullUserData?.organization?.phone || 'Nie podano',
-    email: fullUserData?.organization?.email || 'Nie podano'
+    email: fullUserData?.organization?.email || 'Nie podano',
+    krs: (fullUserData?.organization as any)?.krs || 'Nie podano',
+    regon: (fullUserData?.organization as any)?.regon || 'Nie podano',
+    correspondence: (fullUserData?.organization as any)?.correspondence || {
+      poBox: undefined,
+      address: '',
+      postalCode: '',
+      city: ''
+    }
   });
   
   const [isEditing, setIsEditing] = useState(false);
@@ -118,7 +134,15 @@ export const ProfilePage: React.FC = () => {
                 city: cachedData.organization?.city || 'Nie podano',
                 postalCode: cachedData.organization?.postalCode || 'Nie podano',
                 phone: cachedData.organization?.phone || 'Nie podano',
-                email: cachedData.organization?.email || 'Nie podano'
+                email: cachedData.organization?.email || 'Nie podano',
+                krs: cachedData.organization?.krs || 'Nie podano',
+                regon: cachedData.organization?.regon || 'Nie podano',
+                correspondence: cachedData.organization?.correspondence || {
+                  poBox: undefined,
+                  address: '',
+                  postalCode: '',
+                  city: ''
+                }
               });
               
               setEditData({
@@ -134,7 +158,15 @@ export const ProfilePage: React.FC = () => {
                 city: cachedData.organization?.city || '',
                 postalCode: cachedData.organization?.postalCode || '',
                 phone: cachedData.organization?.phone || '',
-                email: cachedData.organization?.email || ''
+                email: cachedData.organization?.email || '',
+                krs: cachedData.organization?.krs || '',
+                regon: cachedData.organization?.regon || '',
+                correspondence: cachedData.organization?.correspondence || {
+                  poBox: undefined,
+                  address: '',
+                  postalCode: '',
+                  city: ''
+                }
               });
               
               setIsLoadingProfile(false);
@@ -183,7 +215,15 @@ export const ProfilePage: React.FC = () => {
           city: userData.organization?.city || 'Nie podano',
           postalCode: userData.organization?.postalCode || 'Nie podano',
           phone: userData.organization?.phone || 'Nie podano',
-          email: userData.organization?.email || 'Nie podano'
+          email: userData.organization?.email || 'Nie podano',
+          krs: (userData.organization as any)?.krs || 'Nie podano',
+          regon: (userData.organization as any)?.regon || 'Nie podano',
+          correspondence: (userData.organization as any)?.correspondence || {
+            poBox: undefined,
+            address: '',
+            postalCode: '',
+            city: ''
+          }
         });
         
         // Dla edycji używamy pustych stringów jeśli dane są puste
@@ -201,7 +241,15 @@ export const ProfilePage: React.FC = () => {
           city: userData.organization?.city || '',
           postalCode: userData.organization?.postalCode || '',
           phone: userData.organization?.phone || '',
-          email: userData.organization?.email || ''
+          email: userData.organization?.email || '',
+          krs: (userData.organization as any)?.krs || '',
+          regon: (userData.organization as any)?.regon || '',
+          correspondence: (userData.organization as any)?.correspondence || {
+            poBox: undefined,
+            address: '',
+            postalCode: '',
+            city: ''
+          }
         });
         
 
@@ -246,6 +294,52 @@ export const ProfilePage: React.FC = () => {
   const handleConfirmSave = async () => {
     if (!fullUserData) return;
     
+    // Walidacja wymaganych pól organizacji
+    if (editOrganizationData) {
+      // Email jest wymagany
+      if (!editOrganizationData.email || editOrganizationData.email.trim() === '') {
+        alert('Email organizacji jest wymagany!');
+        triggerNotificationHaptic('error');
+        return;
+      }
+      
+      // Walidacja formatu email
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(editOrganizationData.email)) {
+        alert('Email organizacji ma nieprawidłowy format!');
+        triggerNotificationHaptic('error');
+        return;
+      }
+      
+      // KRS jest wymagany - musi składać się z dokładnie 9 cyfr
+      if (!editOrganizationData.krs || editOrganizationData.krs.trim() === '') {
+        alert('KRS jest wymagany i musi składać się z dokładnie 9 cyfr!');
+        triggerNotificationHaptic('error');
+        return;
+      }
+      
+      const krsDigits = editOrganizationData.krs.replace(/\D/g, '');
+      if (krsDigits.length !== 9) {
+        alert('KRS musi składać się z dokładnie 9 cyfr!');
+        triggerNotificationHaptic('error');
+        return;
+      }
+      
+      // REGON jest wymagany - musi składać się z dokładnie 9 cyfr
+      if (!editOrganizationData.regon || editOrganizationData.regon.trim() === '') {
+        alert('REGON jest wymagany i musi składać się z dokładnie 9 cyfr!');
+        triggerNotificationHaptic('error');
+        return;
+      }
+      
+      const regonDigits = editOrganizationData.regon.replace(/\D/g, '');
+      if (regonDigits.length !== 9) {
+        alert('REGON musi składać się z dokładnie 9 cyfr!');
+        triggerNotificationHaptic('error');
+        return;
+      }
+    }
+    
     try {
       setIsSaving(true);
       
@@ -259,14 +353,22 @@ export const ProfilePage: React.FC = () => {
       updateData.postalCode = editData.postalCode;
       
       // Dodaj dane organizacji jeśli są dostępne
-      if (fullUserData?.organization) {
+      if (fullUserData?.organization || editOrganizationData) {
         updateData.organization = {
-          name: editOrganizationData.name,
-          address: editOrganizationData.address,
-          city: editOrganizationData.city,
-          postalCode: editOrganizationData.postalCode,
-          phone: editOrganizationData.phone,
-          email: editOrganizationData.email
+          name: editOrganizationData.name || '',
+          address: editOrganizationData.address || '',
+          city: editOrganizationData.city || '',
+          postalCode: editOrganizationData.postalCode || '',
+          phone: editOrganizationData.phone || '',
+          email: editOrganizationData.email || '',
+          krs: editOrganizationData.krs || '',
+          regon: editOrganizationData.regon || '',
+          correspondence: editOrganizationData.correspondence || {
+            poBox: undefined,
+            address: '',
+            postalCode: '',
+            city: ''
+          }
         };
       }
 
@@ -294,14 +396,22 @@ export const ProfilePage: React.FC = () => {
       });
       
       // Aktualizuj organizationData z "Nie podano" dla pustych pól
-      if (updatedUserData.organization) {
+      if (updatedUserData.organization || editOrganizationData) {
         setOrganizationData({
           name: editOrganizationData.name || 'Nie podano',
           address: editOrganizationData.address || 'Nie podano',
           city: editOrganizationData.city || 'Nie podano',
           postalCode: editOrganizationData.postalCode || 'Nie podano',
           phone: editOrganizationData.phone || 'Nie podano',
-          email: editOrganizationData.email || 'Nie podano'
+          email: editOrganizationData.email || 'Nie podano',
+          krs: editOrganizationData.krs || 'Nie podano',
+          regon: editOrganizationData.regon || 'Nie podano',
+          correspondence: editOrganizationData.correspondence || {
+            poBox: undefined,
+            address: '',
+            postalCode: '',
+            city: ''
+          }
         });
       }
       
@@ -340,7 +450,15 @@ export const ProfilePage: React.FC = () => {
       city: fullUserData?.organization?.city || '',
       postalCode: fullUserData?.organization?.postalCode || '',
       phone: fullUserData?.organization?.phone || '',
-      email: fullUserData?.organization?.email || ''
+      email: fullUserData?.organization?.email || '',
+      krs: (fullUserData?.organization as any)?.krs || '',
+      regon: (fullUserData?.organization as any)?.regon || '',
+      correspondence: (fullUserData?.organization as any)?.correspondence || {
+        poBox: undefined,
+        address: '',
+        postalCode: '',
+        city: ''
+      }
     });
     
     setIsEditing(false);
@@ -353,11 +471,18 @@ export const ProfilePage: React.FC = () => {
     }));
   };
 
-  const handleOrganizationInputChange = (field: keyof OrganizationData, value: string) => {
-    setEditOrganizationData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleOrganizationInputChange = (field: keyof OrganizationData, value: string | number | any) => {
+    if (field === 'correspondence') {
+      setEditOrganizationData(prev => ({
+        ...prev,
+        correspondence: value
+      }));
+    } else {
+      setEditOrganizationData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
 
