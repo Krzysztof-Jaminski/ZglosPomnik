@@ -369,7 +369,7 @@ export const LandingPage = () => {
                 Zobacz aplikację w akcji
               </h2>
               <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                Przejrzyj screenshoty pokazujące funkcjonalności ZgłośPomnik od najstarszych do najnowszych wersji
+                Zobacz jak działa i wygląda aplikacja oraz poznaj krok po kroku, jak z niej korzystać
               </p>
             </div>
             
