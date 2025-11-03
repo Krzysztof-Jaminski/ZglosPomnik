@@ -645,7 +645,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 )}
               </button>
               <div className="flex-1">
-                <span className="text-[10px] text-gray-400 leading-tight">
+                <span className="text-[9px] text-gray-400 leading-tight">
                   Akceptuję{' '}
                   <button
                     type="button"
