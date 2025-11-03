@@ -145,7 +145,7 @@ export const LandingPage = () => {
       createSection('Społeczność', 'Przeglądaj najnowsze zgłoszenia i aktywność społeczności', 4),
       createSection('Profil użytkownika', 'Zarządzaj swoim kontem i przeglądaj swoje zgłoszenia', 4),
       createSection('Działania moderatora', 'Narzędzia administracyjne do zarządzania platformą', 4),
-      createSection('Dodatkowe funkcje', 'Poznaj zaawansowane opcje i narzędzia aplikacji', 4),
+      createSection('Dodatkowe funkcje', 'Poznaj zaawansowane opcje i narzędzia aplikacji', 8),
     ];
     
     // Add remaining screenshots to the last section (Podziękowania)
@@ -304,7 +304,7 @@ export const LandingPage = () => {
             
         <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-0 items-center w-full pt-0 lg:pt-0">
           {/* Mobile: Phone first */}
-          <div className="relative order-1 lg:order-2 flex justify-center lg:justify-end lg:mr-4">
+          <div className="relative order-1 lg:order-2 flex justify-center lg:justify-center">
             <img 
               src="/LandPagePhotos/image.png" 
               alt="ZgłośPomnik App Screenshot" 
