@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Loader2, X, CheckCircle, Download } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Loader2, X, Download, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { Tree, ApplicationTemplate, Commune, Application, FormSchema } from '../types';
 import { applicationsService } from '../services/applicationsService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -81,10 +81,38 @@ export const ApplicationsPage: React.FC = () => {
   const [generatedTreeScreenshotUrl, setGeneratedTreeScreenshotUrl] = useState<string>('');
   const [userManuallyClosedForm, setUserManuallyClosedForm] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [showMapScreenshotModal, setShowMapScreenshotModal] = useState(false);
   const [isPdfGenerated, setIsPdfGenerated] = useState<boolean>(() => {
     const savedPdfData = localStorage.getItem('generatedPdfData');
     return !!savedPdfData;
   });
+
+  const openPhotoModal = useCallback((index: number) => {
+    setSelectedPhotoIndex(index);
+    setShowPhotoModal(true);
+  }, []);
+
+  const closePhotoModal = useCallback(() => {
+    setShowPhotoModal(false);
+  }, []);
+
+  const openMapScreenshotModal = useCallback(() => {
+    setShowMapScreenshotModal(true);
+  }, []);
+
+  const closeMapScreenshotModal = useCallback(() => {
+    setShowMapScreenshotModal(false);
+  }, []);
+
+  const nextPhoto = useCallback(() => {
+    setSelectedPhotoIndex((prev) => (prev + 1) % (generatedImageUrls.length || 1));
+  }, [generatedImageUrls.length]);
+
+  const prevPhoto = useCallback(() => {
+    setSelectedPhotoIndex((prev) => (prev - 1 + (generatedImageUrls.length || 1)) % (generatedImageUrls.length || 1));
+  }, [generatedImageUrls.length]);
 
   // Track which page was last active
   useEffect(() => {
@@ -664,67 +692,122 @@ export const ApplicationsPage: React.FC = () => {
             {/* Application View - Show when PDF is generated */}
             <AnimatePresence>
               {canShowApplicationView && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="relative bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-lg p-3 sm:p-4 shadow-xl"
-                >
-                  <div className="text-center mb-4">
-                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <>
+                  {/* Download Button - At the top */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="relative rounded-xl p-1 shadow-lg border border-gray-200/40 dark:border-gray-400/30 mb-2 sm:mb-3"
+                  >
+                    <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg p-3 sm:p-4">
+                      {/* Download ZIP Button */}
+                      <div className="mb-0">
+                        <GlassButton
+                          onClick={handleDownloadZip}
+                          disabled={isDownloadingZip}
+                          variant="primary"
+                          size="sm"
+                          className="w-full"
+                          icon={isDownloadingZip ? Loader2 : Download}
+                        >
+                          {isDownloadingZip ? 'Pobieranie...' : 'Pobierz Gotowy Wniosek'}
+                        </GlassButton>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-3 text-center">
+                          <strong>Wniosek został wygenerowany!</strong> Pobierz folder ZIP z wniosekiem PDF oraz wszystkimi załącznikami!
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      Wniosek został wygenerowany
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      Możesz pobrać pliki wiele razy
-                    </p>
-                  </div>
+                  </motion.div>
 
-                  {/* Application Info */}
-                  <div className="space-y-3 mb-4">
-                    {selectedTree && (
-                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Drzewo</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTree.name}</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{selectedTree.location.address}</p>
-                      </div>
-                    )}
-                    {selectedCommune && (
-                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Gmina</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedCommune.name}</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{selectedCommune.city}</p>
-                      </div>
-                    )}
-                    {selectedTemplate && (
-                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Szablon wniosku</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTemplate.name}</p>
-                      </div>
-                    )}
-                  </div>
+                  {/* Photos and Map Screenshots */}
+                  <AnimatePresence>
+                    {(generatedImageUrls.length > 0 || generatedTreeScreenshotUrl) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="mb-2 sm:mb-3 space-y-2 sm:space-y-3"
+                      >
+                        {/* Photos Section */}
+                        {generatedImageUrls.length > 0 && (
+                          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-green-200/50 dark:border-green-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                              {generatedImageUrls.map((image, index) => (
+                                <div 
+                                  key={index} 
+                                  className="relative aspect-square"
+                                >
+                                  <img
+                                    src={image}
+                                    crossOrigin={image.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                                    referrerPolicy="no-referrer"
+                                    alt={`Tree photo ${index + 1}`}
+                                    className="w-full h-full object-cover rounded-lg cursor-pointer shadow-sm"
+                                    onClick={() => openPhotoModal(index)}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                  {/* Download ZIP Button */}
-                  <div className="mb-4">
-                    <GlassButton
-                      onClick={handleDownloadZip}
-                      disabled={isDownloadingZip}
-                      variant="primary"
-                      size="sm"
-                      className="w-full"
-                      icon={isDownloadingZip ? Loader2 : Download}
-                    >
-                      {isDownloadingZip ? 'Pobieranie...' : 'Pobierz wszystkie pliki (ZIP)'}
-                    </GlassButton>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center">
-                      Plik ZIP zawiera: wniosek PDF, zdjęcia drzewa {generatedTreeScreenshotUrl ? 'oraz screenshot mapy' : ''}
-                    </p>
-                  </div>
+                        {/* Map Screenshot */}
+                        {generatedTreeScreenshotUrl && (
+                          <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-sm border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-2 sm:p-3 shadow-xl">
+                            <div className="relative">
+                              <img
+                                src={generatedTreeScreenshotUrl}
+                                crossOrigin={generatedTreeScreenshotUrl.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                                referrerPolicy="no-referrer"
+                                alt="Map screenshot"
+                                className="w-full h-20 sm:h-24 object-cover rounded cursor-pointer"
+                                onClick={openMapScreenshotModal}
+                              />
+                              <div className="absolute top-1 left-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                Lokalizacja na mapie
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                  {/* ePUAP Instructions */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 mb-4">
+                  {/* Application Info - Moved to bottom */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="relative rounded-xl p-1 shadow-lg border border-gray-200/40 dark:border-gray-400/30 mb-2 sm:mb-3"
+                  >
+                    <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg p-3 sm:p-4">
+                      {/* Application Info */}
+                      <div className="space-y-3 mb-4">
+                        {selectedTree && (
+                          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Drzewo</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTree.name}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">{selectedTree.location.address}</p>
+                          </div>
+                        )}
+                        {selectedCommune && (
+                          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Gmina</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedCommune.name}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">{selectedCommune.city}</p>
+                          </div>
+                        )}
+                        {selectedTemplate && (
+                          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Szablon wniosku</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTemplate.name}</p>
+                          </div>
+                        )}
+                      </div>
+
+                    {/* ePUAP Instructions */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 mb-4">
                     <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
                       Instrukcja wysyłania wniosku na ePUAP:
                     </h4>
@@ -759,17 +842,29 @@ export const ApplicationsPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Create New Application Button */}
-                  <GlassButton
-                    onClick={handleCreateNewApplication}
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    icon={Plus}
-                  >
-                    Utwórz nowy wniosek
-                  </GlassButton>
+                    {/* Go to ePUAP Button */}
+                    <GlassButton
+                      onClick={() => window.open('https://epuap.gov.pl', '_blank')}
+                      variant="primary"
+                      size="sm"
+                      className="w-full mb-2"
+                      icon={ExternalLink}
+                    >
+                      Przejdź do ePUAP
+                    </GlassButton>
+
+                    {/* Create New Application Button */}
+                    <GlassButton
+                      onClick={handleCreateNewApplication}
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                    >
+                      Zakończ
+                    </GlassButton>
+                  </div>
                 </motion.div>
+                </>
               )}
             </AnimatePresence>
 
@@ -1087,6 +1182,133 @@ export const ApplicationsPage: React.FC = () => {
             </motion.div>
           </div>
         )}
+
+      {/* Photo Preview Modal */}
+      <AnimatePresence>
+        {showPhotoModal && generatedImageUrls.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] p-4"
+            onClick={closePhotoModal}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-5xl max-h-[90vh] w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closePhotoModal}
+                className="absolute -top-12 right-4 text-white hover:text-gray-300 transition-colors z-10"
+              >
+                <X className="w-8 h-8" />
+              </button>
+
+              {/* Photo counter */}
+              <div className="absolute -top-12 left-0 text-white text-lg font-medium z-10">
+                {selectedPhotoIndex + 1} / {generatedImageUrls.length}
+              </div>
+
+              {/* Main photo */}
+              <img
+                src={generatedImageUrls[selectedPhotoIndex]}
+                alt={`Photo ${selectedPhotoIndex + 1}`}
+                className="max-w-full max-h-full object-contain rounded-lg"
+                crossOrigin={generatedImageUrls[selectedPhotoIndex]?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                referrerPolicy="no-referrer"
+              />
+
+              {/* Navigation arrows */}
+              {generatedImageUrls.length > 1 && (
+                <>
+                  <button
+                    onClick={prevPhoto}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 transition-colors rounded-full p-2"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={nextPhoto}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 transition-colors rounded-full p-2"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Thumbnail strip */}
+              {generatedImageUrls.length > 1 && (
+                <div className="flex gap-2 bg-black/50 rounded-lg p-2 mt-4">
+                  {generatedImageUrls.map((photo, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedPhotoIndex(index)}
+                      className={`w-12 h-12 rounded overflow-hidden transition-opacity ${
+                        index === selectedPhotoIndex ? 'opacity-100 ring-2 ring-white' : 'opacity-60 hover:opacity-80'
+                      }`}
+                    >
+                      <img
+                        src={photo}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        crossOrigin={photo?.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                        referrerPolicy="no-referrer"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Map Screenshot Preview Modal */}
+      <AnimatePresence>
+        {showMapScreenshotModal && generatedTreeScreenshotUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] p-4"
+            onClick={closeMapScreenshotModal}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-5xl max-h-[90vh] w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closeMapScreenshotModal}
+                className="absolute -top-12 right-4 text-white hover:text-gray-300 transition-colors z-10"
+              >
+                <X className="w-8 h-8" />
+              </button>
+
+              {/* Title */}
+              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-white text-lg font-medium z-10 whitespace-nowrap">
+                Screenshot mapy lokalizacji
+              </div>
+
+              {/* Main screenshot */}
+              <img
+                src={generatedTreeScreenshotUrl}
+                alt="Map screenshot"
+                className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-lg mx-auto block"
+                crossOrigin={generatedTreeScreenshotUrl.includes('drzewapistorage.blob.core.windows.net') ? undefined : 'anonymous'}
+                referrerPolicy="no-referrer"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       </div>
     </div>
