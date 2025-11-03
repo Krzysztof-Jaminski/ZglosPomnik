@@ -630,22 +630,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
           {/* Terms and Conditions Checkbox */}
           <div className="pt-2 pb-2">
-            <label className="flex items-start space-x-3 cursor-pointer">
+            <label className="flex items-start space-x-2 cursor-pointer">
               <button
                 type="button"
                 onClick={() => setAcceptedTerms(!acceptedTerms)}
-                className="mt-1.5 flex-shrink-0 w-4 h-4 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                className="mt-2 flex-shrink-0 w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900"
                 style={{
                   borderColor: acceptedTerms ? '#10b981' : '#6b7280',
                   backgroundColor: acceptedTerms ? '#10b981' : 'transparent'
                 }}
               >
                 {acceptedTerms && (
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                 )}
               </button>
               <div className="flex-1">
-                <span className="text-[11px] text-gray-400 leading-tight">
+                <span className="text-[10px] text-gray-400 leading-tight">
                   Akceptuję{' '}
                   <button
                     type="button"
