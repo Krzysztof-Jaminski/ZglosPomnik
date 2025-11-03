@@ -82,6 +82,7 @@ export const ApplicationsPage: React.FC = () => {
   const [generatedTreeScreenshotUrl, setGeneratedTreeScreenshotUrl] = useState<string>('');
   const [userManuallyClosedForm, setUserManuallyClosedForm] = useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState<string | null>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [showMapScreenshotModal, setShowMapScreenshotModal] = useState(false);
@@ -672,7 +673,7 @@ export const ApplicationsPage: React.FC = () => {
                   recursive: true
                 });
                 console.log('ZIP file saved to Downloads:', result.uri);
-                alert(`Plik został pobrany! Znajdziesz go w folderze Pobrane (Downloads): ${fileName}`);
+                setDownloadMessage(`Plik został pobrany! Znajdziesz go w folderze Pobrane (Downloads): ${fileName}`);
                 saved = true;
                 break;
               } catch (pathError: any) {
@@ -696,7 +697,7 @@ export const ApplicationsPage: React.FC = () => {
                 recursive: true
               });
               console.log('ZIP file saved to Documents:', result.uri);
-              alert(`Plik został pobrany! Znajdziesz go w folderze Dokumenty: ${fileName}`);
+              setDownloadMessage(`Plik został pobrany! Znajdziesz go w folderze Dokumenty: ${fileName}`);
             } catch (documentsError: any) {
               console.error('Failed to save to Documents:', documentsError);
               
@@ -709,7 +710,7 @@ export const ApplicationsPage: React.FC = () => {
                   recursive: true
                 });
                 console.log('ZIP file saved to Data:', result.uri);
-                alert(`Plik został zapisany: ${fileName}\nLokalizacja: ${result.uri}`);
+                setDownloadMessage(`Plik został zapisany: ${fileName}\nLokalizacja: ${result.uri}`);
               } catch (dataError: any) {
                 console.error('Failed to save file:', dataError);
                 throw new Error('Nie udało się zapisać pliku w żadnej dostępnej lokalizacji');
@@ -731,6 +732,7 @@ export const ApplicationsPage: React.FC = () => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
         console.log('ZIP file downloaded successfully');
+        setDownloadMessage(`Plik został pobrany! Znajdziesz go w folderze Pobrane (Downloads)`);
       }
     } catch (error) {
       console.error('Error downloading ZIP:', error);
@@ -802,6 +804,13 @@ export const ApplicationsPage: React.FC = () => {
                         <p className="text-sm text-gray-700 dark:text-gray-300 mt-3 text-center">
                           <strong>Wniosek został wygenerowany!</strong> Pobierz folder ZIP z wniosekiem PDF oraz wszystkimi załącznikami!
                         </p>
+                        {downloadMessage && (
+                          <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <p className="text-sm text-green-800 dark:text-green-200 text-center whitespace-pre-line">
+                              {downloadMessage}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>

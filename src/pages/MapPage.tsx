@@ -16,13 +16,6 @@ export const MapPage: React.FC = () => {
     if (location.state?.centerOnLocation && mapComponentRef.current) {
       const { lat, lng } = location.state.centerOnLocation;
       mapComponentRef.current.centerOnLocation(lat, lng);
-      
-      // Show success message if it's a new tree
-      if (location.state.showNewTree) {
-        setTimeout(() => {
-          alert('Drzewo zostało pomyślnie dodane!');
-        }, 1000);
-      }
     }
   }, [location.state]);
 
