@@ -209,27 +209,27 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
                      <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
                        Lokalizacja
                      </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        <strong>Adres:</strong> {tree.location?.address || 'Brak adresu'}
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Adres:</span> <span className="ml-1">{tree.location?.address || 'Brak adresu'}</span>
                       </p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        <strong>Gmina:</strong> {tree.location?.commune || 'Brak danych'}
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Gmina:</span> <span className="ml-1">{tree.location?.commune || 'Brak danych'}</span>
                       </p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        <strong>Powiat:</strong> {tree.location?.county || 'Brak danych'}
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Powiat:</span> <span className="ml-1">{tree.location?.county || 'Brak danych'}</span>
                       </p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        <strong>Dzielnica:</strong> {tree.location?.district || 'Brak danych'}
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Dzielnica:</span> <span className="ml-1">{tree.location?.district || 'Brak danych'}</span>
                       </p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        <strong>Województwo:</strong> {tree.location?.province || 'Brak danych'}
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Województwo:</span> <span className="ml-1">{tree.location?.province || 'Brak danych'}</span>
                       </p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        <strong>Numer działki:</strong> {tree.location?.plotNumber || 'Brak danych'}
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Numer działki:</span> <span className="ml-1">{tree.location?.plotNumber || 'Brak danych'}</span>
                       </p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        <strong>Lat:</strong> {tree.location?.lat?.toFixed(6)}, <strong>Lng:</strong> {tree.location?.lng?.toFixed(6)}
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400 col-span-2">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Współrzędne:</span> <span className="ml-1">{tree.location?.lat?.toFixed(6)}, {tree.location?.lng?.toFixed(6)}</span>
                       </p>
                     </div>
                   </div>

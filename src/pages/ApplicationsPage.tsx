@@ -723,15 +723,15 @@ export const ApplicationsPage: React.FC = () => {
         }
       } else {
         // Use standard browser download for web
-        const url = window.URL.createObjectURL(zipBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `wniosek_${new Date().toISOString().split('T')[0]}.zip`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        console.log('ZIP file downloaded successfully');
+      const url = window.URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `wniosek_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      console.log('ZIP file downloaded successfully');
         setDownloadMessage(`Plik został pobrany! Znajdziesz go w folderze Pobrane (Downloads)`);
       }
     } catch (error) {
@@ -747,7 +747,7 @@ export const ApplicationsPage: React.FC = () => {
   const canShowTemplateSelection = selectedTree !== null && selectedCommune !== null;
   const canShowForm = currentApplication !== null && formSchema !== null && !isPdfGenerated;
   const canShowApplicationView = isPdfGenerated && currentApplication !== null;
-
+    
   // Delayed spinner - show only after 500ms
   useEffect(() => {
     const shouldShow = isLoading && trees.length === 0 && !selectedTree && !selectedCommune && !selectedTemplate && !currentApplication;
@@ -760,7 +760,7 @@ export const ApplicationsPage: React.FC = () => {
       setShowLoadingSpinner(false);
     }
   }, [isLoading, trees.length, selectedTree, selectedCommune, selectedTemplate, currentApplication]);
-    
+
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 py-2 sm:py-3 overflow-y-auto relative">
       {/* Loading overlay - below header */}
@@ -782,10 +782,10 @@ export const ApplicationsPage: React.FC = () => {
               {canShowApplicationView && (
                 <>
                   {/* Download Button - At the top */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
                     className="relative rounded-xl p-1 shadow-lg border border-gray-200/40 dark:border-gray-400/30 mb-2 sm:mb-3"
                   >
                     <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg p-3 sm:p-4">
@@ -808,8 +808,8 @@ export const ApplicationsPage: React.FC = () => {
                           <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                             <p className="text-sm text-green-800 dark:text-green-200 text-center whitespace-pre-line">
                               {downloadMessage}
-                            </p>
-                          </div>
+                    </p>
+                  </div>
                         )}
                       </div>
                     </div>
@@ -877,31 +877,31 @@ export const ApplicationsPage: React.FC = () => {
                     className="relative rounded-xl p-1 shadow-lg border border-gray-200/40 dark:border-gray-400/30 mb-2 sm:mb-3"
                   >
                     <div className="bg-gray-50 dark:bg-gray-900 backdrop-blur-sm rounded-lg p-3 sm:p-4">
-                      {/* Application Info */}
-                      <div className="space-y-3 mb-4">
-                        {selectedTree && (
-                          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Drzewo</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTree.name}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">{selectedTree.location.address}</p>
-                          </div>
-                        )}
-                        {selectedCommune && (
-                          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Gmina</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedCommune.name}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">{selectedCommune.city}</p>
-                          </div>
-                        )}
-                        {selectedTemplate && (
-                          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Szablon wniosku</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTemplate.name}</p>
-                          </div>
-                        )}
+                  {/* Application Info */}
+                  <div className="space-y-3 mb-4">
+                    {selectedTree && (
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Drzewo</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTree.name}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{selectedTree.location.address}</p>
                       </div>
+                    )}
+                    {selectedCommune && (
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Gmina</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedCommune.name}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{selectedCommune.city}</p>
+                      </div>
+                    )}
+                    {selectedTemplate && (
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Szablon wniosku</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTemplate.name}</p>
+                      </div>
+                    )}
+                  </div>
 
-                    {/* ePUAP Instructions */}
+                  {/* ePUAP Instructions */}
                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-400/30 rounded-lg p-3 mb-4">
                     <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
                       Instrukcja wysyłania wniosku na ePUAP:
@@ -948,15 +948,15 @@ export const ApplicationsPage: React.FC = () => {
                       Przejdź do ePUAP
                     </GlassButton>
 
-                    {/* Create New Application Button */}
-                    <GlassButton
-                      onClick={handleCreateNewApplication}
-                      variant="secondary"
-                      size="sm"
-                      className="w-full"
-                    >
+                  {/* Create New Application Button */}
+                  <GlassButton
+                    onClick={handleCreateNewApplication}
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                  >
                       Zakończ
-                    </GlassButton>
+                  </GlassButton>
                   </div>
                 </motion.div>
                 </>

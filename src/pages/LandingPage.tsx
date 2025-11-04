@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
@@ -100,6 +100,16 @@ const parseScreenshotFilename = (filename: string): ScreenshotInfo => {
 };
 
 export const LandingPage = () => {
+  // Check if mobile immediately (SSR safe) - must be the FIRST hook
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 1024;
+    }
+    return false;
+  });
+  
+  // All hooks must be called consistently, even if we return early
+  // This ensures the same number of hooks are called every render
   const navigate = useNavigate();
   const location = useLocation();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -109,16 +119,16 @@ export const LandingPage = () => {
   const [userEmail, setUserEmail] = useState<string>('');
   const [isScrolled, setIsScrolled] = useState(false);
   const [showRodoModal, setShowRodoModal] = useState(false);
-  // Check if mobile immediately (SSR safe)
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 1024;
-    }
-    return false;
-  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const { login, register, resendEmailVerification, isLoading } = useAuth();
   useSystemTheme('dark');
+  
+  // Early return for mobile - AFTER all hooks are called
+  if (isMobile) {
+    return <MobileLandingPage />;
+  }
 
   const sortedScreenshots = useMemo(() => {
     return SCREENSHOTS.map(parseScreenshotFilename)
@@ -136,17 +146,17 @@ export const LandingPage = () => {
       return { title, description, screenshots: sectionScreenshots };
     };
     
-    const sectionsArray = [
-      createSection('Start, logowanie i rejestracja', 'Rozpocznij korzystanie z aplikacji - zaloguj się lub zarejestruj nowe konto', 4),
-      createSection('Przeglądanie mapy drzew', 'Eksploruj mapę z zaznaczonymi drzewami w Twojej okolicy', 4),
-      createSection('Tworzenie nowego drzewa', 'Dodaj nowe drzewo do systemu - wypełnij formularz krok po kroku', 8),
-      createSection('Tworzenie wniosku', 'Wygeneruj profesjonalny wniosek o ochronę pomnika przyrody', 8),
-      createSection('Encyklopedia gatunków', 'Poznaj różne gatunki drzew i ich charakterystyki', 4),
-      createSection('Społeczność', 'Przeglądaj najnowsze zgłoszenia i aktywność społeczności', 4),
-      createSection('Profil użytkownika', 'Zarządzaj swoim kontem i przeglądaj swoje zgłoszenia', 4),
-      createSection('Działania moderatora', 'Narzędzia administracyjne do zarządzania platformą', 4),
-      createSection('Dodatkowe funkcje', 'Poznaj zaawansowane opcje i narzędzia aplikacji', 8),
-    ];
+     const sectionsArray = [
+       createSection('Logowanie i rejestracja', 'Bezpieczny system autoryzacji z weryfikacją emailową oraz obsługą kont użytkowników i organizacji', 4),
+       createSection('Mapa drzew', 'Interaktywna mapa z wizualizacją lokalizacji drzew, filtrowaniem oraz szczegółowymi informacjami o każdym zgłoszeniu', 4),
+       createSection('Zgłaszanie drzew', 'Kompleksowy formularz umożliwiający dodanie szczegółowych informacji o drzewie wraz z dokumentacją fotograficzną', 8),
+       createSection('Generowanie wniosków', 'Automatyczne tworzenie profesjonalnych wniosków PDF o uznanie drzewa za pomnik przyrody z pełną dokumentacją', 8),
+       createSection('Encyklopedia gatunków', 'Baza wiedzy o gatunkach drzew z możliwością rozszerzania przez moderatorów', 4),
+       createSection('Feed społecznościowy', 'Przeglądanie i interakcja ze zgłoszeniami innych użytkowników platformy', 4),
+       createSection('Profil użytkownika', 'Panel zarządzania danymi osobowymi, organizacyjnymi oraz statystykami aktywności', 4),
+       createSection('Panel moderatora', 'Narzędzia administracyjne do zarządzania użytkownikami, weryfikacji zgłoszeń i zarządzania bazą gatunków', 4),
+       createSection('Dodatkowe funkcje', 'Personalizacja ustawień, tryb ciemny, integracja z systemami mapowymi oraz wsparcie dla aplikacji mobilnych', 8),
+     ];
     
     // Add remaining screenshots to the last section (Podziękowania)
     const remainingScreenshots = screenshots.slice(index);
@@ -161,16 +171,30 @@ export const LandingPage = () => {
     return sectionsArray.filter(section => section.screenshots.length > 0);
   }, [sortedScreenshots]);
 
-  // Check if mobile
+  // Check if mobile on resize - reload page when switching between mobile/desktop
   useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout;
+    const currentIsMobile = isMobile; // Capture current value
+    
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+      // Debounce resize events
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const newIsMobile = window.innerWidth < 1024;
+        if (newIsMobile !== currentIsMobile) {
+          // Reload page when switching between mobile and desktop
+          window.location.reload();
+        }
+      }, 150); // Small delay to avoid too many reloads during resize
     };
     
-    checkMobile();
+    // Always set up listener - React needs consistent hook structure
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    return () => {
+      clearTimeout(resizeTimeout);
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, [isMobile]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -185,10 +209,13 @@ export const LandingPage = () => {
 
   // Handle scroll to hide/show topbar
   useEffect(() => {
-    let lastScrollY = window.scrollY;
+    let lastScrollY = 0;
     
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      // In fullscreen mode, get scroll from container, otherwise from window
+      const currentScrollY = isFullscreen && scrollContainerRef.current
+        ? scrollContainerRef.current.scrollTop
+        : window.scrollY;
       
       // Hide header when scrolling down, show when scrolling up
       if (currentScrollY > lastScrollY && currentScrollY > 300) {
@@ -200,14 +227,20 @@ export const LandingPage = () => {
       lastScrollY = currentScrollY;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Show mobile landing page for mobile devices
-  if (isMobile) {
-    return <MobileLandingPage />;
-  }
+    // In fullscreen mode, listen to scroll on the container, otherwise on window
+    const scrollTarget = isFullscreen && scrollContainerRef.current
+      ? scrollContainerRef.current
+      : window;
+    
+    scrollTarget.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      if (scrollTarget instanceof Window) {
+        scrollTarget.removeEventListener('scroll', handleScroll);
+      } else {
+        scrollTarget?.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [isFullscreen]);
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
     try {
@@ -265,10 +298,42 @@ export const LandingPage = () => {
     setShowEmailConfirmation(false);
   };
 
+  // Handle fullscreen toggle
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch((err) => {
+        console.error('Error attempting to enable fullscreen:', err);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch((err) => {
+        console.error('Error attempting to exit fullscreen:', err);
+      });
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   // Usunięto pełnoekranowy loading - teraz loading jest tylko w formularzu
 
   return (
-    <div className="dark min-h-screen bg-gray-900 text-white">
+    <div 
+      ref={scrollContainerRef}
+      className={`dark min-h-screen bg-gray-900 text-white ${isFullscreen ? 'fixed inset-0 z-[9999] overflow-y-auto' : ''}`}
+    >
       {/* Topbar - znika przy scrollowaniu */}
       <motion.div
         initial={{ y: 0 }}
@@ -280,7 +345,11 @@ export const LandingPage = () => {
         }}
       >
         <div className="max-w-7xl mx-auto px-4 py-2">
-          <div className="flex items-center justify-center gap-4">
+          <div 
+            className="flex items-center justify-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Wyłącz tryb pełnoekranowy" : "Włącz tryb pełnoekranowy"}
+          >
             <img src="/logo.png" alt="Logo" className="w-18 h-18" />
             <h1 className="text-3xl font-bold" style={{ fontFamily: 'Exo 2, sans-serif' }}>
               <span className="text-blue-600 dark:text-blue-500">Zgłoś</span>
@@ -396,31 +465,31 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Screenshots Gallery Section */}
-      <section className="py-32 px-4 bg-gray-900">
-        <div className="max-w-7xl mx-auto">
-          <div className="space-y-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-                Zobacz aplikację w akcji
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                Zobacz jak działa i wygląda aplikacja oraz poznaj krok po kroku, jak z niej korzystać
-              </p>
-            </div>
-            
-            {sections.map((section, sectionIndex) => (
-              <div key={sectionIndex} className="space-y-6">
-                <div className="text-center">
-                  <h3 className="text-2xl lg:text-3xl font-bold text-white mb-2" style={{ fontFamily: 'Exo 2, sans-serif' }}>
-                    {section.title}
-                  </h3>
-                  <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-                    {section.description}
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {section.screenshots.map((screenshot, index) => (
+       {/* Screenshots Gallery Section */}
+       <section className="py-32 px-4 bg-gray-900">
+         <div className="max-w-7xl mx-auto">
+           <div className="space-y-20">
+             <div className="text-center mb-16">
+               <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
+                 Prezentacja funkcjonalności
+               </h2>
+               <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
+                 Przegląd głównych modułów i możliwości platformy
+               </p>
+             </div>
+             
+             {sections.map((section, sectionIndex) => (
+               <div key={sectionIndex} className="space-y-6">
+                 <div className="text-center">
+                   <h3 className="text-2xl lg:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Exo 2, sans-serif' }}>
+                     {section.title}
+                   </h3>
+                   <p className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                     {section.description}
+                   </p>
+                 </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                   {section.screenshots.map((screenshot, index) => (
                     <div key={screenshot.filename} className="relative group">
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-3xl blur-md opacity-35 group-hover:opacity-50 transition-opacity"></div>
                       <img 
@@ -432,10 +501,71 @@ export const LandingPage = () => {
                   ))}
                 </div>
                 {sectionIndex < sections.length - 1 && (
-                  <div className="border-t border-gray-700 pt-8"></div>
+                  <div className="border-t border-gray-700 pt-16 mt-16"></div>
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Technologies Section */}
+      <section className="py-32 px-4 bg-gray-900 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
+              Technologie aplikacji
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Frontend</p>
+              <p className="text-gray-400 text-sm">React, TypeScript, Tailwind CSS</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Backend</p>
+              <p className="text-gray-400 text-sm">.NET</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Routing</p>
+              <p className="text-gray-400 text-sm">React Router</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Mapy</p>
+              <p className="text-gray-400 text-sm">Leaflet, Google Maps</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Mobile</p>
+              <p className="text-gray-400 text-sm">Capacitor</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Containerization</p>
+              <p className="text-gray-400 text-sm">Docker</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Animacje</p>
+              <p className="text-gray-400 text-sm">Framer Motion</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Build</p>
+              <p className="text-gray-400 text-sm">Vite</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Hosting Frontend</p>
+              <p className="text-gray-400 text-sm">Vercel</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Registry</p>
+              <p className="text-gray-400 text-sm">Docker Hub</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">Storage</p>
+              <p className="text-gray-400 text-sm">LocalStorage</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white mb-2">API</p>
+              <p className="text-gray-400 text-sm">REST</p>
+            </div>
           </div>
         </div>
       </section>
