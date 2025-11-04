@@ -503,7 +503,7 @@ export const LandingPage = () => {
           </div>
           <div className="text-center">
             <p className="text-lg text-gray-300 mb-4 leading-relaxed max-w-3xl mx-auto">
-              Możesz przetestować aplikację na telefonie, wchodząc na stronę <span className="text-white font-semibold">www.zglospomnik.pl</span>, rejestrując się lub korzystając z konta testowego: <span className="text-white font-semibold">user@example.com</span> / <span className="text-white font-semibold">haslo</span>
+              Możesz przetestować aplikację na telefonie, wchodząc na stronę <span className="text-white font-semibold">www.zglospomnik.pl</span>, rejestrując się lub korzystając z konta testowego: <span className="text-white font-semibold">user@example.com</span> / <span className="text-white font-semibold">string</span>
             </p>
             <p className="text-lg text-gray-300 mb-2 leading-relaxed max-w-3xl mx-auto">
               Dziękujemy za dotarcie tutaj. Liczymy na wsparcie w rozwoju aplikacji.
