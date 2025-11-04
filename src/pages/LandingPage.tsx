@@ -17,58 +17,41 @@ interface ScreenshotInfo {
 }
 
 const SCREENSHOTS = [
-  'Screenshot_2025-11-03-21-59-44-420_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-00-08-672_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-00-53-147_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-01-31-450_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-55-28-478_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-55-54-683_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-56-11-207_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-56-21-356_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-56-46-969_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-57-07-364_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-57-14-244_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-22-57-29-565_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-05-59-436_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-06-20-996_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-06-50-670_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-07-23-762_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-08-02-793_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-08-21-147_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-12-53-327_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-12-57-829_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-14-58-007_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-15-08-413_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-15-17-066_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-15-31-050_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-16-48-486_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-16-56-575_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-17-02-871_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-17-09-593_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-17-27-873_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-18-28-465_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-18-51-771_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-19-09-798_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-21-29-832_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-21-43-477_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-21-55-558_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-21-59-170_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-22-28-401_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-22-36-112_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-22-51-501_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-22-59-060_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-23-04-968_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-23-12-689_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-23-31-852_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-23-48-037_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-24-10-934_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-24-21-887_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-24-35-165_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-25-03-662_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-25-24-336_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-25-44-675_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-25-53-314_com.zglospomnik.app.jpg',
-  'Screenshot_2025-11-03-23-26-10-157_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-05-32-577_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-05-50-628_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-06-18-589_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-06-33-944_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-08-13-624_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-08-39-588_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-09-21-489_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-09-47-314_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-11-53-978_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-11-57-043_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-12-56-551_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-14-05-829_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-15-47-188_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-17-35-963_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-18-16-333_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-18-25-131_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-18-56-407_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-25-52-966_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-13-10-01-091_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-31-32-948_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-31-54-113_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-31-57-588_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-36-50-000_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-36-51-000_com.zglospomnik.app.jpg',
+
+  'Screenshot_2025-11-04-11-33-20-268_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-33-28-225_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-33-37-646_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-13-31-01-905_com.zglospomnik.app.jpg',
+
+  'Screenshot_2025-11-04-13-34-57-130_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-33-07-223_com.zglospomnik.app.jpg',
+
+  'Screenshot_2025-11-04-11-33-47-267_com.zglospomnik.app.jpg',
+  'Screenshot_2025-11-04-11-33-57-842_com.zglospomnik.app.jpg',
 ];
 
 const parseScreenshotFilename = (filename: string): ScreenshotInfo => {
@@ -130,14 +113,14 @@ export const LandingPage = () => {
     return <MobileLandingPage />;
   }
 
-  const sortedScreenshots = useMemo(() => {
-    return SCREENSHOTS.map(parseScreenshotFilename)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  // Parse screenshots without sorting - use them in the order they appear in SCREENSHOTS array
+  const parsedScreenshots = useMemo(() => {
+    return SCREENSHOTS.map(parseScreenshotFilename);
   }, []);
 
   // Divide screenshots into sections
   const sections = useMemo(() => {
-    const screenshots = sortedScreenshots;
+    const screenshots = parsedScreenshots;
     let index = 0;
     
     const createSection = (title: string, description: string, count: number) => {
@@ -152,8 +135,7 @@ export const LandingPage = () => {
        createSection('Zgłaszanie drzew', 'Kompleksowy formularz umożliwiający dodanie szczegółowych informacji o drzewie wraz z dokumentacją fotograficzną', 8),
        createSection('Generowanie wniosków', 'Automatyczne tworzenie profesjonalnych wniosków PDF o uznanie drzewa za pomnik przyrody z pełną dokumentacją', 8),
        createSection('Encyklopedia gatunków', 'Baza wiedzy o gatunkach drzew z możliwością rozszerzania przez moderatorów', 4),
-       createSection('Feed społecznościowy', 'Przeglądanie i interakcja ze zgłoszeniami innych użytkowników platformy', 4),
-       createSection('Profil użytkownika', 'Panel zarządzania danymi osobowymi, organizacyjnymi oraz statystykami aktywności', 4),
+       createSection('Feed społecznościowy i profil', 'Przeglądanie i interakcja ze zgłoszeniami innych użytkowników platformy oraz panel zarządzania danymi osobowymi, organizacyjnymi i statystykami aktywności', 8),
        createSection('Panel moderatora', 'Narzędzia administracyjne do zarządzania użytkownikami, weryfikacji zgłoszeń i zarządzania bazą gatunków', 4),
        createSection('Dodatkowe funkcje', 'Personalizacja ustawień, tryb ciemny, integracja z systemami mapowymi oraz wsparcie dla aplikacji mobilnych', 8),
      ];
@@ -169,7 +151,7 @@ export const LandingPage = () => {
     }
     
     return sectionsArray.filter(section => section.screenshots.length > 0);
-  }, [sortedScreenshots]);
+  }, [parsedScreenshots]);
 
   // Check if mobile on resize - reload page when switching between mobile/desktop
   useEffect(() => {
@@ -512,60 +494,23 @@ export const LandingPage = () => {
       {/* Technologies Section */}
       <section className="py-32 px-4 bg-gray-900 border-t border-gray-800">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
-              Technologie aplikacji
+          <div className="text-center mb-12">
+            <img src="/logo.png" alt="ZgłośPomnik Logo" className="w-32 h-32 mx-auto mb-6" />
+            <h2 className="text-4xl lg:text-6xl font-bold mb-4" style={{ fontFamily: 'Exo 2, sans-serif', lineHeight: '1.6' }}>
+              <span className="text-blue-600 dark:text-blue-500">Zgłoś</span>
+              <span className="text-green-600 dark:text-green-400">Pomnik</span>
             </h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Frontend</p>
-              <p className="text-gray-400 text-sm">React, TypeScript, Tailwind CSS</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Backend</p>
-              <p className="text-gray-400 text-sm">.NET</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Routing</p>
-              <p className="text-gray-400 text-sm">React Router</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Mapy</p>
-              <p className="text-gray-400 text-sm">Leaflet, Google Maps</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Mobile</p>
-              <p className="text-gray-400 text-sm">Capacitor</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Containerization</p>
-              <p className="text-gray-400 text-sm">Docker</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Animacje</p>
-              <p className="text-gray-400 text-sm">Framer Motion</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Build</p>
-              <p className="text-gray-400 text-sm">Vite</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Hosting Frontend</p>
-              <p className="text-gray-400 text-sm">Vercel</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Registry</p>
-              <p className="text-gray-400 text-sm">Docker Hub</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">Storage</p>
-              <p className="text-gray-400 text-sm">LocalStorage</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white mb-2">API</p>
-              <p className="text-gray-400 text-sm">REST</p>
-            </div>
+          <div className="text-center">
+            <p className="text-lg text-gray-300 mb-4 leading-relaxed max-w-3xl mx-auto">
+              Możesz przetestować aplikację na telefonie, wchodząc na stronę <span className="text-white font-semibold">www.zglospomnik.pl</span>, rejestrując się lub korzystając z konta testowego: <span className="text-white font-semibold">user@example.com</span> / <span className="text-white font-semibold">haslo</span>
+            </p>
+            <p className="text-lg text-gray-300 mb-2 leading-relaxed max-w-3xl mx-auto">
+              Dziękujemy za dotarcie tutaj. Liczymy na wsparcie w rozwoju aplikacji.
+            </p>
+            <p className="text-sm text-gray-400 mt-6 leading-relaxed max-w-3xl mx-auto">
+              Technologie: React, TypeScript, Tailwind CSS, .NET C#, SQL, Leaflet, Docker, Vercel
+            </p>
           </div>
         </div>
       </section>
