@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, TreePine } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Species, ApiTreeSubmission } from '../../types';
 import { speciesService } from '../../services/speciesService';
@@ -12,6 +12,7 @@ import { TreeReportFormSectionSpecies } from './TreeReportFormSectionSpecies';
 import { TreeReportFormSectionDetails } from './TreeReportFormSectionDetails';
 import { TreeReportFormSectionNotes } from './TreeReportFormSectionNotes';
 import { TreeSubmissionValidation } from '../../utils/validationRules';
+import { logger } from '../../utils/logger';
 
 
 interface TreeReportFormProps {
@@ -45,7 +46,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
 
   // Synchronize photos with external state
   React.useEffect(() => {
-    console.log('TreeReportForm: externalPhotos changed:', externalPhotos?.length || 0, 'photos');
+    logger.log('TreeReportForm: externalPhotos changed:', externalPhotos?.length || 0, 'photos');
     if (externalPhotos !== undefined) {
       setPhotos(externalPhotos);
     }
@@ -215,7 +216,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           handlePhotosChange(restoredPhotos);
         }
       } catch (error) {
-        console.error('Error loading saved form data:', error);
+        logger.error('Error loading saved form data:', error);
       }
     }
   }, []);
@@ -226,10 +227,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
     const loadAllSpecies = async () => {
       setIsLoadingSpecies(true);
       try {
-        console.log('TreeReportForm: Loading species...');
+        logger.log('TreeReportForm: Loading species...');
         const species = await speciesService.getSpecies();
-        console.log('TreeReportForm: Loaded species count:', species.length);
-        console.log('TreeReportForm: Species data:', species);
+        logger.log('TreeReportForm: Loaded species count:', species.length);
+        logger.log('TreeReportForm: Species data:', species);
         setAllSpecies(species);
         setFilteredSpecies(species);
         
@@ -249,11 +250,11 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
               }
             }
           } catch (error) {
-            console.error('Error restoring selected species:', error);
+            logger.error('Error restoring selected species:', error);
           }
         }
       } catch (error) {
-        console.error('Error loading species:', error);
+        logger.error('Error loading species:', error);
       } finally {
         setIsLoadingSpecies(false);
       }
@@ -319,7 +320,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         };
         localStorage.setItem('treeReportFormData', JSON.stringify(formData));
       } catch (error) {
-        console.error('Error saving form data:', error);
+        logger.error('Error saving form data:', error);
       }
     };
     
@@ -372,7 +373,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
 
     // Check authentication status
     if (!isAuthenticated) {
-      console.error('User is not authenticated');
+      logger.error('User is not authenticated');
       return;
     }
 
@@ -435,10 +436,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         setValidationErrors({});
 
         // Debug arrays before sending
-        console.log('TreeReportForm: Arrays before sending:');
-        console.log('- soilTags:', soilTags, 'length:', soilTags.length);
-        console.log('- healthTags:', healthTags, 'length:', healthTags.length);
-        console.log('- environmentTags:', environmentTags, 'length:', environmentTags.length);
+        logger.log('TreeReportForm: Arrays before sending:');
+        logger.log('- soilTags:', soilTags, 'length:', soilTags.length);
+        logger.log('- healthTags:', healthTags, 'length:', healthTags.length);
+        logger.log('- environmentTags:', environmentTags, 'length:', environmentTags.length);
 
         // Transform data to match API specification
         const apiTreeData: ApiTreeSubmission = {
@@ -467,10 +468,10 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
           isMonument: false // Default to false, can be changed later
         };
 
-        console.log('TreeReportForm: Final apiTreeData arrays:');
-        console.log('- soil:', apiTreeData.soil, 'length:', apiTreeData.soil?.length || 0);
-        console.log('- health:', apiTreeData.health, 'length:', apiTreeData.health?.length || 0);
-        console.log('- environment:', apiTreeData.environment, 'length:', apiTreeData.environment?.length || 0);
+        logger.log('TreeReportForm: Final apiTreeData arrays:');
+        logger.log('- soil:', apiTreeData.soil, 'length:', apiTreeData.soil?.length || 0);
+        logger.log('- health:', apiTreeData.health, 'length:', apiTreeData.health?.length || 0);
+        logger.log('- environment:', apiTreeData.environment, 'length:', apiTreeData.environment?.length || 0);
 
         // Submit to API with photos and map screenshot
         await treesService.submitTreeReport(apiTreeData, photos, mapScreenshot);
@@ -505,7 +506,7 @@ export const TreeReportForm: React.FC<TreeReportFormProps> = ({
         return;
       }
     } catch (error) {
-      console.error('Error submitting report:', error);
+      logger.error('Error submitting report:', error);
     } finally {
       setIsSubmitting(false);
     }

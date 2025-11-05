@@ -1,8 +1,9 @@
 // Serwis administratora - używa prawdziwych API
-import { Tree, Species, User } from '../types';
+import { Tree, Species } from '../types';
 import { applicationsService } from './applicationsService';
 import { treesService } from './treesService';
 import { authService } from './authService';
+import { logger } from '../utils/logger';
 
 export interface AdminUser {
   id: string;
@@ -52,10 +53,10 @@ class AdminService {
   // Pobierz wszystkie drzewa (używa prawdziwego API)
   async getAllTrees(): Promise<Tree[]> {
     try {
-      console.log('API Call: getAllTrees (admin)');
+      logger.log('API Call: getAllTrees (admin)');
       return await applicationsService.getAllTrees();
     } catch (error) {
-      console.error('Error fetching trees:', error);
+      logger.error('Error fetching trees:', error);
       throw error;
     }
   }
@@ -63,7 +64,7 @@ class AdminService {
   // Pobierz wszystkich użytkowników (prawdziwe API)
   async getAllUsers(): Promise<AdminUser[]> {
     try {
-      console.log('API Call: getAllUsers (admin)');
+      logger.log('API Call: getAllUsers (admin)');
       const token = localStorage.getItem('auth_token');
       
       const response = await fetch(`${this.baseUrl}/Users`, {
@@ -90,7 +91,7 @@ class AdminService {
         status: user.status || 'active'
       }));
     } catch (error) {
-      console.error('Error fetching users:', error);
+      logger.error('Error fetching users:', error);
       // Return mock data when API fails
       return [
         {
@@ -121,7 +122,7 @@ class AdminService {
   // Pobierz wszystkie gatunki (prawdziwe API)
   async getAllSpecies(): Promise<Species[]> {
     try {
-      console.log('API Call: getAllSpecies (admin)');
+      logger.log('API Call: getAllSpecies (admin)');
       const token = localStorage.getItem('auth_token');
       
       const response = await fetch(`${this.baseUrl}/Species`, {
@@ -158,7 +159,7 @@ class AdminService {
         }
       }));
     } catch (error) {
-      console.error('Error fetching species:', error);
+      logger.error('Error fetching species:', error);
       // Return mock data when API fails
       return [
         {
@@ -189,7 +190,7 @@ class AdminService {
   // Dodaj nowy gatunek
   async createSpecies(speciesData: SpeciesFormData): Promise<Species> {
     try {
-      console.log('API Call: createSpecies (admin)');
+      logger.log('API Call: createSpecies (admin)');
       const formData = new FormData();
       
       formData.append('PolishName', speciesData.polishName);
@@ -231,7 +232,7 @@ class AdminService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating species:', error);
+      logger.error('Error creating species:', error);
       throw error;
     }
   }
@@ -239,7 +240,7 @@ class AdminService {
   // Edytuj gatunek
   async updateSpecies(speciesId: string, speciesData: SpeciesFormData): Promise<Species> {
     try {
-      console.log(`API Call: updateSpecies ${speciesId} (admin)`);
+      logger.log(`API Call: updateSpecies ${speciesId} (admin)`);
       const formData = new FormData();
       
       formData.append('PolishName', speciesData.polishName);
@@ -281,7 +282,7 @@ class AdminService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error updating species:', error);
+      logger.error('Error updating species:', error);
       throw error;
     }
   }
@@ -289,7 +290,7 @@ class AdminService {
   // Usuń gatunek
   async deleteSpecies(speciesId: string): Promise<void> {
     try {
-      console.log(`API Call: deleteSpecies ${speciesId} (admin)`);
+      logger.log(`API Call: deleteSpecies ${speciesId} (admin)`);
       const token = authService.getToken();
       const response = await fetch(`${this.baseUrl}/Species/${speciesId}`, {
         method: 'DELETE',
@@ -303,7 +304,7 @@ class AdminService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error deleting species:', error);
+      logger.error('Error deleting species:', error);
       throw error;
     }
   }
@@ -312,10 +313,10 @@ class AdminService {
   // Usuń drzewo (używa istniejącego API)
   async deleteTree(treeId: string): Promise<void> {
     try {
-      console.log(`API Call: deleteTree ${treeId} (admin)`);
+      logger.log(`API Call: deleteTree ${treeId} (admin)`);
       await treesService.deleteTree(treeId);
     } catch (error) {
-      console.error('Error deleting tree:', error);
+      logger.error('Error deleting tree:', error);
       throw error;
     }
   }
@@ -323,7 +324,7 @@ class AdminService {
   // Usuń użytkownika (prawdziwe API)
   async deleteUser(userId: string): Promise<void> {
     try {
-      console.log(`API Call: deleteUser ${userId} (admin)`);
+      logger.log(`API Call: deleteUser ${userId} (admin)`);
       const response = await fetch(`${this.baseUrl}/Users/${userId}`, {
         method: 'DELETE',
         headers: {
@@ -335,7 +336,7 @@ class AdminService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
+      logger.error('Error deleting user:', error);
       throw error;
     }
   }
@@ -343,7 +344,7 @@ class AdminService {
   // Zawieś/odblokuj użytkownika (prawdziwe API)
   async toggleUserStatus(userId: string, status: 'active' | 'suspended' | 'banned'): Promise<void> {
     try {
-      console.log(`API Call: toggleUserStatus ${userId} to ${status} (admin)`);
+      logger.log(`API Call: toggleUserStatus ${userId} to ${status} (admin)`);
       const response = await fetch(`${this.baseUrl}/Users/${userId}/status`, {
         method: 'PUT',
         headers: {
@@ -356,20 +357,20 @@ class AdminService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error updating user status:', error);
+      logger.error('Error updating user status:', error);
       throw error;
     }
   }
 
   // Weryfikuj hasło administratora
-  async verifyAdminPassword(password: string): Promise<boolean> {
+  async verifyAdminPassword(_password: string): Promise<boolean> {
     try {
-      console.log('API Call: verifyAdminPassword (admin)');
+      logger.log('API Call: verifyAdminPassword (admin)');
       // TODO: Implement real API call for password verification
       // For now, return false to disable admin functions
       return false;
     } catch (error) {
-      console.error('Error verifying admin password:', error);
+      logger.error('Error verifying admin password:', error);
       return false;
     }
   }
@@ -377,7 +378,7 @@ class AdminService {
   // Pobierz statystyki administratora (obliczane z prawdziwych danych)
   async getAdminStats(): Promise<AdminStats> {
     try {
-      console.log('API Call: getAdminStats (admin) - calculated from real data');
+      logger.log('API Call: getAdminStats (admin) - calculated from real data');
       const [trees, users] = await Promise.all([
         this.getAllTrees(),
         this.getAllUsers()
@@ -393,7 +394,7 @@ class AdminService {
         activeUsers: users.filter(user => user.status === 'active').length
       };
     } catch (error) {
-      console.error('Error fetching admin stats:', error);
+      logger.error('Error fetching admin stats:', error);
       throw error;
     }
   }

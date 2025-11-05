@@ -3,6 +3,7 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
 import { Tree } from '../../types';
+import { logger } from '../../utils/logger';
 
 interface TreeInfoPopupProps {
   tree: Tree;
@@ -16,7 +17,7 @@ export const TreeInfoPopup: React.FC<TreeInfoPopupProps> = ({
   onGoToFeed
 }) => {
   // Log tree object to console for debugging
-  console.log('TreeInfoPopup - Tree object:', tree);
+  logger.log('TreeInfoPopup - Tree object:', tree);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [showMapScreenshotModal, setShowMapScreenshotModal] = useState(false);

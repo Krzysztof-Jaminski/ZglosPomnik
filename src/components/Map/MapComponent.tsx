@@ -9,6 +9,7 @@ import { GlassButton } from '../UI/GlassButton';
 import { TreeInfoPopup } from './TreeInfoPopup';
 import { AuthContext } from '../../context/AuthContext';
 import { useContext } from 'react';
+import { logger } from '../../utils/logger';
 
 interface MapComponentProps {
   onGoToFeed?: (treeId: string) => void;
@@ -118,7 +119,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       };
       
       localStorage.setItem('mapState', JSON.stringify(state));
-      console.log('Map state saved:', state);
+      logger.log('Map state saved:', state);
     }
   };
 
@@ -128,11 +129,11 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       const savedState = localStorage.getItem('mapState');
       if (savedState) {
         const state = JSON.parse(savedState);
-        console.log('Map state loaded:', state);
+        logger.log('Map state loaded:', state);
         return state;
       }
     } catch (error) {
-      console.error('Error loading map state:', error);
+      logger.error('Error loading map state:', error);
     }
     return null;
   };
@@ -175,7 +176,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       if (!roadmapMapRef.current || !satelliteMapRef.current || roadmapMap || satelliteMap) return;
 
       try {
-        console.log('Initializing both maps...');
+        logger.log('Initializing both maps...');
         
         // Ensure Leaflet CSS is loaded
         if (!document.querySelector('link[href*="leaflet"]')) {
@@ -293,7 +294,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         
         // Add fallback handling for satellite tiles
         satelliteTiles.on('tileerror', () => {
-          console.warn('Satellite tile error, switching to fallback');
+          logger.warn('Satellite tile error, switching to fallback');
           satelliteInstance.removeLayer(satelliteTiles);
           satelliteFallback.addTo(satelliteInstance);
         });
@@ -325,9 +326,9 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
         // Set initial map type from saved state
         setMapType(initialMapType);
 
-        console.log('Both maps initialized successfully');
+        logger.log('Both maps initialized successfully');
       } catch (error) {
-        console.error('Error initializing maps:', error);
+        logger.error('Error initializing maps:', error);
         setError('Nie udało się załadować mapy. Sprawdź połączenie internetowe.');
       }
     };
@@ -339,7 +340,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
   useEffect(() => {
     if (!roadmapMapRef.current || !satelliteMapRef.current) return;
 
-    console.log('Switching map visibility to:', mapType);
+    logger.log('Switching map visibility to:', mapType);
     
     if (mapType === 'roadmap') {
       roadmapMapRef.current.style.display = 'block';
@@ -351,7 +352,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       // Force refresh satellite map when switching to it - NO DELAY
       if (satelliteMap) {
         satelliteMap.invalidateSize();
-        console.log('Satellite map refreshed');
+        logger.log('Satellite map refreshed');
       }
     }
 
@@ -402,7 +403,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
             });
             
             if (clickedMarker) {
-              console.log('Clicked on existing tree marker, not adding new marker');
+              logger.log('Clicked on existing tree marker, not adding new marker');
             return;
             }
             
@@ -415,7 +416,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
             setShowTreePopup(false);
             
             // Add blue marker at clicked location
-            console.log('Adding blue click marker at:', lat, lng);
+            logger.log('Adding blue click marker at:', lat, lng);
             const clickMarker = L.circleMarker([lat, lng], {
               radius: 8, // Smaller radius
               fillColor: '#3b82f6',
@@ -449,17 +450,17 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
       try {
         let treesData;
         
-        console.log('=== LOADING TREES ===');
-        console.log('isAuthenticated:', isAuthenticated);
+        logger.log('=== LOADING TREES ===');
+        logger.log('isAuthenticated:', isAuthenticated);
         
         if (isAuthenticated) {
-          console.log('Loading trees from API...');
+          logger.log('Loading trees from API...');
           treesData = await treesService.getTrees();
-          console.log('API returned trees:', treesData.length);
+          logger.log('API returned trees:', treesData.length);
         } else {
-          console.log('Loading mock trees...');
+          logger.log('Loading mock trees...');
           treesData = await api.getTrees();
-          console.log('Mock returned trees:', treesData.length);
+          logger.log('Mock returned trees:', treesData.length);
         }
         
         setTrees(treesData);
@@ -472,9 +473,9 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           satelliteMarkersRef.current = [];
 
           // Add markers to both maps
-          console.log('Adding markers for', treesData.length, 'trees');
+          logger.log('Adding markers for', treesData.length, 'trees');
           treesData.forEach((tree, index) => {
-            console.log(`Adding marker ${index + 1} at:`, tree.location.lat, tree.location.lng);
+            logger.log(`Adding marker ${index + 1} at:`, tree.location.lat, tree.location.lng);
             
             // Create markers for both maps
             const roadmapMarker = L.circleMarker([tree.location.lat, tree.location.lng], {
@@ -522,7 +523,7 @@ export const MapComponent = forwardRef<MapComponentRef, MapComponentProps>(({ on
           });
         }
       } catch (error) {
-        console.error('Error loading trees:', error);
+        logger.error('Error loading trees:', error);
       }
     };
 

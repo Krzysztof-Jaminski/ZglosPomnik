@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FormField, FormSchema, Tree, Commune, ApplicationTemplate } from '../../types';
 import { motion } from 'framer-motion';
 import { GlassButton } from '../UI/GlassButton';
+import { logger } from '../../utils/logger';
 import { ArrowLeft, Bot, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { applicationsService } from '../../services/applicationsService';
@@ -54,7 +55,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         const parsedData = JSON.parse(savedFormData);
         Object.assign(initialData, parsedData);
       } catch (error) {
-        console.error('Error loading saved form data:', error);
+        logger.error('Error loading saved form data:', error);
       }
     }
     
@@ -338,12 +339,12 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       
       if (applicationId) {
         try {
-          console.log('Calling Gemini to generate justification for application:', applicationId);
+          logger.log('Calling Gemini to generate justification for application:', applicationId);
           generatedDescription = await applicationsService.generateJustification(applicationId);
-          console.log('Generated justification from Gemini:', generatedDescription);
+          logger.log('Generated justification from Gemini:', generatedDescription);
         } catch (error) {
-          console.error('Gemini API error:', error);
-          console.log('Falling back to default description');
+          logger.error('Gemini API error:', error);
+          logger.log('Falling back to default description');
           // Continue with fallback data if backend fails
         }
       }
@@ -371,36 +372,36 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         field.label.toLowerCase().includes('wniosku')
       );
       
-      console.log('Found justification field:', justificationField);
+      logger.log('Found justification field:', justificationField);
       
       // Add generated description if available
       if (generatedDescription && justificationField) {
         mockData[justificationField.name] = generatedDescription;
-        console.log(`Setting ${justificationField.name} (${justificationField.label}) with:`, generatedDescription.substring(0, 100) + '...');
+        logger.log(`Setting ${justificationField.name} (${justificationField.label}) with:`, generatedDescription.substring(0, 100) + '...');
       }
       
       // Debug: Log all available fields
-      console.log('Available form fields:', schema.requiredFields.map(f => ({ name: f.name, label: f.label })));
-      console.log('Current form data:', formData);
-      console.log('Mock data to apply:', mockData);
+      logger.log('Available form fields:', schema.requiredFields.map(f => ({ name: f.name, label: f.label })));
+      logger.log('Current form data:', formData);
+      logger.log('Mock data to apply:', mockData);
       
       // Only fill empty fields
       const updatedData: Record<string, any> = {};
       schema.requiredFields.forEach(field => {
         // If field is empty and we have mock data for it, use mock data
         if (!formData[field.name] && mockData[field.name]) {
-          console.log(`Filling field ${field.name} (${field.label}) with:`, mockData[field.name]);
+          logger.log(`Filling field ${field.name} (${field.label}) with:`, mockData[field.name]);
           updatedData[field.name] = mockData[field.name];
         }
       });
       
       // Also try to fill justification field directly if found
       if (generatedDescription && justificationField && !formData[justificationField.name] && !updatedData[justificationField.name]) {
-        console.log(`Filling justification field ${justificationField.name} directly`);
+        logger.log(`Filling justification field ${justificationField.name} directly`);
         updatedData[justificationField.name] = generatedDescription;
       }
       
-      console.log('Final updated data:', updatedData);
+      logger.log('Final updated data:', updatedData);
       
       // Update form data
       setFormData(prev => ({ ...prev, ...updatedData }));
@@ -409,7 +410,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       localStorage.setItem('applicationFormData', JSON.stringify({ ...formData, ...updatedData }));
       
     } catch (error) {
-      console.error('Auto-fill error:', error);
+      logger.error('Auto-fill error:', error);
       // Show inline error instead of alert
       setErrors(prev => ({
         ...prev,

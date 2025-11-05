@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '../utils/logger';
 
 interface UseImageLoaderResult {
   imageUrl: string;
@@ -34,7 +35,7 @@ export const useImageLoader = (originalUrl: string, fallbackUrl: string = '/logo
       // Use proxy in development
       const blobPath = originalUrl.replace('https://drzewapistorage.blob.core.windows.net', '');
       finalUrl = `/blob-proxy${blobPath}`;
-      console.log('Using proxy for Azure Blob Storage:', finalUrl);
+      logger.log('Using proxy for Azure Blob Storage:', finalUrl);
     }
 
     setImageUrl(finalUrl);

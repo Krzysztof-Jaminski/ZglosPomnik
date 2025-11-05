@@ -5,6 +5,7 @@ import { GlassButton } from '../components/UI/GlassButton';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { logger } from '../utils/logger';
 
 interface SavedFormData {
   latitude?: number;
@@ -29,7 +30,7 @@ export const ReportPage: React.FC = () => {
   // Generate map screenshot directly from Leaflet map
   const generateMapScreenshot = useCallback(async (lat: number, lng: number): Promise<File | null> => {
     try {
-      console.log('Generating map screenshot for coordinates:', lat, lng);
+      logger.log('Generating map screenshot for coordinates:', lat, lng);
       
       // Create a temporary map container
       const tempContainer = document.createElement('div');
@@ -89,8 +90,8 @@ export const ReportPage: React.FC = () => {
       finalCanvas.height = canvas.height;
       const finalCtx = finalCanvas.getContext('2d');
       
-      console.log('Final canvas context:', finalCtx, 'Canvas size:', finalCanvas.width, 'x', finalCanvas.height);
-      console.log('Original html2canvas size:', canvas.width, 'x', canvas.height);
+      logger.log('Final canvas context:', finalCtx, 'Canvas size:', finalCanvas.width, 'x', finalCanvas.height);
+      logger.log('Original html2canvas size:', canvas.width, 'x', canvas.height);
       
       if (finalCtx) {
         // First draw the map screenshot
@@ -99,7 +100,7 @@ export const ReportPage: React.FC = () => {
         // Then draw the marker on top
         const centerX = finalCanvas.width / 2;
         const centerY = finalCanvas.height / 2;
-        console.log('Drawing marker at center:', centerX, centerY);
+        logger.log('Drawing marker at center:', centerX, centerY);
         
         // Draw green marker circle at center with proper transparency (same as main map)
         finalCtx.save(); // Save current state
@@ -118,9 +119,9 @@ export const ReportPage: React.FC = () => {
         finalCtx.stroke();
         
         finalCtx.restore(); // Restore state
-        console.log('Marker drawn successfully on final canvas');
+        logger.log('Marker drawn successfully on final canvas');
       } else {
-        console.log('No final canvas context available');
+        logger.log('No final canvas context available');
       }
 
       // Convert final canvas to blob
@@ -128,7 +129,7 @@ export const ReportPage: React.FC = () => {
         finalCanvas.toBlob((blob) => {
           if (blob) {
                   const file = new File([blob], `Mapa_Lokalizacji_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`, { type: 'image/png' });
-            console.log('Map screenshot generated:', file.name, file.size, 'bytes');
+            logger.log('Map screenshot generated:', file.name, file.size, 'bytes');
             resolve(file);
           } else {
             resolve(null);
@@ -141,7 +142,7 @@ export const ReportPage: React.FC = () => {
       });
 
     } catch (error) {
-      console.error('Error generating map screenshot:', error);
+      logger.error('Error generating map screenshot:', error);
       
       // Fallback: create a simple canvas with coordinates
       const canvas = document.createElement('canvas');
@@ -176,7 +177,7 @@ export const ReportPage: React.FC = () => {
           canvas.toBlob((blob) => {
             if (blob) {
                   const file = new File([blob], `Mapa_Lokalizacji_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`, { type: 'image/png' });
-              console.log('Fallback map screenshot generated:', file.name, file.size, 'bytes');
+              logger.log('Fallback map screenshot generated:', file.name, file.size, 'bytes');
               resolve(file);
             } else {
               resolve(null);
@@ -203,7 +204,7 @@ export const ReportPage: React.FC = () => {
         Math.abs(mapScreenshotCoords.lng - selectedLocation.lng) < 0.00001;
       
       if (coordsMatch && mapScreenshot) {
-        console.log('Using existing map screenshot for same coordinates');
+        logger.log('Using existing map screenshot for same coordinates');
         return;
       }
       
@@ -215,9 +216,9 @@ export const ReportPage: React.FC = () => {
         if (screenshot) {
           setMapScreenshot(screenshot);
           setMapScreenshotCoords(selectedLocation);
-          console.log('Auto-generated map screenshot for new coordinates');
+          logger.log('Auto-generated map screenshot for new coordinates');
         } else {
-          console.log('Failed to auto-generate map screenshot');
+          logger.log('Failed to auto-generate map screenshot');
         }
         setIsGeneratingMapScreenshot(false);
       });
@@ -228,7 +229,7 @@ export const ReportPage: React.FC = () => {
 
   // Synchronize photos with form
   const handlePhotosChange = (newPhotos: File[]) => {
-    console.log('ReportPage: handlePhotosChange called with', newPhotos.length, 'photos');
+    logger.log('ReportPage: handlePhotosChange called with', newPhotos.length, 'photos');
     setPhotos(newPhotos);
   };
 
@@ -257,7 +258,7 @@ export const ReportPage: React.FC = () => {
         handlePhotosChange(newPhotos);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
+      logger.error('Error taking photo:', error);
     }
   };
 
@@ -285,7 +286,7 @@ export const ReportPage: React.FC = () => {
       
       input.click();
     } catch (error) {
-      console.error('Error selecting photos:', error);
+      logger.error('Error selecting photos:', error);
     }
   };
 
@@ -320,7 +321,7 @@ export const ReportPage: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error('Error loading saved location:', error);
+        logger.error('Error loading saved location:', error);
       }
     }
     
@@ -377,7 +378,7 @@ export const ReportPage: React.FC = () => {
               }
             }
           } catch (error) {
-            console.error('Error loading saved photos and screenshot:', error);
+            logger.error('Error loading saved photos and screenshot:', error);
           }
         }
   }, [initializeLocation]);
@@ -404,7 +405,7 @@ export const ReportPage: React.FC = () => {
         try {
           formData = JSON.parse(savedData);
         } catch (error) {
-          console.error('Error parsing saved form data:', error);
+          logger.error('Error parsing saved form data:', error);
         }
       }
       
@@ -429,7 +430,7 @@ export const ReportPage: React.FC = () => {
           try {
             formData = JSON.parse(savedData);
           } catch (error) {
-            console.error('Error parsing saved form data:', error);
+            logger.error('Error parsing saved form data:', error);
           }
         }
         
@@ -467,7 +468,7 @@ export const ReportPage: React.FC = () => {
         
         localStorage.setItem('treeReportFormData', JSON.stringify(updatedFormData));
       } catch (error) {
-        console.error('Error saving to localStorage:', error);
+        logger.error('Error saving to localStorage:', error);
       }
     };
 

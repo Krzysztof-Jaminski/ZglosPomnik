@@ -1,7 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-console.log('AuthService API_BASE_URL:', API_BASE_URL);
 
 import { User } from '../types';
+import { logger } from '../utils/logger';
+
+logger.log('AuthService API_BASE_URL:', API_BASE_URL);
 
 export interface RegisterRequest {
   firstName: string;
@@ -67,7 +69,7 @@ class AuthService {
       const stored = localStorage.getItem('user_data');
       return stored ? JSON.parse(stored) : null;
     } catch (error) {
-      console.error('Error parsing stored user data:', error);
+      logger.error('Error parsing stored user data:', error);
       return null;
     }
   }
@@ -110,7 +112,7 @@ class AuthService {
     }
 
     const data = await response.json();
-    console.log('Registration response:', data);
+    logger.log('Registration response:', data);
     
     // Check if email verification is required
     if (data.requiresEmailVerification) {
@@ -171,11 +173,11 @@ class AuthService {
     }
 
     const data = await response.json();
-    console.log('Login response data:', data);
+    logger.log('Login response data:', data);
     const accessToken = data.accessToken;
     const refreshToken = data.refreshToken;
-    console.log('Extracted accessToken:', accessToken ? 'found' : 'not found');
-    console.log('Extracted refreshToken:', refreshToken ? 'found' : 'not found');
+    logger.log('Extracted accessToken:', accessToken ? 'found' : 'not found');
+    logger.log('Extracted refreshToken:', refreshToken ? 'found' : 'not found');
     
     if (accessToken) {
       this.token = accessToken;
@@ -183,16 +185,16 @@ class AuthService {
       if (refreshToken) {
         localStorage.setItem('refresh_token', refreshToken);
       }
-      console.log('Tokens saved to localStorage');
+      logger.log('Tokens saved to localStorage');
     } else {
-      console.error('No accessToken found in login response');
+      logger.error('No accessToken found in login response');
     }
 
     // User data will be fetched separately from /api/user/profile endpoint
 
     return data;
   } catch (error: any) {
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     
     // If it's already our custom error message, re-throw it
     if (error.message && !error.message.includes('HTTP error!')) {
@@ -211,7 +213,7 @@ class AuthService {
   async refreshAccessToken(): Promise<string | null> {
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) {
-      console.log('No refresh token available');
+      logger.log('No refresh token available');
       return null;
     }
 
@@ -226,7 +228,7 @@ class AuthService {
       });
 
       if (!response.ok) {
-        console.error('Token refresh failed:', response.status);
+        logger.error('Token refresh failed:', response.status);
         return null;
       }
 
@@ -236,13 +238,13 @@ class AuthService {
       if (newAccessToken) {
         this.token = newAccessToken;
         localStorage.setItem('auth_token', newAccessToken);
-        console.log('Access token refreshed successfully');
+        logger.log('Access token refreshed successfully');
         return newAccessToken;
       }
       
       return null;
     } catch (error) {
-      console.error('Error refreshing token:', error);
+      logger.error('Error refreshing token:', error);
       return null;
     }
   }
@@ -332,7 +334,7 @@ class AuthService {
       this.saveUser(userData);
       return userData;
     } catch (error) {
-      console.error('Get user profile error:', error);
+      logger.error('Get user profile error:', error);
       throw error;
     }
   }
@@ -370,8 +372,8 @@ class AuthService {
       throw new Error('No current user found');
     }
 
-    console.log('updateUserData called with:', userData);
-    console.log('Current user ID:', currentUser.id);
+    logger.log('updateUserData called with:', userData);
+    logger.log('Current user ID:', currentUser.id);
 
     try {
       // Create FormData for multipart/form-data - ALL fields must be sent
@@ -406,12 +408,12 @@ class AuthService {
         formData.append('Organization.Correspondence.City', corr.city || '');
       }
 
-      console.log('Updating user data with FormData:');
+      logger.log('Updating user data with FormData:');
       for (let [key, value] of formData.entries()) {
         if (value instanceof File) {
-          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+          logger.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
         } else {
-          console.log(`${key}: ${value}`);
+          logger.log(`${key}: ${value}`);
         }
       }
 
@@ -427,7 +429,7 @@ class AuthService {
       if (!response.ok) {
         // Log error details for debugging
         const errorText = await response.text();
-        console.error('API Error Response:', {
+        logger.error('API Error Response:', {
           status: response.status,
           statusText: response.statusText,
           body: errorText
@@ -449,7 +451,7 @@ class AuthService {
             
             if (!retryResponse.ok) {
               const retryErrorText = await retryResponse.text();
-              console.error('API Retry Error Response:', {
+              logger.error('API Retry Error Response:', {
                 status: retryResponse.status,
                 statusText: retryResponse.statusText,
                 body: retryErrorText
@@ -468,11 +470,11 @@ class AuthService {
       }
 
       const updatedUserData = await response.json();
-      console.log('User data updated successfully:', updatedUserData);
+      logger.log('User data updated successfully:', updatedUserData);
       this.saveUser(updatedUserData);
       return updatedUserData;
     } catch (error) {
-      console.error('Update user data error:', error);
+      logger.error('Update user data error:', error);
       throw error;
     }
   }
@@ -492,7 +494,7 @@ class AuthService {
       if (!response.ok) {
         // Try to get error message as text first (since API returns text/plain)
         const errorText = await response.text();
-        console.error('Resend email verification error response:', errorText);
+        logger.error('Resend email verification error response:', errorText);
         
         // Try to parse error as JSON to get specific error message
         let errorMessage = '';
@@ -527,7 +529,7 @@ class AuthService {
 
       // API returns text/plain, so we need to parse it as text first
       const responseText = await response.text();
-      console.log('Resend email verification response text:', responseText);
+      logger.log('Resend email verification response text:', responseText);
       
       // Try to parse as JSON
       try {
@@ -542,7 +544,7 @@ class AuthService {
         };
       }
     } catch (error: any) {
-      console.error('Resend email verification error:', error);
+      logger.error('Resend email verification error:', error);
       
       // If it's already our custom error message, re-throw it
       if (error.message && !error.message.includes('HTTP error!')) {
@@ -574,7 +576,7 @@ class AuthService {
       if (!response.ok) {
         // Try to get error message as text first (since API returns text/plain)
         const errorText = await response.text();
-        console.error('Forgot password error response:', errorText);
+        logger.error('Forgot password error response:', errorText);
         
         // Try to parse error as JSON to get specific error message
         let errorMessage = '';
@@ -613,7 +615,7 @@ class AuthService {
 
       // API returns text/plain, so we need to parse it as text first
       const responseText = await response.text();
-      console.log('Forgot password response text:', responseText);
+      logger.log('Forgot password response text:', responseText);
       
       // Try to parse as JSON
       try {
@@ -628,7 +630,7 @@ class AuthService {
         };
       }
     } catch (error: any) {
-      console.error('Forgot password error:', error);
+      logger.error('Forgot password error:', error);
       
       // If it's already our custom error message, re-throw it
       if (error.message && !error.message.includes('HTTP error!')) {
@@ -660,7 +662,7 @@ class AuthService {
       if (!response.ok) {
         // Try to get error message as text first (since API returns text/plain)
         const errorText = await response.text();
-        console.error('Reset password error response:', errorText);
+        logger.error('Reset password error response:', errorText);
         
         // Handle different error types with user-friendly messages
         switch (response.status) {
@@ -681,7 +683,7 @@ class AuthService {
 
       // API returns text/plain, so we need to parse it as text first
       const responseText = await response.text();
-      console.log('Reset password response text:', responseText);
+      logger.log('Reset password response text:', responseText);
       
       // Try to parse as JSON
       try {
@@ -696,7 +698,7 @@ class AuthService {
         };
       }
     } catch (error: any) {
-      console.error('Reset password error:', error);
+      logger.error('Reset password error:', error);
       
       // If it's already our custom error message, re-throw it
       if (error.message && !error.message.includes('HTTP error!')) {
@@ -726,7 +728,7 @@ class AuthService {
       if (!response.ok) {
         // Try to get error message as text first (since API returns text/plain)
         const errorText = await response.text();
-        console.error('Verify reset token error response:', errorText);
+        logger.error('Verify reset token error response:', errorText);
         
         // Handle different error types with user-friendly messages
         switch (response.status) {
@@ -747,7 +749,7 @@ class AuthService {
 
       // API returns text/plain, so we need to parse it as text first
       const responseText = await response.text();
-      console.log('Verify reset token response text:', responseText);
+      logger.log('Verify reset token response text:', responseText);
       
       // Try to parse as JSON
       try {
@@ -762,7 +764,7 @@ class AuthService {
         };
       }
     } catch (error: any) {
-      console.error('Verify reset token error:', error);
+      logger.error('Verify reset token error:', error);
       
       // If it's already our custom error message, re-throw it
       if (error.message && !error.message.includes('HTTP error!')) {
@@ -791,7 +793,7 @@ class AuthService {
     }
 
     try {
-      console.log('Changing password with new API format:', {
+      logger.log('Changing password with new API format:', {
         token: passwordData.token,
         newPassword: '[HIDDEN]',
         confirmPassword: '[HIDDEN]'
@@ -835,7 +837,7 @@ class AuthService {
               throw new Error('Failed to change password after token refresh');
             }
             
-            console.log('Password changed successfully');
+            logger.log('Password changed successfully');
             return; // Password change successful
           } else {
             throw new Error('Authentication token expired and refresh failed');
@@ -844,9 +846,9 @@ class AuthService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log('Password changed successfully');
+      logger.log('Password changed successfully');
     } catch (error) {
-      console.error('Change password error:', error);
+      logger.error('Change password error:', error);
       throw error;
     }
   }

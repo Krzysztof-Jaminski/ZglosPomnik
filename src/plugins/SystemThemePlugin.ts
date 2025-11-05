@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { NavigationBar } from '@capgo/capacitor-navigation-bar';
+import { logger } from '../utils/logger';
 
 export interface SystemThemePlugin {
   setStatusBarColor(options: { color: string }): Promise<void>;
@@ -377,7 +378,7 @@ class SystemThemePluginNative implements SystemThemePlugin {
       await StatusBar.setBackgroundColor({ color: options.color });
       await StatusBar.setOverlaysWebView({ overlay: false });
     } catch (error) {
-      console.error('Failed to set status bar color:', error);
+      logger.error('Failed to set status bar color:', error);
     }
   }
 
@@ -390,7 +391,7 @@ class SystemThemePluginNative implements SystemThemePlugin {
         darkButtons: !isDarkColor // Invert logic: light background = dark buttons, dark background = light buttons
       });
     } catch (error) {
-      console.error('Failed to set navigation bar color:', error);
+      logger.error('Failed to set navigation bar color:', error);
     }
   }
 
@@ -404,7 +405,7 @@ class SystemThemePluginNative implements SystemThemePlugin {
       
       await StatusBar.show();
     } catch (error) {
-      console.error('Failed to set system UI theme:', error);
+      logger.error('Failed to set system UI theme:', error);
     }
   }
 

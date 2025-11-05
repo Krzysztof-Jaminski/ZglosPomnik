@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { logger } from '../utils/logger';
 
 export const useHapticFeedback = () => {
   const triggerHaptic = useCallback(async (style: ImpactStyle = ImpactStyle.Medium) => {
@@ -10,7 +11,7 @@ export const useHapticFeedback = () => {
       }
     } catch (error) {
       // Ignoruj błędy haptic feedback - nie jest krytyczne dla działania aplikacji
-      console.log('Haptic feedback not available:', error);
+      logger.log('Haptic feedback not available:', error);
     }
   }, []);
 
@@ -34,7 +35,7 @@ export const useHapticFeedback = () => {
         await Haptics.selectionEnd();
       }
     } catch (error) {
-      console.log('Selection haptic feedback not available:', error);
+      logger.log('Selection haptic feedback not available:', error);
     }
   }, []);
 
@@ -46,7 +47,7 @@ export const useHapticFeedback = () => {
         });
       }
     } catch (error) {
-      console.log('Notification haptic feedback not available:', error);
+      logger.log('Notification haptic feedback not available:', error);
     }
   }, []);
 

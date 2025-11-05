@@ -4,6 +4,7 @@ import { SearchInput } from '../UI/SearchInput';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Species } from '../../types';
 import { GlassButton } from '../UI/GlassButton';
+import { logger } from '../../utils/logger';
 
 interface TreeReportFormSectionSpeciesProps {
   speciesQuery: string;
@@ -282,7 +283,7 @@ export const TreeReportFormSectionSpecies: React.FC<TreeReportFormSectionSpecies
                                     // Navigate to encyclopedia - it will use temporary localStorage key to find the species
                                     navigate('/encyclopedia');
                                   } catch (error) {
-                                    console.error('Error saving form data:', error);
+                                    logger.error('Error saving form data:', error);
                                   }
                                 }}
                                 variant="primary"

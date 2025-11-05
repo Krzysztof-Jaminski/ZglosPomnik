@@ -1,5 +1,6 @@
 import React from 'react';
 import { useImageLoader } from '../../hooks/useImageLoader';
+import { logger } from '../../utils/logger';
 
 interface ImageWithFallbackProps {
   src: string;
@@ -23,7 +24,7 @@ export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   const { imageUrl, isLoading, error } = useImageLoader(src, fallbackSrc);
 
   const handleError = () => {
-    console.warn(`Failed to load image: ${imageUrl}`);
+    logger.warn(`Failed to load image: ${imageUrl}`);
   };
 
   const handleLoad = () => {

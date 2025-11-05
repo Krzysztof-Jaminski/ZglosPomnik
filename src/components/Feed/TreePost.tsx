@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Edit, Trash2, X, ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import { TreePost as TreePostType, ApiTreeSubmission } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '../../utils/logger';
 import { useAutoTextarea } from '../../hooks/useAutoTextarea';
 import { DeleteConfirmationModal } from '../UI/DeleteConfirmationModal';
 import { treesService } from '../../services/treesService';
@@ -28,7 +29,7 @@ export const TreePost: React.FC<TreePostProps> = ({
   const { user, isModerator } = useAuth();
   
   // Log tree object to console for debugging
-  console.log('TreePost - Tree object:', post);
+  logger.log('TreePost - Tree object:', post);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -86,7 +87,7 @@ export const TreePost: React.FC<TreePostProps> = ({
     // TODO: TEMPORARY - Always try to delete, let API handle permission validation
     // TODO: In the future, this should check: user && post.userData.userId && post.userData.userId === user.id
     const hasPermission = true; // Always try to delete for now
-    console.log('Attempting to delete post:', {
+    logger.log('Attempting to delete post:', {
       hasPermission,
       postUserName: post.userData.userName,
       postUserId: post.userData.userId, // This is null/undefined for now
@@ -97,23 +98,23 @@ export const TreePost: React.FC<TreePostProps> = ({
     setIsDeleting(true);
     try {
       await treesService.deleteTree(post.id);
-      console.log('Post deleted successfully');
+      logger.log('Post deleted successfully');
       onDelete(post.id);
       setShowDeleteModal(false);
     } catch (error: any) {
-      console.error('Error deleting post:', error);
+      logger.error('Error deleting post:', error);
       
       // Handle specific error cases
       if (error.message?.includes('403')) {
-        console.log('403 Error - No permission to delete this post');
+        logger.log('403 Error - No permission to delete this post');
       } else if (error.message?.includes('404')) {
-        console.log('404 Error - Post not found');
+        logger.log('404 Error - Post not found');
       } else if (error.message?.includes('401')) {
-        console.log('401 Error - Session expired');
+        logger.log('401 Error - Session expired');
       } else if (error.message?.includes('500') || error.message?.includes('Server error')) {
-        console.log('500 Error - Server error:', error.message);
+        logger.log('500 Error - Server error:', error.message);
       } else {
-        console.log('Other error:', error.message);
+        logger.log('Other error:', error.message);
       }
     } finally {
       setIsDeleting(false);
@@ -206,7 +207,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                                           speciesId = matchingSpecies.id;
                                         }
                                       } catch (error) {
-                                        console.error('Error finding species:', error);
+                                        logger.error('Error finding species:', error);
                                       }
 
                                       if (!speciesId) {
@@ -253,14 +254,14 @@ export const TreePost: React.FC<TreePostProps> = ({
                                               const fileName = url.split('/').pop() || `image_${Date.now()}.jpg`;
                                               return new File([blob], fileName, { type: blob.type });
                                             } catch (error) {
-                                              console.error('Error loading photo:', url, error);
+                                              logger.error('Error loading photo:', url, error);
                                               return null;
                                             }
                                           });
                                           const fetchedPhotos = (await Promise.all(photoPromises)).filter((photo): photo is File => photo !== null);
                                           existingPhotos.push(...fetchedPhotos);
                                         } catch (error) {
-                                          console.error('Error loading existing photos:', error);
+                                          logger.error('Error loading existing photos:', error);
                                         }
                                       }
 
@@ -274,7 +275,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                                       if (onCancelEdit) onCancelEdit();
                                       if (onUpdate) onUpdate();
                                     } catch (error: any) {
-                                      console.error('Error updating tree:', error);
+                                      logger.error('Error updating tree:', error);
                                       alert(error.message || 'Błąd podczas aktualizacji');
                                     } finally {
                                       setIsSaving(false);
@@ -302,7 +303,7 @@ export const TreePost: React.FC<TreePostProps> = ({
                             {canDeletePost && (
                               <button
                                 onClick={() => {
-                                  console.log('Delete post clicked:', {
+                                  logger.log('Delete post clicked:', {
                                     hasPermission: canDeletePost,
                                     postUserName: post.userData.userName,
                                     postUserId: post.userData.userId,

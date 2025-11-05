@@ -1,6 +1,8 @@
 // Image proxy utility to handle CORS issues with Azure Blob Storage
 // This creates a proxy endpoint that fetches images from external sources
 
+import { logger } from './logger';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const getProxiedImageUrl = (originalUrl: string): string => {
@@ -35,7 +37,7 @@ export const fetchImageAsBlob = async (imageUrl: string): Promise<string> => {
     const blob = await response.blob();
     return URL.createObjectURL(blob);
   } catch (error) {
-    console.error('Error fetching image as blob:', error);
+    logger.error('Error fetching image as blob:', error);
     // Return a fallback image or the original URL
     return '/logo.png';
   }

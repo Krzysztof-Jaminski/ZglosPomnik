@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import JSZip from 'jszip';
 import { Capacitor } from '@capacitor/core';
+import { logger } from '../utils/logger';
 
 
 
@@ -29,7 +30,7 @@ export const ApplicationsPage: React.FC = () => {
       try {
         return JSON.parse(savedTree);
       } catch (error) {
-        console.error('Error parsing saved tree:', error);
+        logger.error('Error parsing saved tree:', error);
       }
     }
     return null;
@@ -40,7 +41,7 @@ export const ApplicationsPage: React.FC = () => {
       try {
         return JSON.parse(savedCommune);
       } catch (error) {
-        console.error('Error parsing saved commune:', error);
+        logger.error('Error parsing saved commune:', error);
       }
     }
     return null;
@@ -51,7 +52,7 @@ export const ApplicationsPage: React.FC = () => {
       try {
         return JSON.parse(savedTemplate);
       } catch (error) {
-        console.error('Error parsing saved template:', error);
+        logger.error('Error parsing saved template:', error);
       }
     }
     return null;
@@ -63,7 +64,7 @@ export const ApplicationsPage: React.FC = () => {
       try {
         return JSON.parse(savedApplication);
       } catch (error) {
-        console.error('Error parsing saved application:', error);
+        logger.error('Error parsing saved application:', error);
       }
     }
     return null;
@@ -161,7 +162,7 @@ export const ApplicationsPage: React.FC = () => {
         setGeneratedTreeScreenshotUrl(pdfData.treeScreenshotUrl || '');
         setIsPdfGenerated(true);
       } catch (error) {
-        console.error('Error loading saved PDF data:', error);
+        logger.error('Error loading saved PDF data:', error);
       }
     }
   }, []);
@@ -170,7 +171,7 @@ export const ApplicationsPage: React.FC = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       if (!isAuthenticated) {
-        console.warn('User not authenticated, skipping data load');
+        logger.warn('User not authenticated, skipping data load');
         setIsLoading(false);
         return;
       }
@@ -190,11 +191,11 @@ export const ApplicationsPage: React.FC = () => {
             
             // Use cached data if less than 5 minutes old
             if (cacheAge < 5 * 60 * 1000 && Array.isArray(cachedData) && cachedData.length > 0) {
-              console.log('ApplicationsPage: Using cached trees data');
+              logger.log('ApplicationsPage: Using cached trees data');
               setTrees(cachedData);
             }
           } catch (e) {
-            console.warn('Failed to parse cached trees:', e);
+            logger.warn('Failed to parse cached trees:', e);
           }
         }
         
@@ -206,11 +207,11 @@ export const ApplicationsPage: React.FC = () => {
             
             // Use cached data if less than 5 minutes old
             if (cacheAge < 5 * 60 * 1000 && Array.isArray(cachedData) && cachedData.length > 0) {
-              console.log('ApplicationsPage: Using cached communes data');
+              logger.log('ApplicationsPage: Using cached communes data');
               setCommunes(cachedData);
             }
           } catch (e) {
-            console.warn('Failed to parse cached communes:', e);
+            logger.warn('Failed to parse cached communes:', e);
           }
         }
         
@@ -219,7 +220,7 @@ export const ApplicationsPage: React.FC = () => {
         const isReturningFromReport = lastActivePage === 'report';
         
         if (isReturningFromReport) {
-          console.log('User returning from report page, restoring application state');
+          logger.log('User returning from report page, restoring application state');
           // Don't reset currentApplication if user is returning from report
           setUserManuallyClosedForm(false);
         }
@@ -253,13 +254,13 @@ export const ApplicationsPage: React.FC = () => {
             });
             
             if (matchingCommune) {
-              console.log('Auto-selected commune:', matchingCommune.name);
+              logger.log('Auto-selected commune:', matchingCommune.name);
               setSelectedCommune(matchingCommune);
             }
             setAutoSelectAttempted(true);
           }
         } catch (error) {
-        console.error('Error loading initial data:', error);
+        logger.error('Error loading initial data:', error);
           if (error instanceof Error && error.message.includes('autoryzacji')) {
             handleAuthError(error);
             await clearCacheAndReset();
@@ -285,21 +286,21 @@ export const ApplicationsPage: React.FC = () => {
           const templatesData = await applicationsService.getCommuneTemplates(selectedCommune.id);
           setTemplates(templatesData);
         } catch (error) {
-          console.error('Error loading templates:', error);
+          logger.error('Error loading templates:', error);
           if (error instanceof Error) {
             if (error.message.includes('autoryzacji')) {
               handleAuthError(error);
               await clearCacheAndReset();
               return;
             } else if (error.message.includes('404')) {
-              console.warn('No templates found for commune:', selectedCommune.id);
+              logger.warn('No templates found for commune:', selectedCommune.id);
               setTemplates([]);
             } else {
-              console.warn('Error loading templates');
+              logger.warn('Error loading templates');
               setTemplates([]);
             }
           } else {
-            console.warn('Error loading templates');
+            logger.warn('Error loading templates');
             setTemplates([]);
           }
         } finally {
@@ -319,7 +320,7 @@ export const ApplicationsPage: React.FC = () => {
           const schema = await applicationsService.getFormSchema(currentApplication.id);
           setFormSchema(schema);
         } catch (error) {
-          console.error('Error loading form schema:', error);
+          logger.error('Error loading form schema:', error);
           if (error instanceof Error && error.message.includes('autoryzacji')) {
             handleAuthError(error);
             await clearCacheAndReset();
@@ -352,7 +353,7 @@ export const ApplicationsPage: React.FC = () => {
             setFormSchema(schema);
           }
         } catch (error) {
-          console.error('Error loading application:', error);
+          logger.error('Error loading application:', error);
           if (error instanceof Error && error.message.includes('autoryzacji')) {
             handleAuthError(error);
             await clearCacheAndReset();
@@ -388,7 +389,7 @@ export const ApplicationsPage: React.FC = () => {
       });
       
       if (matchingCommune) {
-        console.log('Auto-selected commune:', matchingCommune.name);
+        logger.log('Auto-selected commune:', matchingCommune.name);
         setSelectedCommune(matchingCommune);
       }
       setAutoSelectAttempted(true);
@@ -403,16 +404,16 @@ export const ApplicationsPage: React.FC = () => {
     try {
       setIsLoading(true);
       const allTreesData = await applicationsService.getAllTrees();
-      console.log('Loaded all trees:', allTreesData);
-      console.log('Number of trees:', allTreesData.length);
+      logger.log('Loaded all trees:', allTreesData);
+      logger.log('Number of trees:', allTreesData.length);
       if (allTreesData.length > 0) {
-        console.log('First tree:', allTreesData[0]);
-        console.log('First tree ID:', allTreesData[0].id);
+        logger.log('First tree:', allTreesData[0]);
+        logger.log('First tree ID:', allTreesData[0].id);
       }
       setTrees(allTreesData);
       setShowAllTrees(true);
     } catch (error) {
-      console.error('Error loading all trees:', error);
+      logger.error('Error loading all trees:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
         await clearCacheAndReset();
@@ -452,11 +453,11 @@ export const ApplicationsPage: React.FC = () => {
       setGeneratedTreeScreenshotUrl('');
       setPdfModalOpen(false);
       
-      console.log('Creating application with:');
-      console.log('Selected tree:', selectedTree);
-      console.log('Selected template:', selectedTemplate);
-      console.log('Tree ID:', selectedTree.id);
-      console.log('Template ID:', selectedTemplate.id);
+      logger.log('Creating application with:');
+      logger.log('Selected tree:', selectedTree);
+      logger.log('Selected template:', selectedTemplate);
+      logger.log('Tree ID:', selectedTree.id);
+      logger.log('Template ID:', selectedTemplate.id);
       
       const application = await applicationsService.createApplication(
         selectedTemplate.id,
@@ -469,7 +470,7 @@ export const ApplicationsPage: React.FC = () => {
       const schema = await applicationsService.getFormSchema(application.id);
       setFormSchema(schema);
     } catch (error) {
-      console.error('Error creating application:', error);
+      logger.error('Error creating application:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
         await clearCacheAndReset();
@@ -511,7 +512,7 @@ export const ApplicationsPage: React.FC = () => {
       setFormSchema(null); // Hide form
       setUserManuallyClosedForm(true); // Prevent form from showing again
     } catch (error) {
-      console.error('Error submitting application:', error);
+      logger.error('Error submitting application:', error);
       if (error instanceof Error && error.message.includes('autoryzacji')) {
         handleAuthError(error);
         await clearCacheAndReset();
@@ -570,7 +571,7 @@ export const ApplicationsPage: React.FC = () => {
   };
 
   const clearCacheAndReset = async () => {
-    console.log('Clearing cache and resetting');
+    logger.log('Clearing cache and resetting');
     localStorage.removeItem('selectedTree');
     localStorage.removeItem('selectedCommune');
     localStorage.removeItem('selectedTemplate');
@@ -603,38 +604,38 @@ export const ApplicationsPage: React.FC = () => {
       const zip = new JSZip();
 
       // Download PDF
-      console.log('Downloading PDF:', generatedPdfUrl);
+      logger.log('Downloading PDF:', generatedPdfUrl);
       const pdfBlob = await downloadFile(generatedPdfUrl);
       zip.file('wniosek.pdf', pdfBlob);
 
       // Download tree screenshot if available
       if (generatedTreeScreenshotUrl) {
-        console.log('Downloading tree screenshot:', generatedTreeScreenshotUrl);
+        logger.log('Downloading tree screenshot:', generatedTreeScreenshotUrl);
         try {
           const screenshotBlob = await downloadFile(generatedTreeScreenshotUrl);
           const extension = generatedTreeScreenshotUrl.split('.').pop()?.split('?')[0] || 'jpg';
           zip.file(`Mapa lokalizacyjna drzewa.${extension}`, screenshotBlob);
         } catch (error) {
-          console.warn('Failed to download tree screenshot:', error);
+          logger.warn('Failed to download tree screenshot:', error);
         }
       }
 
       // Download all images (in the same folder as PDF)
       if (generatedImageUrls.length > 0) {
-        console.log('Downloading images:', generatedImageUrls.length);
+        logger.log('Downloading images:', generatedImageUrls.length);
         for (let i = 0; i < generatedImageUrls.length; i++) {
           try {
             const imageBlob = await downloadFile(generatedImageUrls[i]);
             const extension = generatedImageUrls[i].split('.').pop()?.split('?')[0] || 'jpg';
             zip.file(`zdjecie_${i + 1}.${extension}`, imageBlob);
           } catch (error) {
-            console.warn(`Failed to download image ${i + 1}:`, error);
+            logger.warn(`Failed to download image ${i + 1}:`, error);
           }
         }
       }
 
       // Generate ZIP file
-      console.log('Generating ZIP file...');
+      logger.log('Generating ZIP file...');
       const zipBlob = await zip.generateAsync({ type: 'blob' });
 
       // Check if running on mobile (Capacitor)
@@ -672,12 +673,12 @@ export const ApplicationsPage: React.FC = () => {
                   directory: Directory.ExternalStorage,
                   recursive: true
                 });
-                console.log('ZIP file saved to Downloads:', result.uri);
+                logger.log('ZIP file saved to Downloads:', result.uri);
                 setDownloadMessage(`Plik został pobrany! Znajdziesz go w folderze Pobrane (Downloads): ${fileName}`);
                 saved = true;
                 break;
               } catch (pathError: any) {
-                console.warn(`Failed to save to ${downloadsPath}, trying next path...`);
+                logger.warn(`Failed to save to ${downloadsPath}, trying next path...`);
                 continue;
               }
             }
@@ -686,7 +687,7 @@ export const ApplicationsPage: React.FC = () => {
               throw new Error('Nie udało się zapisać do folderu Downloads');
             }
           } catch (downloadsError: any) {
-            console.warn('Failed to save to Downloads, trying Documents:', downloadsError);
+            logger.warn('Failed to save to Downloads, trying Documents:', downloadsError);
             
             // Fallback to Documents folder (still accessible and user-friendly)
             try {
@@ -696,10 +697,10 @@ export const ApplicationsPage: React.FC = () => {
                 directory: Directory.Documents,
                 recursive: true
               });
-              console.log('ZIP file saved to Documents:', result.uri);
+              logger.log('ZIP file saved to Documents:', result.uri);
               setDownloadMessage(`Plik został pobrany! Znajdziesz go w folderze Dokumenty: ${fileName}`);
             } catch (documentsError: any) {
-              console.error('Failed to save to Documents:', documentsError);
+              logger.error('Failed to save to Documents:', documentsError);
               
               // Last fallback to Data directory (app-specific, but accessible via file manager)
               try {
@@ -709,16 +710,16 @@ export const ApplicationsPage: React.FC = () => {
                   directory: Directory.Data,
                   recursive: true
                 });
-                console.log('ZIP file saved to Data:', result.uri);
+                logger.log('ZIP file saved to Data:', result.uri);
                 setDownloadMessage(`Plik został zapisany: ${fileName}\nLokalizacja: ${result.uri}`);
               } catch (dataError: any) {
-                console.error('Failed to save file:', dataError);
+                logger.error('Failed to save file:', dataError);
                 throw new Error('Nie udało się zapisać pliku w żadnej dostępnej lokalizacji');
               }
             }
           }
         } catch (error) {
-          console.error('Error saving ZIP file:', error);
+          logger.error('Error saving ZIP file:', error);
           alert(`Błąd podczas pobierania pliku: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
         }
       } else {
@@ -731,11 +732,11 @@ export const ApplicationsPage: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      console.log('ZIP file downloaded successfully');
+      logger.log('ZIP file downloaded successfully');
         setDownloadMessage(`Plik został pobrany! Znajdziesz go w folderze Pobrane (Downloads)`);
       }
     } catch (error) {
-      console.error('Error downloading ZIP:', error);
+      logger.error('Error downloading ZIP:', error);
       alert(`Błąd podczas pobierania plików: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
     } finally {
       setIsDownloadingZip(false);
@@ -1083,9 +1084,9 @@ export const ApplicationsPage: React.FC = () => {
                     if (savedFormData) {
                       try {
                         const formData = JSON.parse(savedFormData);
-                        console.log('Loaded form data from localStorage:', formData);
+                        logger.log('Loaded form data from localStorage:', formData);
                       } catch (error) {
-                        console.error('Error loading form data from localStorage:', error);
+                        logger.error('Error loading form data from localStorage:', error);
                       }
                     }
                     
@@ -1096,7 +1097,7 @@ export const ApplicationsPage: React.FC = () => {
                         const schema = await applicationsService.getFormSchema(currentApplication.id);
                         setFormSchema(schema);
                       } catch (error) {
-                        console.error('Error loading form schema:', error);
+                        logger.error('Error loading form schema:', error);
                         if (error instanceof Error && error.message.includes('autoryzacji')) {
                           handleAuthError(error);
                           await clearCacheAndReset();

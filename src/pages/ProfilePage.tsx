@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User } from 'lucide-react';
 import { GlassButton } from '../components/UI/GlassButton';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '../utils/logger';
 import { useAuth } from '../context/AuthContext';
 import { useHapticFeedback } from '../hooks/useHapticFeedback';
 import { ProfileInfo } from '../components/Profile/ProfileInfo';
@@ -118,7 +119,7 @@ export const ProfilePage: React.FC = () => {
             
             // Use cached data if less than 5 minutes old
             if (cacheAge < 5 * 60 * 1000 && cachedData) {
-              console.log('ProfilePage: Using cached user data');
+              logger.log('ProfilePage: Using cached user data');
               setFullUserData(cachedData);
               
               setAdditionalData({
@@ -172,7 +173,7 @@ export const ProfilePage: React.FC = () => {
               setIsLoadingProfile(false);
             }
           } catch (e) {
-            console.warn('Failed to parse cached user data:', e);
+            logger.warn('Failed to parse cached user data:', e);
           }
         }
         
@@ -180,7 +181,7 @@ export const ProfilePage: React.FC = () => {
         
         const token = localStorage.getItem('auth_token');
         if (!token) {
-          console.error('No auth token found');
+          logger.error('No auth token found');
           return;
         }
 
@@ -258,7 +259,7 @@ export const ProfilePage: React.FC = () => {
         localStorage.setItem('user_data_time', Date.now().toString());
         
       } catch (error) {
-        console.error('Failed to fetch user data from /api/Users/current:', error);
+        logger.error('Failed to fetch user data from /api/Users/current:', error);
         // W przypadku błędu, użyj danych z kontekstu
         setFullUserData(user);
         
@@ -372,9 +373,9 @@ export const ProfilePage: React.FC = () => {
         };
       }
 
-      console.log('ProfilePage: Preparing update data:', updateData);
-      console.log('ProfilePage: Original editData:', editData);
-      console.log('ProfilePage: Original editOrganizationData:', editOrganizationData);
+      logger.log('ProfilePage: Preparing update data:', updateData);
+      logger.log('ProfilePage: Original editData:', editData);
+      logger.log('ProfilePage: Original editOrganizationData:', editOrganizationData);
 
       // Use the new API endpoint for updating user data
       const { authService } = await import('../services/authService');
@@ -425,7 +426,7 @@ export const ProfilePage: React.FC = () => {
       alert('Zmiany zostały pomyślnie zapisane na serwerze!');
       
     } catch (error) {
-      console.error('Failed to update user data:', error);
+      logger.error('Failed to update user data:', error);
       triggerNotificationHaptic('error');
       alert('Wystąpił błąd podczas zapisywania zmian. Spróbuj ponownie.');
     } finally {
@@ -632,7 +633,7 @@ export const ProfilePage: React.FC = () => {
       alert('Hasło zostało pomyślnie zmienione!');
       
     } catch (error) {
-      console.error('Failed to change password:', error);
+      logger.error('Failed to change password:', error);
       triggerNotificationHaptic('error');
       alert('Wystąpił błąd podczas zmiany hasła. Spróbuj ponownie.');
     } finally {

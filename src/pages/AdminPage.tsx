@@ -5,6 +5,7 @@ import { AdminUsers } from '../components/Admin/AdminUsers';
 import { AdminModals } from '../components/Admin/AdminModals';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '../utils/logger';
 
 export const AdminPage: React.FC = () => {
   const { isModerator } = useAuth();
@@ -37,7 +38,7 @@ export const AdminPage: React.FC = () => {
         setUsers(usersData);
         
       } catch (error) {
-        console.error('Error loading admin data:', error);
+        logger.error('Error loading admin data:', error);
         setError(error instanceof Error ? error.message : 'Błąd podczas ładowania danych');
         setUsers([]);
       } finally {
@@ -73,7 +74,7 @@ export const AdminPage: React.FC = () => {
         alert('Nieprawidłowe hasło!');
       }
     } catch (error) {
-      console.error('Error deleting:', error);
+      logger.error('Error deleting:', error);
       alert('Błąd podczas usuwania!');
     }
   };

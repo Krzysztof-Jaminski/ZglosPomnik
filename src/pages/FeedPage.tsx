@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TreePost } from '../components/Feed/TreePost';
 import { TreePost as TreePostType } from '../types';
 import { treesService } from '../services/treesService';
+import { logger } from '../utils/logger';
 import { useLocation } from 'react-router-dom';
 import { SearchInput } from '../components/UI/SearchInput';
 
@@ -35,7 +36,7 @@ export const FeedPage: React.FC = () => {
           
           // Use cached data if less than 5 minutes old
           if (cacheAge < 5 * 60 * 1000 && Array.isArray(cachedData) && cachedData.length > 0) {
-            console.log('FeedPage: Using cached posts data');
+            logger.log('FeedPage: Using cached posts data');
             setAllPosts(cachedData);
             
             // Display first 5 posts
@@ -46,7 +47,7 @@ export const FeedPage: React.FC = () => {
             setIsLoading(false);
           }
         } catch (e) {
-          console.warn('Failed to parse cached posts:', e);
+          logger.warn('Failed to parse cached posts:', e);
         }
       }
       
@@ -79,7 +80,7 @@ export const FeedPage: React.FC = () => {
 
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading trees:', error);
+      logger.error('Error loading trees:', error);
       setIsLoading(false);
     }
   }, []);
@@ -115,7 +116,7 @@ export const FeedPage: React.FC = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !isLoadingMore && hasMorePosts) {
-          console.log('Loading more posts...');
+          logger.log('Loading more posts...');
           loadMorePosts();
         }
       },

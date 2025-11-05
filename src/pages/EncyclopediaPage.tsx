@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, X, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { SearchInput } from '../components/UI/SearchInput';
 import { PhotoPicker } from '../components/UI/PhotoPicker';
+import { logger } from '../utils/logger';
 import { useAutoTextarea } from '../hooks/useAutoTextarea';
 import { Species } from '../types';
 import { speciesService } from '../services/speciesService';
@@ -68,7 +69,7 @@ export const EncyclopediaPage: React.FC = () => {
             // Keep _temp_encyclopedia_returnTo until user navigates back
           }
         } catch (e) {
-          console.warn('Failed to parse cached species for initialization:', e);
+          logger.warn('Failed to parse cached species for initialization:', e);
         }
       }
     }
@@ -85,7 +86,7 @@ export const EncyclopediaPage: React.FC = () => {
   useEffect(() => {
     const loadSpecies = async () => {
       try {
-        console.log('EncyclopediaPage: Loading species...');
+        logger.log('EncyclopediaPage: Loading species...');
         
         // Check for selected species from temporary localStorage FIRST (before loading data)
         const speciesIdFromStorage = localStorage.getItem('_temp_encyclopedia_selectedSpecies');
@@ -102,7 +103,7 @@ export const EncyclopediaPage: React.FC = () => {
             
             // Use cached data if less than 5 minutes old
             if (cacheAge < 5 * 60 * 1000 && Array.isArray(cachedData) && cachedData.length > 0) {
-              console.log('EncyclopediaPage: Using cached species data');
+              logger.log('EncyclopediaPage: Using cached species data');
               data = cachedData;
               setSpecies(data);
               setFilteredSpecies(data);
@@ -120,13 +121,13 @@ export const EncyclopediaPage: React.FC = () => {
               }
             }
           } catch (e) {
-            console.warn('Failed to parse cached species:', e);
+            logger.warn('Failed to parse cached species:', e);
           }
         }
         
         // Always fetch fresh data in background
         const freshData = await speciesService.getSpecies();
-        console.log('EncyclopediaPage: Loaded species count:', freshData.length);
+        logger.log('EncyclopediaPage: Loaded species count:', freshData.length);
         
         // Cache the data
         localStorage.setItem('cached_species', JSON.stringify(freshData));
@@ -160,7 +161,7 @@ export const EncyclopediaPage: React.FC = () => {
         
         setIsLoading(false);
       } catch (error) {
-        console.error('Error loading species:', error);
+        logger.error('Error loading species:', error);
         setIsLoading(false);
       }
     };
@@ -562,7 +563,7 @@ export const EncyclopediaPage: React.FC = () => {
                         setIsCreatingSpecies(false);
                         setEditPhotos([]);
                       } catch (error) {
-                        console.error('Error creating species:', error);
+                        logger.error('Error creating species:', error);
                         alert('Wystąpił błąd podczas tworzenia gatunku.');
                         setIsCreatingSpecies(false);
                       }

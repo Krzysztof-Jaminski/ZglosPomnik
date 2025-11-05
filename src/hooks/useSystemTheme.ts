@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SystemTheme } from '../plugins/SystemThemePlugin';
+import { logger } from '../utils/logger';
 
 export const useSystemTheme = (actualTheme: 'light' | 'dark') => {
   const location = useLocation();
@@ -47,7 +48,7 @@ export const useSystemTheme = (actualTheme: 'light' | 'dark') => {
           document.documentElement.style.backgroundColor = navigationBarColor;
         }
       } catch (error) {
-        console.log('System UI update not available on this platform:', error);
+        logger.log('System UI update not available on this platform:', error);
       }
     };
     
