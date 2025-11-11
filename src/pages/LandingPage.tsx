@@ -105,6 +105,7 @@ export const LandingPage = () => {
   const [showRodoModal, setShowRodoModal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [screenshotsLoaded, setScreenshotsLoaded] = useState(false);
   
   const { login, register, resendEmailVerification, isLoading } = useAuth();
   useSystemTheme('dark');
@@ -152,6 +153,42 @@ export const LandingPage = () => {
     }
     
     return sectionsArray.filter(section => section.screenshots.length > 0);
+  }, [parsedScreenshots]);
+
+  useEffect(() => {
+    let isSubscribed = true;
+    const totalScreenshots = parsedScreenshots.length;
+
+    if (totalScreenshots === 0) {
+      setScreenshotsLoaded(true);
+      return;
+    }
+
+    setScreenshotsLoaded(false);
+
+    let loadedCount = 0;
+
+    const handleImageLoad = () => {
+      if (!isSubscribed) {
+        return;
+      }
+
+      loadedCount += 1;
+      if (loadedCount >= totalScreenshots) {
+        setScreenshotsLoaded(true);
+      }
+    };
+
+    parsedScreenshots.forEach((screenshot) => {
+      const img = new Image();
+      img.src = screenshot.path;
+      img.onload = handleImageLoad;
+      img.onerror = handleImageLoad;
+    });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [parsedScreenshots]);
 
   // Check if mobile on resize - reload page when switching between mobile/desktop
@@ -316,10 +353,15 @@ export const LandingPage = () => {
   // Usunięto pełnoekranowy loading - teraz loading jest tylko w formularzu
 
   return (
-    <div 
+    <div
       ref={scrollContainerRef}
       className={`dark min-h-screen bg-gray-900 text-white ${isFullscreen ? 'fixed inset-0 z-[9999] overflow-y-auto' : ''}`}
     >
+      {!screenshotsLoaded && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-gray-900 transition-opacity">
+          <div className="w-12 h-12 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        </div>
+      )}
       {/* Topbar - znika przy scrollowaniu */}
       <motion.div
         initial={{ y: 0 }}
