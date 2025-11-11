@@ -1,6 +1,5 @@
 const CACHE_NAME = 'zglospomnik-v5-' + Date.now();
 const urlsToCache = [
-  '/',
   '/manifest.json',
   '/icon-192x192.png',
   '/icon-512x512.png'
@@ -36,6 +35,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   const url = new URL(event.request.url);
+  const acceptHeader = event.request.headers.get('accept') || '';
+  const isNavigationRequest =
+    event.request.mode === 'navigate' ||
+    (event.request.method === 'GET' && acceptHeader.includes('text/html'));
   
   // Skip external domains (Azure Blob Storage, API endpoints, etc.)
   const externalDomains = [
@@ -69,6 +72,24 @@ self.addEventListener('fetch', (event) => {
   // Only handle requests from the same origin
   if (url.origin !== location.origin) {
     console.log('Service Worker: Skipping different origin:', url.origin);
+    return;
+  }
+
+  // Force network-first strategy for navigation/HTML requests to avoid stale shells
+  if (isNavigationRequest) {
+    console.log('Service Worker: Network-first for navigation:', url.href);
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return networkResponse;
+        })
+        .catch(() => {
+          console.log('Service Worker: Network failed for navigation, using cache');
+          return caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match('/'));
+        })
+    );
     return;
   }
 
