@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { authService, LoginRequest, RegisterRequest } from '../services/authService';
 import { User } from '../types';
+import { logger } from '../utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -36,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Debug: monitoruj zmiany w user
   useEffect(() => {
-    console.log('AuthContext: user changed to:', user ? 'User logged in' : 'No user');
+    logger.log('AuthContext: user changed to:', user ? 'User logged in' : 'No user');
   }, [user]);
 
   
@@ -45,11 +46,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (typeof window === 'undefined') return;
     
     if (!isManual) {
-      console.log('Automatic logout detected - localStorage will NOT be cleared');
+      logger.log('Automatic logout detected - localStorage will NOT be cleared');
       return;
     }
     
-    console.log('Manual logout detected - clearing all user data from localStorage');
+    logger.log('Manual logout detected - clearing all user data from localStorage');
     
     // Lista kluczy do wyczyszczenia przy ręcznym wylogowaniu
     const keysToRemove: string[] = [];
@@ -86,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem(key);
     });
     
-    console.log(`Cleared ${keysToRemove.length} user state keys from localStorage (manual logout)`);
+    logger.log(`Cleared ${keysToRemove.length} user state keys from localStorage (manual logout)`);
   }, []);
 
   // Sprawdź czy użytkownik jest już zalogowany przy inicjalizacji
@@ -95,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // Sprawdź czy localStorage jest dostępny
         if (typeof localStorage === 'undefined') {
-          console.warn('localStorage is not available');
+          logger.warn('localStorage is not available');
           setIsLoading(false);
           return;
         }
@@ -108,21 +109,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const cachedUserData = authService.getCurrentUserData();
           if (cachedUserData) {
             setUser(cachedUserData);
-            console.log('User data loaded from cache:', cachedUserData);
+            logger.log('User data loaded from cache:', cachedUserData);
           } else {
             // Jeśli nie mamy zapisanych danych, nie wywołuj API automatycznie
             // Użytkownik będzie musiał się zalogować ponownie
-            console.log('No cached user data found, user needs to login');
+            logger.log('No cached user data found, user needs to login');
             // Wyczyść nieprawidłowy token
             localStorage.removeItem('auth_token');
             authService.logout();
           }
         } else {
           // No token found
-          console.log('No auth token found');
+          logger.log('No auth token found');
         }
       } catch (error) {
-        console.error('Failed to initialize auth:', error);
+        logger.error('Failed to initialize auth:', error);
         setError(error instanceof Error ? error.message : 'Unknown error');
         
         // Wyloguj tylko jeśli token jest nieprawidłowy przy inicjalizacji
@@ -130,7 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           authService.logout();
         } else {
           // Dla innych błędów (np. sieciowych), nie wylogowuj automatycznie
-          console.warn('Network error during auth initialization, keeping user logged in if token exists');
+          logger.warn('Network error during auth initialization, keeping user logged in if token exists');
           // Jeśli mamy token ale nie możemy go zweryfikować z powodu błędu sieci,
           // ustaw użytkownika jako zalogowanego na podstawie tokenu
           const token = localStorage.getItem('auth_token');
@@ -139,7 +140,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const userData = authService.getCurrentUserData();
             if (userData) {
               setUser(userData);
-              console.log('User data loaded from localStorage (error fallback):', userData);
+              logger.log('User data loaded from localStorage (error fallback):', userData);
             } else {
               // Ustaw podstawowe dane użytkownika na podstawie tokenu
               const fallbackUser = {
@@ -160,7 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 }
               };
               setUser(fallbackUser);
-              console.log('Using fallback user data for token (error fallback):', fallbackUser);
+              logger.log('Using fallback user data for token (error fallback):', fallbackUser);
             }
           }
         }
@@ -189,15 +190,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           longitude: 0.000000
         };
         localStorage.setItem('treeReportFormData', JSON.stringify(defaultFormData));
-        console.log('Default location coordinates saved to localStorage after login');
+        logger.log('Default location coordinates saved to localStorage after login');
       }
       
       // Verify token was saved
       const savedToken = authService.getToken();
-      console.log('Token after login:', savedToken ? 'saved' : 'not saved');
-      console.log('User data from API:', userData);
+      logger.log('Token after login:', savedToken ? 'saved' : 'not saved');
+      logger.log('User data from API:', userData);
     } catch (error) {
-      console.error('Login failed:', error);
+      logger.error('Login failed:', error);
       // Nie rzucamy błędu - pozwalamy parent component obsłużyć błąd
       throw error; // Zachowujemy throw dla kompatybilności wstecznej
     }
@@ -207,22 +208,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: RegisterRequest) => {
     try {
       setIsLoading(true);
-      console.log('AuthContext: Starting registration...');
+      logger.log('AuthContext: Starting registration...');
       const response = await authService.register(userData);
-      console.log('AuthContext: Registration response:', response);
+      logger.log('AuthContext: Registration response:', response);
       
       // Check if email verification is required
       if (response && response.requiresEmailVerification) {
         // Don't try to fetch user profile if email verification is required
-        console.log('Email verification required:', response.message);
-        console.log('AuthContext: Returning response without setting user');
+        logger.log('Email verification required:', response.message);
+        logger.log('AuthContext: Returning response without setting user');
         return response; // Return the response with verification info
       }
       
-      console.log('AuthContext: Normal registration - fetching user profile...');
+      logger.log('AuthContext: Normal registration - fetching user profile...');
       // Normal registration - fetch user data from API
       const userDataFromAPI = await authService.getUserProfile();
-      console.log('AuthContext: User profile fetched:', userDataFromAPI);
+      logger.log('AuthContext: User profile fetched:', userDataFromAPI);
       setUser(userDataFromAPI);
       
       // Initialize default location in localStorage if not exists
@@ -233,14 +234,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           longitude: 0.000000
         };
         localStorage.setItem('treeReportFormData', JSON.stringify(defaultFormData));
-        console.log('Default location coordinates saved to localStorage after registration');
+        logger.log('Default location coordinates saved to localStorage after registration');
       }
       
       // Token is automatically saved by authService
-      console.log('User data from API:', userDataFromAPI);
+      logger.log('User data from API:', userDataFromAPI);
       return response;
     } catch (error) {
-      console.error('Registration failed:', error);
+      logger.error('Registration failed:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -253,7 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.resendEmailVerification(email);
       return response;
     } catch (error) {
-      console.error('Resend email verification failed:', error);
+      logger.error('Resend email verification failed:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -268,9 +269,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 
   const handleAuthError = (error: any) => {
-    console.log('Handling auth error:', error);
+    logger.log('Handling auth error:', error);
     if (error instanceof Error && error.message.includes('Brak autoryzacji')) {
-      console.log('401 Unauthorized detected, logging out user automatically');
+      logger.log('401 Unauthorized detected, logging out user automatically');
       const errorMessage = 'Sesja wygasła lub wystąpił problem z autoryzacją. ' +
         'Jeśli problem się powtarza, spróbuj się wylogować ręcznie i zalogować ponownie.';
       alert(errorMessage);

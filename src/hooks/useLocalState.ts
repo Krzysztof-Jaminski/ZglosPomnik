@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '../utils/logger';
 
 /**
  * Hook do zarządzania lokalnym stanem z automatycznym zapisywaniem do localStorage
@@ -46,7 +47,7 @@ export function useLocalState<T>(
       const parsed = deserialize(item);
       return parsed;
     } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
+      logger.warn(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -65,7 +66,7 @@ export function useLocalState<T>(
         localStorage.setItem(key, serialize(valueToStore));
       }
     } catch (error) {
-      console.error(`Error setting localStorage key "${key}":`, error);
+      logger.error(`Error setting localStorage key "${key}":`, error);
     }
   }, [key, storedValue, persist, serialize]);
 
@@ -102,7 +103,7 @@ export function useLocalState<T>(
           const newValue = deserialize(e.newValue);
           setStoredValue(newValue);
         } catch (error) {
-          console.warn(`Error parsing localStorage key "${key}" from storage event:`, error);
+          logger.warn(`Error parsing localStorage key "${key}" from storage event:`, error);
         }
       }
     };
@@ -198,7 +199,7 @@ export function useClearUserState() {
       localStorage.removeItem(key);
     });
     
-    console.log(`Cleared ${keysToRemove.length} user state keys from localStorage`);
+    logger.log(`Cleared ${keysToRemove.length} user state keys from localStorage`);
   }, []);
   
   return clearUserState;

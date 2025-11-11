@@ -1,9 +1,10 @@
 // Serwis do pobierania drzew z API
 import { Tree, ApiTreeSubmission } from '../types';
 import { authService } from './authService';
+import { logger } from '../utils/logger';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-console.log('TreesService API_BASE_URL:', API_BASE_URL);
+logger.log('TreesService API_BASE_URL:', API_BASE_URL);
 
 class TreesService {
   // Pobierz wszystkie drzewa
@@ -25,7 +26,7 @@ class TreesService {
       if (!response.ok) {
         if (response.status === 401) {
           // Token wygasł - spróbuj odświeżyć
-          console.log('Token expired, attempting to refresh...');
+          logger.log('Token expired, attempting to refresh...');
           const newToken = await authService.refreshAccessToken();
           if (newToken) {
             // Spróbuj ponownie z nowym tokenem
@@ -48,10 +49,10 @@ class TreesService {
       }
 
       const data = await response.json();
-      console.log('TreesService - getTrees response:', data);
+      logger.log('TreesService - getTrees response:', data);
       return data;
     } catch (error) {
-      console.error('Get trees error:', error);
+      logger.error('Get trees error:', error);
       throw error;
     }
   }
@@ -86,7 +87,7 @@ class TreesService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Get tree error:', error);
+      logger.error('Get tree error:', error);
       throw error;
     }
   }
@@ -123,7 +124,7 @@ class TreesService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Get trees in area error:', error);
+      logger.error('Get trees in area error:', error);
       // Jeśli endpoint nie istnieje, zwróć pustą tablicę
       return [];
     }
@@ -154,10 +155,10 @@ class TreesService {
       }
 
       const data = await response.json();
-      console.log(`Vote on tree ${treeId}:`, data);
+      logger.log(`Vote on tree ${treeId}:`, data);
       return data;
     } catch (error) {
-      console.error('Vote on tree error:', error);
+      logger.error('Vote on tree error:', error);
       throw error;
     }
   }
@@ -186,10 +187,10 @@ class TreesService {
       }
 
       const data = await response.json();
-      console.log(`Removed vote from tree ${treeId}:`, data);
+      logger.log(`Removed vote from tree ${treeId}:`, data);
       return data;
     } catch (error) {
-      console.error('Remove vote from tree error:', error);
+      logger.error('Remove vote from tree error:', error);
       throw error;
     }
   }
@@ -198,7 +199,7 @@ class TreesService {
   async submitTreeReport(treeData: ApiTreeSubmission, photos: File[], mapScreenshot?: File | null): Promise<any> {
     try {
       const token = authService.getToken();
-      console.log('Token from authService:', token ? 'exists' : 'null');
+      logger.log('Token from authService:', token ? 'exists' : 'null');
       if (!token) {
         throw new Error('No authentication token');
       }
@@ -219,19 +220,19 @@ class TreesService {
         }
       }
 
-      console.log('Submitting tree report to API:', treeData);
-      console.log('Tree data fields being sent:');
-      console.log('- name:', treeData.name);
-      console.log('- description:', treeData.description);
-      console.log('- legend:', treeData.legend);
-      console.log('- soil tags:', treeData.soil);
-      console.log('- health tags:', treeData.health);
-      console.log('- environment tags:', treeData.environment);
-      console.log('- soil length:', treeData.soil?.length || 0);
-      console.log('- health length:', treeData.health?.length || 0);
-      console.log('- environment length:', treeData.environment?.length || 0);
-      console.log('Photos count:', photos.length);
-      console.log('Request URL:', `${API_BASE_URL}/trees`);
+      logger.log('Submitting tree report to API:', treeData);
+      logger.log('Tree data fields being sent:');
+      logger.log('- name:', treeData.name);
+      logger.log('- description:', treeData.description);
+      logger.log('- legend:', treeData.legend);
+      logger.log('- soil tags:', treeData.soil);
+      logger.log('- health tags:', treeData.health);
+      logger.log('- environment tags:', treeData.environment);
+      logger.log('- soil length:', treeData.soil?.length || 0);
+      logger.log('- health length:', treeData.health?.length || 0);
+      logger.log('- environment length:', treeData.environment?.length || 0);
+      logger.log('Photos count:', photos.length);
+      logger.log('Request URL:', `${API_BASE_URL}/trees`);
 
       // Create FormData
       const formData = new FormData();
@@ -272,45 +273,45 @@ class TreesService {
       }
       
       // Add array fields (soil, health, environment tags)
-      console.log('Adding array fields to FormData:');
+      logger.log('Adding array fields to FormData:');
       if (treeData.soil) {
-        console.log('- Adding soil tags:', treeData.soil);
+        logger.log('- Adding soil tags:', treeData.soil);
         treeData.soil.forEach(tag => {
           formData.append('soil', tag);
-          console.log('  - Added soil:', tag);
+          logger.log('  - Added soil:', tag);
         });
       } else {
-        console.log('- No soil tags to add');
+        logger.log('- No soil tags to add');
       }
       if (treeData.health) {
-        console.log('- Adding health tags:', treeData.health);
+        logger.log('- Adding health tags:', treeData.health);
         treeData.health.forEach(tag => {
           formData.append('health', tag);
-          console.log('  - Added health:', tag);
+          logger.log('  - Added health:', tag);
         });
       } else {
-        console.log('- No health tags to add');
+        logger.log('- No health tags to add');
       }
       if (treeData.environment) {
-        console.log('- Adding environment tags:', treeData.environment);
+        logger.log('- Adding environment tags:', treeData.environment);
         treeData.environment.forEach(tag => {
           formData.append('environment', tag);
-          console.log('  - Added environment:', tag);
+          logger.log('  - Added environment:', tag);
         });
       } else {
-        console.log('- No environment tags to add');
+        logger.log('- No environment tags to add');
       }
       
       // Log FormData contents
-      console.log('FormData contents:');
+      logger.log('FormData contents:');
       for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value);
+        logger.log(`  ${key}:`, value);
       }
       
       // Add photos
-      console.log('Adding photos to FormData:');
+      logger.log('Adding photos to FormData:');
       photos.forEach((photo, index) => {
-        console.log(`Photo ${index + 1}:`, {
+        logger.log(`Photo ${index + 1}:`, {
           name: photo.name,
           size: photo.size,
           type: photo.type
@@ -320,7 +321,7 @@ class TreesService {
 
       // Add map screenshot if available
       if (mapScreenshot) {
-        console.log('Adding map screenshot:', {
+        logger.log('Adding map screenshot:', {
           name: mapScreenshot.name,
           size: mapScreenshot.size,
           type: mapScreenshot.type
@@ -329,12 +330,12 @@ class TreesService {
       }
       
       // Debug FormData contents
-      console.log('FormData entries:');
+      logger.log('FormData entries:');
       for (let [key, value] of formData.entries()) {
         if (value instanceof File) {
-          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+          logger.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
         } else {
-          console.log(`${key}: ${value}`);
+          logger.log(`${key}: ${value}`);
         }
       }
 
@@ -362,17 +363,17 @@ class TreesService {
       }
 
       const data = await response.json();
-      console.log('Response status:', response.status);
-      console.log('Response URL:', response.url);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      console.log('Tree report submitted successfully:', data);
-      console.log('Returned tree images:', data.imageUrls);
-      console.log('Returned soil:', data.soil);
-      console.log('Returned health:', data.health);
-      console.log('Returned environment:', data.environment);
+      logger.log('Response status:', response.status);
+      logger.log('Response URL:', response.url);
+      logger.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      logger.log('Tree report submitted successfully:', data);
+      logger.log('Returned tree images:', data.imageUrls);
+      logger.log('Returned soil:', data.soil);
+      logger.log('Returned health:', data.health);
+      logger.log('Returned environment:', data.environment);
       return data;
     } catch (error) {
-      console.error('Submit tree report error:', error);
+      logger.error('Submit tree report error:', error);
       throw error;
     }
   }
@@ -401,7 +402,7 @@ class TreesService {
         }
       }
 
-      console.log('Updating tree:', treeId, treeData);
+      logger.log('Updating tree:', treeId, treeData);
 
       // Create FormData
       const formData = new FormData();
@@ -474,10 +475,10 @@ class TreesService {
       }
 
       const data = await response.json();
-      console.log('Tree updated successfully:', data);
+      logger.log('Tree updated successfully:', data);
       return data;
     } catch (error) {
-      console.error('Update tree error:', error);
+      logger.error('Update tree error:', error);
       throw error;
     }
   }
@@ -490,7 +491,7 @@ class TreesService {
         throw new Error('No authentication token');
       }
 
-      console.log('Attempting to delete tree:', {
+      logger.log('Attempting to delete tree:', {
         treeId,
         url: `${API_BASE_URL}/trees/${treeId}`,
         token: token ? 'exists' : 'missing'
@@ -504,7 +505,7 @@ class TreesService {
         }
       });
 
-      console.log('Delete tree response:', {
+      logger.log('Delete tree response:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok
@@ -534,9 +535,9 @@ class TreesService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log(`Deleted tree post ${treeId}`);
+      logger.log(`Deleted tree post ${treeId}`);
     } catch (error) {
-      console.error('Delete tree error:', error);
+      logger.error('Delete tree error:', error);
       throw error;
     }
   }

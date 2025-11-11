@@ -1,4 +1,5 @@
 import { Tree } from '../types';
+import { logger } from '../utils/logger';
 
 // Mock data removed - using real API data only
 
@@ -16,6 +17,7 @@ export const api = {
     return [
       {
         id: '1',
+        name: 'Dąb w parku',
         userData: {
           userName: 'Test User',
           avatar: '',
@@ -26,23 +28,30 @@ export const api = {
         location: {
           lat: 50.041187,
           lng: 21.999121,
-          address: 'Rzeszów, Park'
+          address: 'Rzeszów, Park',
+          plotNumber: null,
+          district: null,
+          province: null,
+          county: null,
+          commune: null
         },
         circumference: 150,
         height: 25,
-        condition: 'dobry',
+        crownSpread: 0,
+        soil: null,
+        health: null,
+        environment: null,
         isAlive: true,
         estimatedAge: 100,
         description: 'Piękny dąb w parku miejskim',
+        legend: 'Stary dąb w parku miejskim',
         imageUrls: [],
+        treeScreenshotUrl: '',
         isMonument: true,
         status: 'approved',
         submissionDate: new Date().toISOString(),
         approvalDate: new Date().toISOString(),
-        votes: {
-          like: 5,
-          dislike: 0
-        }
+        votesCount: 5
       }
     ];
   },
@@ -118,19 +127,19 @@ export const api = {
 
   // User authentication - DEPRECATED: Use authService instead
   async login(email: string, password: string) {
-    console.warn('api.login is deprecated. Use authService.login instead.');
+    logger.warn('api.login is deprecated. Use authService.login instead.');
     const { authService } = await import('./authService');
     return authService.login({ email, password });
   },
 
   async register(userData: any) {
-    console.warn('api.register is deprecated. Use authService.register instead.');
+    logger.warn('api.register is deprecated. Use authService.register instead.');
     const { authService } = await import('./authService');
     return authService.register(userData);
   },
 
   async getCurrentUser() {
-    console.warn('api.getCurrentUser is deprecated. Use authService.getCurrentUserData() instead.');
+    logger.warn('api.getCurrentUser is deprecated. Use authService.getCurrentUserData() instead.');
     const { authService } = await import('./authService');
     return authService.getCurrentUserData();
   },

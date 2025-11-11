@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DarkGlassButton } from '../components/UI/DarkGlassButton';
 import { useAuth } from '../context/AuthContext';
+import { logger } from '../utils/logger';
 import { useSystemTheme } from '../hooks/useSystemTheme';
 import { AuthModal } from '../components/Auth/AuthModal';
 import { EmailConfirmationModal } from '../components/Auth/EmailConfirmationModal';
@@ -22,42 +23,42 @@ export const MobileLandingPage = () => {
 
   // Debug: monitoruj zmiany w showAuthModal
   useEffect(() => {
-    console.log('MobileLandingPage: showAuthModal changed to:', showAuthModal);
+    logger.log('MobileLandingPage: showAuthModal changed to:', showAuthModal);
     showAuthModalRef.current = showAuthModal;
   }, [showAuthModal]);
 
   // Debug: monitoruj zmiany w error
   useEffect(() => {
-    console.log('MobileLandingPage: error changed to:', error);
+    logger.log('MobileLandingPage: error changed to:', error);
   }, [error]);
 
   // Debug: monitoruj zmiany w showEmailConfirmation
   useEffect(() => {
-    console.log('MobileLandingPage: showEmailConfirmation changed to:', showEmailConfirmation);
+    logger.log('MobileLandingPage: showEmailConfirmation changed to:', showEmailConfirmation);
   }, [showEmailConfirmation]);
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
     try {
-      console.log('MobileLandingPage: Starting login, showAuthModal:', showAuthModal);
+      logger.log('MobileLandingPage: Starting login, showAuthModal:', showAuthModal);
       setError(null);
       await login(credentials);
-      console.log('MobileLandingPage: Login successful, closing modal');
+      logger.log('MobileLandingPage: Login successful, closing modal');
       setShowAuthModal(false);
       navigate('/map');
     } catch (error: any) {
-      console.log('MobileLandingPage: Login failed, setting error');
-      console.log('MobileLandingPage: showAuthModal should still be true:', showAuthModal);
-      console.log('MobileLandingPage: showAuthModalRef.current:', showAuthModalRef.current);
+      logger.log('MobileLandingPage: Login failed, setting error');
+      logger.log('MobileLandingPage: showAuthModal should still be true:', showAuthModal);
+      logger.log('MobileLandingPage: showAuthModalRef.current:', showAuthModalRef.current);
       
       // Opóźnij ustawienie błędu żeby zobaczyć czy to pomoże
       setTimeout(() => {
-        console.log('MobileLandingPage: Setting error after timeout');
+        logger.log('MobileLandingPage: Setting error after timeout');
         setError('Sprawdź dane logowania'); // Ogólny komunikat dla bezpieczeństwa
-        console.log('MobileLandingPage: Error set after timeout');
+        logger.log('MobileLandingPage: Error set after timeout');
         
         // Upewnij się, że modal pozostaje otwarty
         if (!showAuthModalRef.current) {
-          console.log('MobileLandingPage: Modal was closed, reopening it');
+          logger.log('MobileLandingPage: Modal was closed, reopening it');
           setShowAuthModal(true);
         }
       }, 100);
@@ -68,35 +69,35 @@ export const MobileLandingPage = () => {
 
   const handleRegister = async (userData: any) => {
     try {
-      console.log('MobileLandingPage: Starting registration...');
+      logger.log('MobileLandingPage: Starting registration...');
       setError(null);
       const response = await register(userData);
-      console.log('MobileLandingPage: Registration response:', response);
+      logger.log('MobileLandingPage: Registration response:', response);
       
       // Check if email verification is required
       if (response && response.requiresEmailVerification) {
-        console.log('MobileLandingPage: Email verification required, showing modal');
-        console.log('MobileLandingPage: Current showEmailConfirmation:', showEmailConfirmation);
+        logger.log('MobileLandingPage: Email verification required, showing modal');
+        logger.log('MobileLandingPage: Current showEmailConfirmation:', showEmailConfirmation);
         setUserEmail(userData.email); // Save user email for resend functionality
         
         // Use setTimeout to ensure state updates happen after current render
         setTimeout(() => {
-          console.log('MobileLandingPage: Setting showAuthModal to false');
+          logger.log('MobileLandingPage: Setting showAuthModal to false');
           setShowAuthModal(false);
-          console.log('MobileLandingPage: Setting showEmailConfirmation to true');
+          logger.log('MobileLandingPage: Setting showEmailConfirmation to true');
           setShowEmailConfirmation(true);
-          console.log('MobileLandingPage: State updates queued');
+          logger.log('MobileLandingPage: State updates queued');
         }, 0);
         
-        console.log('MobileLandingPage: Modal should be shown now');
+        logger.log('MobileLandingPage: Modal should be shown now');
       } else {
-        console.log('MobileLandingPage: Normal registration, redirecting to map');
+        logger.log('MobileLandingPage: Normal registration, redirecting to map');
         // Normal registration - redirect to map (this should rarely happen)
         setShowAuthModal(false);
         navigate('/map');
       }
     } catch (error: any) {
-      console.error('MobileLandingPage: Registration error:', error);
+      logger.error('MobileLandingPage: Registration error:', error);
       setError('Sprawdź dane rejestracji'); // Ogólny komunikat dla bezpieczeństwa
     }
   };

@@ -5,6 +5,7 @@ import { SpeciesFormData } from '../../services/adminService';
 import { GlassButton } from '../UI/GlassButton';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { X } from 'lucide-react';
+import { logger } from '../../utils/logger';
 
 interface AdminModalsProps {
   showPasswordModal: boolean;
@@ -61,7 +62,7 @@ export const AdminModals: React.FC<AdminModalsProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
+      logger.error('Error taking photo:', error);
     }
   };
 

@@ -8,6 +8,7 @@ import { MobileLandingPage } from './MobileLandingPage';
 import { AuthModal } from '../components/Auth/AuthModal';
 import { EmailConfirmationModal } from '../components/Auth/EmailConfirmationModal';
 import { RodoModal } from '../components/Layout/RodoModal';
+import { logger } from '../utils/logger';
 
 interface ScreenshotInfo {
   filename: string;
@@ -177,6 +178,9 @@ export const LandingPage = () => {
       window.removeEventListener('resize', checkMobile);
     };
   }, [isMobile]);
+  
+  // Note: setIsMobile is intentionally not used - it's only set during initialization
+  // The component reloads when switching between mobile/desktop, so state updates aren't needed
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -238,35 +242,35 @@ export const LandingPage = () => {
 
   const handleRegister = async (userData: any) => {
     try {
-      console.log('LandingPage: Starting registration...');
+      logger.log('LandingPage: Starting registration...');
       setError(null);
       const response = await register(userData);
-      console.log('LandingPage: Registration response:', response);
+      logger.log('LandingPage: Registration response:', response);
       
       // Check if email verification is required
       if (response && response.requiresEmailVerification) {
-        console.log('LandingPage: Email verification required, showing modal');
-        console.log('LandingPage: Current showEmailConfirmation:', showEmailConfirmation);
+        logger.log('LandingPage: Email verification required, showing modal');
+        logger.log('LandingPage: Current showEmailConfirmation:', showEmailConfirmation);
         setUserEmail(userData.email); // Save user email for resend functionality
         
         // Use setTimeout to ensure state updates happen after current render
         setTimeout(() => {
-          console.log('LandingPage: Setting showAuthModal to false');
+          logger.log('LandingPage: Setting showAuthModal to false');
           setShowAuthModal(false);
-          console.log('LandingPage: Setting showEmailConfirmation to true');
+          logger.log('LandingPage: Setting showEmailConfirmation to true');
           setShowEmailConfirmation(true);
-          console.log('LandingPage: State updates queued');
+          logger.log('LandingPage: State updates queued');
         }, 0);
         
-        console.log('LandingPage: Modal should be shown now');
+        logger.log('LandingPage: Modal should be shown now');
       } else {
-        console.log('LandingPage: Normal registration, redirecting to map');
+        logger.log('LandingPage: Normal registration, redirecting to map');
         // Normal registration - redirect to map (this should rarely happen)
         setShowAuthModal(false);
         navigate('/map');
       }
     } catch (error: any) {
-      console.error('LandingPage: Registration error:', error);
+      logger.error('LandingPage: Registration error:', error);
       setError('Sprawdź dane rejestracji'); // Ogólny komunikat dla bezpieczeństwa
     }
   };
@@ -286,13 +290,13 @@ export const LandingPage = () => {
       document.documentElement.requestFullscreen().then(() => {
         setIsFullscreen(true);
       }).catch((err) => {
-        console.error('Error attempting to enable fullscreen:', err);
+        logger.error('Error attempting to enable fullscreen:', err);
       });
     } else {
       document.exitFullscreen().then(() => {
         setIsFullscreen(false);
       }).catch((err) => {
-        console.error('Error attempting to exit fullscreen:', err);
+        logger.error('Error attempting to exit fullscreen:', err);
       });
     }
   };

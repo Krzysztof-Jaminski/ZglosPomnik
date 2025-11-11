@@ -1,6 +1,7 @@
 // Serwis do pobierania gatunków drzew z API
 import { Species } from '../types';
 import { authService } from './authService';
+import { logger } from '../utils/logger';
 
 const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/Species`;
 
@@ -24,9 +25,9 @@ class SpeciesService {
 
   // Pobierz wszystkie gatunki drzew
   async getSpecies(): Promise<Species[]> {
-    console.log('SpeciesService: Fetching species from:', API_BASE_URL);
+    logger.log('SpeciesService: Fetching species from:', API_BASE_URL);
     const result = await this.fetchWithAuth(API_BASE_URL);
-    console.log('SpeciesService: Fetched species count:', result.length);
+    logger.log('SpeciesService: Fetched species count:', result.length);
     return result;
   }
 
