@@ -8,6 +8,7 @@ import { MobileLandingPage } from './MobileLandingPage';
 import { AuthModal } from '../components/Auth/AuthModal';
 import { EmailConfirmationModal } from '../components/Auth/EmailConfirmationModal';
 import { RodoModal } from '../components/Layout/RodoModal';
+import { RegulaminModal } from '../components/Layout/RegulaminModal';
 import { logger } from '../utils/logger';
 
 interface ScreenshotInfo {
@@ -103,6 +104,7 @@ export const LandingPage = () => {
   const [userEmail] = useState<string>('');
   const [isScrolled, setIsScrolled] = useState(false);
   const [showRodoModal, setShowRodoModal] = useState(false);
+  const [showRegulaminModal, setShowRegulaminModal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [screenshotsLoaded, setScreenshotsLoaded] = useState(false);
@@ -587,17 +589,29 @@ export const LandingPage = () => {
               <h4 className="text-white font-semibold mb-4">Szybkie linki</h4>
               <ul className="space-y-2">
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  <a 
+                    href="#" 
+                    onClick={(e) => e.preventDefault()}
+                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                  >
                     O platformie
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  <a 
+                    href="#" 
+                    onClick={(e) => e.preventDefault()}
+                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                  >
                     Jak działa
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  <a 
+                    href="#" 
+                    onClick={(e) => e.preventDefault()}
+                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                  >
                     Kontakt
                   </a>
                 </li>
@@ -617,9 +631,12 @@ export const LandingPage = () => {
                   </button>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  <button
+                    onClick={() => setShowRegulaminModal(true)}
+                    className="text-gray-400 hover:text-white transition-colors text-sm text-left"
+                  >
                     Regulamin
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -630,6 +647,11 @@ export const LandingPage = () => {
       <RodoModal
         isOpen={showRodoModal}
         onClose={() => setShowRodoModal(false)}
+      />
+
+      <RegulaminModal
+        isOpen={showRegulaminModal}
+        onClose={() => setShowRegulaminModal(false)}
       />
 
     </div>
