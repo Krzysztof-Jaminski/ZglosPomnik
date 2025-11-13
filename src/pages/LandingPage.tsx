@@ -85,7 +85,7 @@ const parseScreenshotFilename = (filename: string): ScreenshotInfo => {
 
 export const LandingPage = () => {
   // Check if mobile immediately (SSR safe) - must be the FIRST hook
-  const [isMobile, setIsMobile] = useState(() => {
+  const [isMobile] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 1024;
     }
@@ -100,7 +100,7 @@ export const LandingPage = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
-  const [userEmail, setUserEmail] = useState<string>('');
+  const [userEmail] = useState<string>('');
   const [isScrolled, setIsScrolled] = useState(false);
   const [showRodoModal, setShowRodoModal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -284,31 +284,12 @@ export const LandingPage = () => {
       const response = await register(userData);
       logger.log('LandingPage: Registration response:', response);
       
-      // Check if email verification is required
-      if (response && response.requiresEmailVerification) {
-        logger.log('LandingPage: Email verification required, showing modal');
-        logger.log('LandingPage: Current showEmailConfirmation:', showEmailConfirmation);
-        setUserEmail(userData.email); // Save user email for resend functionality
-        
-        // Use setTimeout to ensure state updates happen after current render
-        setTimeout(() => {
-          logger.log('LandingPage: Setting showAuthModal to false');
-          setShowAuthModal(false);
-          logger.log('LandingPage: Setting showEmailConfirmation to true');
-          setShowEmailConfirmation(true);
-          logger.log('LandingPage: State updates queued');
-        }, 0);
-        
-        logger.log('LandingPage: Modal should be shown now');
-      } else {
-        logger.log('LandingPage: Normal registration, redirecting to map');
-        // Normal registration - redirect to map (this should rarely happen)
-        setShowAuthModal(false);
-        navigate('/map');
-      }
+      // Don't close modal or navigate - let RegisterForm handle success state
+      // The form will show success message and disable fields
     } catch (error: any) {
       logger.error('LandingPage: Registration error:', error);
       setError('Sprawdź dane rejestracji'); // Ogólny komunikat dla bezpieczeństwa
+      throw error; // Re-throw to let RegisterForm handle the error state
     }
   };
 

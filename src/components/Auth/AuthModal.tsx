@@ -74,7 +74,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onSubmit={onRegister}
                         onSwitchToLogin={onSwitchToLogin}
                         onClose={onClose}
-                        isLoading={isLoading}
                         error={error}
                       />
                     )}

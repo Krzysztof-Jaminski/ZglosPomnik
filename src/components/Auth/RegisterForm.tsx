@@ -10,7 +10,6 @@ interface RegisterFormProps {
   onSwitchToLogin: () => void;
   onClose: () => void;
   onBackToMenu?: () => void;
-  isLoading?: boolean;
   error?: string | null;
 }
 
@@ -18,7 +17,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit,
   onSwitchToLogin,
   onBackToMenu,
-  isLoading = false,
   error = null
 }) => {
   const [formData, setFormData] = useState({
@@ -37,6 +35,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showRodoModal, setShowRodoModal] = useState(false);
   const [lastTermsClickTime, setLastTermsClickTime] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [validation, setValidation] = useState({
     firstName: { isValid: false, message: '' },
     lastName: { isValid: false, message: '' },
@@ -52,7 +52,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     passwordsMatch: false
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Sprawdź wszystkie wymagane pola
@@ -93,7 +93,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       phone: formData.phone.trim() || null // Jeśli pusty string, wyślij null
     };
     
-    onSubmit(userData);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(userData);
+      setRegistrationSuccess(true);
+      setIsSubmitting(false);
+    } catch (error) {
+      setIsSubmitting(false);
+      setRegistrationSuccess(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -259,13 +267,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   onChange={handleInputChange}
                   onFocus={() => handleFieldFocus('firstName')}
                   onBlur={handleFieldBlur}
+                  disabled={isSubmitting || registrationSuccess}
                   className={`w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                     formData.firstName && !validation.firstName.isValid 
                       ? 'border-red-500/50' 
                       : formData.firstName && validation.firstName.isValid 
                         ? 'border-green-500/50' 
                         : 'border-gray-600/50'
-                  }`}
+                  } ${isSubmitting || registrationSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
                   placeholder="Imię"
                 />
                 {formData.firstName && (
@@ -289,13 +298,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                   onChange={handleInputChange}
                   onFocus={() => handleFieldFocus('lastName')}
                   onBlur={handleFieldBlur}
+                  disabled={isSubmitting || registrationSuccess}
                   className={`w-full pl-10 pr-3 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                     formData.lastName && !validation.lastName.isValid 
                       ? 'border-red-500/50' 
                       : formData.lastName && validation.lastName.isValid 
                         ? 'border-green-500/50' 
                         : 'border-gray-600/50'
-                  }`}
+                  } ${isSubmitting || registrationSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
                   placeholder="Nazwisko"
                 />
                 {formData.lastName && (
@@ -322,13 +332,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 onFocus={() => handleFieldFocus('email')}
                 onBlur={handleFieldBlur}
                 required
+                disabled={isSubmitting || registrationSuccess}
                 className={`w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                   formData.email && !validation.email.isValid 
                     ? 'border-red-500/50' 
                     : formData.email && validation.email.isValid 
                       ? 'border-green-500/50' 
                       : 'border-gray-600/50'
-                }`}
+                } ${isSubmitting || registrationSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder="jan@example.com"
               />
               {formData.email && (
@@ -354,13 +365,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 onFocus={() => handleFieldFocus('password')}
                 onBlur={handleFieldBlur}
                 required
+                disabled={isSubmitting || registrationSuccess}
                 className={`w-full pl-10 pr-12 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                   formData.password && !Object.values(validation.password).every(Boolean)
                     ? 'border-red-500/50' 
                     : formData.password && Object.values(validation.password).every(Boolean)
                       ? 'border-green-500/50' 
                       : 'border-gray-600/50'
-                }`}
+                } ${isSubmitting || registrationSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder="Hasło"
               />
               <button
@@ -384,13 +396,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 onFocus={() => handleFieldFocus('confirmPassword')}
                 onBlur={handleFieldBlur}
                 required
+                disabled={isSubmitting || registrationSuccess}
                 className={`w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                   formData.confirmPassword && !validation.passwordsMatch
                     ? 'border-red-500/50' 
                     : formData.confirmPassword && validation.passwordsMatch
                       ? 'border-green-500/50' 
                       : 'border-gray-600/50'
-                }`}
+                } ${isSubmitting || registrationSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder="Potwierdź hasło"
               />
               <button
@@ -413,13 +426,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('phone')}
                 onBlur={handleFieldBlur}
+                disabled={isSubmitting || registrationSuccess}
                 className={`w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-200 text-sm ${
                   formData.phone && !validation.phone.isValid 
                     ? 'border-red-500/50' 
                     : formData.phone && validation.phone.isValid 
                       ? 'border-green-500/50' 
                       : 'border-gray-600/50'
-                }`}
+                } ${isSubmitting || registrationSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder="+48 123 456 789 (opcjonalne)"
               />
               {formData.phone && (
@@ -618,13 +632,25 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             </div>
           )}
 
-          {error && (
+          {error && !registrationSuccess && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="p-3 bg-red-900/20 border-2 border-red-800 rounded-lg text-center"
             >
               <p className="text-sm text-red-400">Sprawdź dane rejestracji</p>
+            </motion.div>
+          )}
+
+          {registrationSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-green-900/20 border-2 border-green-800 rounded-lg text-center"
+            >
+              <p className="text-sm text-green-400 font-medium">
+                Rejestracja zakończona pomyślnie! Sprawdź swoją skrzynkę mailową i aktywuj konto.
+              </p>
             </motion.div>
           )}
 
@@ -675,16 +701,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               variant="primary"
               size="sm"
               className="w-full"
-              disabled={isLoading || !validation.firstName.isValid || !validation.lastName.isValid || !validation.email.isValid || 
+              disabled={isSubmitting || registrationSuccess || !validation.firstName.isValid || !validation.lastName.isValid || !validation.email.isValid || 
                        !Object.values(validation.password).every(Boolean) || !validation.passwordsMatch ||
                        !formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword ||
                        !acceptedTerms}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                   <span>Rejestracja...</span>
                 </div>
+              ) : registrationSuccess ? (
+                'Konto utworzone'
               ) : (
                 'Utwórz konto'
               )}

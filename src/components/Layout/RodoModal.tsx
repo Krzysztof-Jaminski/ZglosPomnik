@@ -92,7 +92,7 @@ export const RodoModal: React.FC<RodoModalProps> = ({
                         Twoje prawa (RODO)
                       </h3>
                       <p className="text-xs leading-relaxed">
-                        Masz prawo do dostępu, sprostowania, usunięcia lub ograniczenia przetwarzania danych. Aby skorzystać z tych praw, skontaktuj się z nami.
+                        Masz prawo do dostępu, sprostowania, usunięcia lub ograniczenia przetwarzania danych. Aby skorzystać z tych praw, skontaktuj się z nami poprzez email: <a href="mailto:3andflora@gmail.com" className="text-green-400 hover:text-green-300 underline">3andflora@gmail.com</a>.
                       </p>
                     </div>
                   </div>
