@@ -6,7 +6,6 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing v5...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
@@ -15,12 +14,10 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating v5...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          console.log('Deleting ALL caches:', cacheName);
           return caches.delete(cacheName);
         })
       );
@@ -50,7 +47,6 @@ self.addEventListener('fetch', (event) => {
   ];
   
   if (externalDomains.some(domain => url.hostname.includes(domain))) {
-    console.log('Service Worker: Skipping external domain:', url.hostname);
     return; // Let external requests pass through normally
   }
 
@@ -71,13 +67,11 @@ self.addEventListener('fetch', (event) => {
 
   // Only handle requests from the same origin
   if (url.origin !== location.origin) {
-    console.log('Service Worker: Skipping different origin:', url.origin);
     return;
   }
 
   // Force network-first strategy for navigation/HTML requests to avoid stale shells
   if (isNavigationRequest) {
-    console.log('Service Worker: Network-first for navigation:', url.href);
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
@@ -86,14 +80,11 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          console.log('Service Worker: Network failed for navigation, using cache');
           return caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match('/'));
         })
     );
     return;
   }
-
-  console.log('Service Worker: Handling same-origin request:', url.href);
 
   event.respondWith(
     caches.match(event.request)
@@ -115,7 +106,6 @@ self.addEventListener('fetch', (event) => {
             return fetchResponse;
           })
           .catch((error) => {
-            console.log('Fetch failed for:', event.request.url, error);
             // If fetch fails, return a fallback response only for HTML pages
             if (event.request.destination === 'document') {
               return caches.match('/');
