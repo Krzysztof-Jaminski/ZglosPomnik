@@ -207,7 +207,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterRequest) => {
     try {
-      setIsLoading(true);
+      // Don't set global isLoading - let the form handle its own loading state
+      // setIsLoading(true) removed to prevent showing full app loading screen during registration
       logger.log('AuthContext: Starting registration...');
       const response = await authService.register(userData);
       logger.log('AuthContext: Registration response:', response);
@@ -243,9 +244,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       logger.error('Registration failed:', error);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
+    // Removed finally block - don't set isLoading(false) since we don't set it to true
   };
 
   const resendEmailVerification = async (email: string) => {

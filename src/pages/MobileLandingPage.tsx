@@ -74,31 +74,12 @@ export const MobileLandingPage = () => {
       const response = await register(userData);
       logger.log('MobileLandingPage: Registration response:', response);
       
-      // Check if email verification is required
-      if (response && response.requiresEmailVerification) {
-        logger.log('MobileLandingPage: Email verification required, showing modal');
-        logger.log('MobileLandingPage: Current showEmailConfirmation:', showEmailConfirmation);
-        setUserEmail(userData.email); // Save user email for resend functionality
-        
-        // Use setTimeout to ensure state updates happen after current render
-        setTimeout(() => {
-          logger.log('MobileLandingPage: Setting showAuthModal to false');
-          setShowAuthModal(false);
-          logger.log('MobileLandingPage: Setting showEmailConfirmation to true');
-          setShowEmailConfirmation(true);
-          logger.log('MobileLandingPage: State updates queued');
-        }, 0);
-        
-        logger.log('MobileLandingPage: Modal should be shown now');
-      } else {
-        logger.log('MobileLandingPage: Normal registration, redirecting to map');
-        // Normal registration - redirect to map (this should rarely happen)
-        setShowAuthModal(false);
-        navigate('/map');
-      }
+      // Don't close modal or navigate - let RegisterForm handle success state
+      // The form will show success message and disable fields
     } catch (error: any) {
       logger.error('MobileLandingPage: Registration error:', error);
       setError('Sprawdź dane rejestracji'); // Ogólny komunikat dla bezpieczeństwa
+      throw error; // Re-throw to let RegisterForm handle the error state
     }
   };
 
