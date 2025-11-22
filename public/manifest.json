@@ -1,7 +1,7 @@
 {
   "name": "Zgłoś Pomnik",
   "short_name": "ZgłośPomnik",
-  "description": "ZgłośPomnik",
+  "description": "ZgłośPomnik - profesjonalna platforma do zgłaszania i ochrony pomników przyrody",
   "theme_color": "#111827",
   "background_color": "#f9fafb",
   "display": "standalone",
