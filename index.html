@@ -3,10 +3,166 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="shortcut icon" type="image/png" href="/logo.png" />
     <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="ZgłośPomnik szybko i skutecznie!" />
+    <meta name="description" content="ZgłośPomnik - profesjonalna platforma do zgłaszania i ochrony pomników przyrody. Twórz wnioski, zarządzaj mapą drzew i współpracuj z lokalną społecznością w ochronie natury." />
     <meta name="theme-color" content="#111827" />
+    <meta name="keywords" content="pomniki przyrody, zgłaszanie drzew, ochrona przyrody, aplikacja ekologiczna, mapa drzew, pomniki przyrody polska" />
+    <meta name="author" content="ZgłośPomnik" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" id="canonical-url" href="/" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" id="og-url" content="/" />
+    <meta property="og:title" content="ZgłośPomnik - Ochrona Pomników Przyrody" />
+    <meta property="og:description" content="ZgłośPomnik - profesjonalna platforma do zgłaszania i ochrony pomników przyrody. Twórz wnioski, zarządzaj mapą drzew i współpracuj z lokalną społecznością w ochronie natury." />
+    <meta property="og:image" id="og-image" content="/icon-512x512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="ZgłośPomnik Logo" />
+    <meta property="og:locale" content="pl_PL" />
+    <meta property="og:site_name" content="ZgłośPomnik" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:url" id="twitter-url" content="/" />
+    <meta name="twitter:title" content="ZgłośPomnik - Ochrona Pomników Przyrody" />
+    <meta name="twitter:description" content="ZgłośPomnik - profesjonalna platforma do zgłaszania i ochrony pomników przyrody. Twórz wnioski, zarządzaj mapą drzew i współpracuj z lokalną społecznością w ochronie natury." />
+    <meta name="twitter:image" id="twitter-image" content="/icon-512x512.png" />
+    <meta name="twitter:image:alt" content="ZgłośPomnik Logo" />
+    
+    <!-- Set dynamic full URLs for meta tags (Vercel compatible) -->
+    <script>
+      (function() {
+        try {
+          if (typeof window !== 'undefined' && window.location) {
+            var baseUrl = window.location.origin;
+            var currentUrl = baseUrl + window.location.pathname + (window.location.search || '');
+            var imageUrl = baseUrl + '/icon-512x512.png';
+            
+            function updateMetaContent(id, content) {
+              var meta = document.getElementById(id);
+              if (meta) {
+                meta.setAttribute('content', content);
+              }
+            }
+            
+            updateMetaContent('og-url', currentUrl);
+            updateMetaContent('og-image', imageUrl);
+            updateMetaContent('twitter-url', currentUrl);
+            updateMetaContent('twitter-image', imageUrl);
+            
+            // Update canonical URL
+            var canonical = document.getElementById('canonical-url');
+            if (canonical) {
+              canonical.setAttribute('href', currentUrl);
+            }
+          }
+        } catch(e) {
+          // Silent fail if window is not available
+        }
+      })();
+    </script>
+    
+    <!-- Schema.org structured data for Google Search -->
+    <script type="application/ld+json" id="organization-schema">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "ZgłośPomnik",
+        "url": "/",
+        "logo": "/icon-512x512.png",
+        "description": "ZgłośPomnik - profesjonalna platforma do zgłaszania i ochrony pomników przyrody",
+        "sameAs": [],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "availableLanguage": ["Polish"]
+        }
+      }
+    </script>
+    <script type="application/ld+json" id="website-schema">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "ZgłośPomnik",
+        "url": "/",
+        "description": "ZgłośPomnik - profesjonalna platforma do zgłaszania i ochrony pomników przyrody. Twórz wnioski, zarządzaj mapą drzew i współpracuj z lokalną społecznością w ochronie natury.",
+        "inLanguage": "pl-PL",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+    <script type="application/ld+json" id="webapp-schema">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "ZgłośPomnik",
+        "url": "/",
+        "applicationCategory": "UtilityApplication",
+        "operatingSystem": "Web, Android, iOS",
+        "description": "ZgłośPomnik - profesjonalna platforma do zgłaszania i ochrony pomników przyrody",
+        "screenshot": "/icon-512x512.png",
+        "logo": "/icon-512x512.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "PLN"
+        }
+      }
+    </script>
+    
+    <!-- Update schema.org URLs dynamically -->
+    <script>
+      (function() {
+        try {
+          if (typeof window !== 'undefined' && window.location) {
+            var baseUrl = window.location.origin;
+            var currentUrl = baseUrl + window.location.pathname + (window.location.search || '');
+            var imageUrl = baseUrl + '/icon-512x512.png';
+            
+            // Update Organization schema
+            var orgSchema = document.getElementById('organization-schema');
+            if (orgSchema) {
+              var orgData = JSON.parse(orgSchema.textContent);
+              orgData.url = currentUrl;
+              orgData.logo = imageUrl;
+              orgSchema.textContent = JSON.stringify(orgData);
+            }
+            
+            // Update Website schema
+            var webSchema = document.getElementById('website-schema');
+            if (webSchema) {
+              var webData = JSON.parse(webSchema.textContent);
+              webData.url = currentUrl;
+              if (webData.potentialAction && webData.potentialAction.target) {
+                webData.potentialAction.target = baseUrl + webData.potentialAction.target.replace('/', '');
+              }
+              webSchema.textContent = JSON.stringify(webData);
+            }
+            
+            // Update WebApplication schema
+            var appSchema = document.getElementById('webapp-schema');
+            if (appSchema) {
+              var appData = JSON.parse(appSchema.textContent);
+              appData.url = currentUrl;
+              appData.logo = imageUrl;
+              appData.screenshot = imageUrl;
+              appSchema.textContent = JSON.stringify(appData);
+            }
+          }
+        } catch(e) {
+          // Silent fail if window is not available
+        }
+      })();
+    </script>
     
     <!-- Cache busting meta tags -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
